@@ -1,0 +1,15 @@
+# .gitignore
+# don't push these files to the repository
+
+.history
+*.log
+*.eml
+*.o
+*.a
+*.d
+*.elf
+*.s19
+*.map
+*.bin
+*.hex
+*.dll

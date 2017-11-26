@@ -1,0 +1,6 @@
+# .gitattributes
+# prevent binary files from CRLF handling, diff and merge:
+*.hex -crlf -diff
+*.bin -crlf -diff
+*.z -crlf -diff
+ 
