@@ -2,14 +2,16 @@ ChameleonMini-rebooted
 ======================
 [![Latest release](https://img.shields.io/github/release/iceman1001/chameleonmini-rebooted.svg)](https://github.com/iceman1001/chameleonmini-rebooted/releases/latest)
 
-Excited news!
+![Image chameleon mini revE - rebooted](http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg)
 
-This is firmware for the revised, rebooted version of the Chameleon Mini rev E which so many of you bought.
+#Excited news!
+
+*This is firmware for the revised, rebooted version of the Chameleon Mini rev E which so many of you bought.
 The chinese manufacturer had its firmware changes to themself which was limiting for all who bought this device.
 After talks with manufacturer, they also came to the conclusion that it should be open-sourced.  I managed to get source from them and agreed to make a public repository on GitHub.
-Since this firmware isn't in the official Chameleon mini repo,  I decided to make a 'iceman fork' of it.   
+Since this firmware isn't in the official Chameleon mini repo,  I decided to make a 'iceman fork' of it.*
 
-I will see if I can get the sourcecode for the windows GUI, that comes with this revision. 
+*I will see if I can get the sourcecode for the windows GUI, that comes with this revision.* 
 
 
 ## Donate
