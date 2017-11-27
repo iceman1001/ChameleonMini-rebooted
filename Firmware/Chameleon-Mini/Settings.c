@@ -79,19 +79,11 @@ SettingsType EEMEM StoredSettings = {
 };
 
 void SettingsLoad(void) {
-//	#if ENABLE_EEPROM_SETTINGS
 	eeprom_read_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
-	//#elif ENABLE_FLASH_SETTINGS
-	//Read_Save(&GlobalSettings, 32*1024,sizeof(SettingsType));
-	//#endif
 }
 
 void SettingsSave(void) {
-	//#if ENABLE_EEPROM_SETTINGS
-	//eeprom_write_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
-	//#elif ENABLE_FLASH_SETTINGS
-	//Write_Save(&GlobalSettings, 32*1024,sizeof(SettingsType));
-	//#endif
+
 	uint8_t temp[35];
 	memcpy(temp,&GlobalSettings,sizeof(SettingsType));
 	ISO14443AAppendCRCA(temp,sizeof(SettingsType));
@@ -107,17 +99,13 @@ void SettingsCycle(void) {
 		Setting = (Setting + 1) % SETTINGS_COUNT;
 
 		if (GlobalSettings.Settings[Setting].Configuration != CONFIG_NONE) {
-			//SettingsSetActiveById(Setting);
  
 			 	if (Setting < SETTINGS_COUNT) {
 				 	GlobalSettings.ActiveSetting = Setting;
 				 	GlobalSettings.ActiveSettingPtr =
 				 	&GlobalSettings.Settings[GlobalSettings.ActiveSetting];
 
-
 			 	}
-
- 
 			break;
 		}
 	}
@@ -131,9 +119,6 @@ void SettingsSetActiveById(uint8_t Setting) {
 
 		/* Settings have changed. Progress changes through system */
 		ConfigurationInit();
-		
-
-
 	}
 }
 
