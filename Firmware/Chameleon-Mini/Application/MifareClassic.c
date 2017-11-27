@@ -192,16 +192,12 @@ void MifareClassicAppTask(void)
 
 }
 
-//static uint8_t TEMP[256];
-//static uint16_t count;
-//static uint8_t authed_falg=0;
+
 uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
 
-	//count=BitCount;
-	//memcpy(TEMP,Buffer,BitCount);
 
-		//发来0x26 准备在此处做清零打算
+		//0x26  WUPA?
 		if(BitCount==7)
 		{
 				if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue))
@@ -210,7 +206,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             return BitCount;
         }
 		}
-		//发来0x93 0x20 或 0x93 0x70
+		// 0x93 0x20 ,  0x93 0x70  Anticollision 1
 		 if(BitCount==16 || BitCount==72)
 		 {
 		 	if (Buffer[0] == ISO14443A_CMD_SELECT_CL1)
@@ -275,7 +271,6 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         for (uint8_t i=0; i<4; i++)
             Buffer[i+4] ^= Crypto1Byte();
 
-			//memcpy(TEMP,Buffer,BitCount/8);
         if ((Buffer[4] == ReaderResponse[0]) &&
             (Buffer[5] == ReaderResponse[1]) &&
             (Buffer[6] == ReaderResponse[2]) &&
@@ -303,15 +298,12 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 		for (uint8_t i=0; i<BitCount/8; i++)
             Buffer[i] ^= Crypto1Byte();
 
-		//memcpy(TEMP,Buffer,BitCount/8);
 
         if (Buffer[0] == CMD_READ) {
             if (ISO14443ACheckCRCA(Buffer, CMD_READ_FRAME_SIZE)) {
                 /* Read command. Read data from memory and append CRCA. */
                 MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                 ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
-		//for(int i=0;i<20;i++)
-		//TEMP[i]=Buffer[i];
                 /* Encrypt and calculate parity bits. */
                 for (uint8_t i=0; i<(ISO14443A_CRCA_SIZE + MEM_BYTES_PER_BLOCK); i++) {
                     uint8_t Plain = Buffer[i];
