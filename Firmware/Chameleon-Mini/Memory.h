@@ -68,7 +68,7 @@
 #define MEMORY_PAGE_SIZE		256
 #define MEMORY_SIZE_PER_SETTING	((uint32_t) 256 * MEMORY_PAGE_SIZE) /* Multiple of memory page size */
 
-void MemoryInit(void);
+int MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryClear(void);
@@ -77,4 +77,6 @@ void MemoryClear(void);
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 
+uint8_t Read_Save(void* Buffer, uint16_t Address, uint16_t ByteCount);
+void Write_Save(void* Buffer, uint16_t Address, uint16_t ByteCount);
 #endif /* MEMORY_H_ */

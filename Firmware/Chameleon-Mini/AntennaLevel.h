@@ -96,7 +96,4 @@ uint16_t AntennaLevelGet(void)
 	return (uint16_t) (((uint32_t) Result * ANTENNA_LEVEL_NUMERATOR) / ANTENNA_LEVEL_DENOMINATOR);
 }
 
-void AntennaLevelTick(void);
-void AntennaLevelResetMaxRssi(void);
-
 #endif /* ANTENNALEVEL_H_ */

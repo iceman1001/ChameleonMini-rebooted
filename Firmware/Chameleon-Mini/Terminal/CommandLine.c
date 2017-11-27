@@ -188,7 +188,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
   {
 	  .Command    = COMMAND_DETECTION,
 	  .ExecFunc   = NO_FUNCTION,
-	  .SetFunc    = NO_FUNCTION,
+	  .SetFunc    = CommandSetDetection,
 	  .GetFunc    = CommandGetDetection,
   }
 };

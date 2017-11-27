@@ -152,6 +152,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam);
 
 #define COMMAND_DETECTION     "DETECTIONMY"
 CommandStatusIdType CommandGetDetection(char* OutParam);
+CommandStatusIdType CommandSetDetection(const char* InParam);
 /* Defines the end of command list. This is no actual command */
 
 #endif /* COMMANDS_H_ */

@@ -111,7 +111,7 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
 
         *BitCount = ISO14443A_CL_FRAME_SIZE;
 
-        return false;
+        return true;
 
     case ISO14443A_NVB_AC_END:
         /* End of anticollision procedure.

@@ -73,17 +73,17 @@ static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
     [CONFIG_NONE] = {
         .ConfigurationID = CONFIG_NONE,
-        .ConfigurationName = "NONE",
+        .ConfigurationName = "CLOSED",
         .CodecInitFunc = CodecInitDummy,
         .CodecTaskFunc = CodecTaskDummy,
         .ApplicationInitFunc = ApplicationInitDummy,
         .ApplicationResetFunc = ApplicationResetDummy,
         .ApplicationTaskFunc = ApplicationTaskDummy,
         .ApplicationProcessFunc = ApplicationProcessDummy,
-        .ApplicationGetUidFunc = ApplicationGetUidDummy,
+        .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
-        .UidSize = 0,
-        .MemorySize = 0,
+        .UidSize = MIFARE_CLASSIC_UID_SIZE,
+        .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
         .ReadOnly = true
     },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT

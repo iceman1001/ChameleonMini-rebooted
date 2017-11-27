@@ -57,7 +57,17 @@
 #include <avr/eeprom.h>
 #include "Configuration.h"
 #include  "LED.h"
-SettingsType GlobalSettings;
+#include <string.h>
+SettingsType GlobalSettings=
+{
+	.ActiveSetting = DEFAULT_SETTING,
+	.ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
+
+	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
+		.Configuration = DEFAULT_CONFIGURATION,
+		.ButtonAction =	DEFAULT_BUTTON_ACTION,
+	} }
+};
 SettingsType EEMEM StoredSettings = {
 	.ActiveSetting = DEFAULT_SETTING,
 	.ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
@@ -69,24 +79,45 @@ SettingsType EEMEM StoredSettings = {
 };
 
 void SettingsLoad(void) {
+//	#if ENABLE_EEPROM_SETTINGS
 	eeprom_read_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
+	//#elif ENABLE_FLASH_SETTINGS
+	//Read_Save(&GlobalSettings, 32*1024,sizeof(SettingsType));
+	//#endif
 }
 
 void SettingsSave(void) {
-#if ENABLE_EEPROM_SETTINGS
-	eeprom_write_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
-#endif
+	//#if ENABLE_EEPROM_SETTINGS
+	//eeprom_write_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
+	//#elif ENABLE_FLASH_SETTINGS
+	//Write_Save(&GlobalSettings, 32*1024,sizeof(SettingsType));
+	//#endif
+	uint8_t temp[35];
+	memcpy(temp,&GlobalSettings,sizeof(SettingsType));
+	ISO14443AAppendCRCA(temp,sizeof(SettingsType));
+	Write_Save(temp, 32*1024,sizeof(SettingsType)+2);
+	
 }
 
 void SettingsCycle(void) {
-	uint8_t i = SETTINGS_COUNT;
+	char i = SETTINGS_COUNT;
 	uint8_t Setting = GlobalSettings.ActiveSetting;
 
 	while (i-- > 0) {
 		Setting = (Setting + 1) % SETTINGS_COUNT;
 
 		if (GlobalSettings.Settings[Setting].Configuration != CONFIG_NONE) {
-			SettingsSetActiveById(Setting);
+			//SettingsSetActiveById(Setting);
+ 
+			 	if (Setting < SETTINGS_COUNT) {
+				 	GlobalSettings.ActiveSetting = Setting;
+				 	GlobalSettings.ActiveSettingPtr =
+				 	&GlobalSettings.Settings[GlobalSettings.ActiveSetting];
+
+
+			 	}
+
+ 
 			break;
 		}
 	}
@@ -100,6 +131,9 @@ void SettingsSetActiveById(uint8_t Setting) {
 
 		/* Settings have changed. Progress changes through system */
 		ConfigurationInit();
+		
+
+
 	}
 }
 
@@ -108,8 +142,11 @@ uint8_t SettingsGetActiveById(void) {
 }
 
 void SettingsGetActiveByName(char* SettingOut, uint16_t BufferSize) {
-	SettingOut[0] = SettingsGetActiveById() + '0';
-	SettingOut[1] = '\0';
+	SettingOut[0] = 'N';
+	SettingOut[1] = 'O';
+	SettingOut[2] = '.';	
+	SettingOut[3] = SettingsGetActiveById() + '0';
+	SettingOut[4] = '\0';
 }
 
 bool SettingsSetActiveByName(const char* Setting) {

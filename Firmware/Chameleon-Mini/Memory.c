@@ -213,7 +213,7 @@ INLINE void FlashClearPage(uint16_t PageAddress)
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 }
 
-void MemoryInit(void)
+int MemoryInit(void)
 {
 	/* Configure MEMORY_FLASH_USART for SPI master mode 0 with maximum clock frequency */
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
@@ -232,7 +232,19 @@ void MemoryInit(void)
 	if ( !(FlashReadStatusRegister() & FLASH_STATUS_REG_PAGESIZE_BIT) ) {
 		/* Configure for 256 byte Dataflash if not already done. */
 		FlashConfigurePageSize();
+		//return 0;
 	}
+	return 1;
+}
+
+uint8_t Read_Save(void* Buffer, uint16_t Address, uint16_t ByteCount)
+{
+	FlashRead(Buffer, Address, ByteCount);
+}
+
+void Write_Save(void* Buffer, uint16_t Address, uint16_t ByteCount)
+{
+	FlashWrite(Buffer, Address, ByteCount);
 }
 
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount)

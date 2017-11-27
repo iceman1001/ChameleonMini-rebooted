@@ -72,7 +72,7 @@ extern const PROGMEM CommandEntryType CommandTable[];
 CommandStatusIdType CommandGetVersion(char* OutParam)
 {
   snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR(
-    "Chameleon-Old-Driver-1.0"
+    "Chameleon-new-1.0"
     )
   );
 
@@ -330,4 +330,12 @@ CommandStatusIdType CommandGetDetection(char* OutParam)
    return COMMAND_INFO_OK_ID;
 
 
+}
+
+CommandStatusIdType CommandSetDetection(const char* InParam)
+{
+	uint8_t temp[200];
+	memset(temp,0xff,200);
+	MemoryWriteBlock(temp, 4096+16, 192);
+	return COMMAND_INFO_OK_ID;
 }
