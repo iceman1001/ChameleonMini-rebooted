@@ -1,0 +1,31 @@
+# Travis-CI Build for IcemanFork/ChameleonMini-rebooted
+language: c
+
+#default linux build env is: Ubuntu 14.04 trusty
+compiler: gcc
+
+# Test on Linux
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+
+before_install:
+## Install ARM toolchain on Linux.
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then 
+    sudo apt-get update -qq;
+  fi
+
+install:
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then 
+    make;
+  fi
+
+before_script:
+
+script: 
+## start and run a test script
+##  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then 
+##    ./client/proxmark3 -h ;
+##  fi
