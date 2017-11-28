@@ -1,5 +1,7 @@
 ChameleonMini-rebooted
 ======================
+
+[![Build Status](https://travis-ci.org/iceman1001/chameleonmini-rebooted.svg?branch=master)](https://travis-ci.org/iceman1001/chameleonmini-rebooted)
 [![Latest release](https://img.shields.io/github/release/iceman1001/chameleonmini-rebooted.svg)](https://github.com/iceman1001/chameleonmini-rebooted/releases/latest)
 
 ![Image chameleon mini revE - rebooted](http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg)
