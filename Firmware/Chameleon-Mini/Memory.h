@@ -10,6 +10,11 @@
 
 #include "Common.h"
 
+#define MEMORY_SIZE					(FLASH_DATA_SIZE) /* From makefile */
+#define MEMORY_INIT_VALUE			0x00
+#define MEMORY_SIZE_PER_SETTING		8192
+
+
 #define MEMORY_FLASH_USART	USARTD0
 #define MEMORY_FLASH_PORT	PORTD
 #define MEMORY_FLASH_CS		PIN4_bm
