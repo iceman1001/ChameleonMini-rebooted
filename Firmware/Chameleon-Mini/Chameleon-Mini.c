@@ -75,7 +75,10 @@ int main(void) {
 				.ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
 				.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 						.Configuration = DEFAULT_CONFIGURATION,
-						.ButtonActions = DEFAULT_BUTTON_ACTION,
+						.ButtonActions = {
+								[BUTTON_L_PRESS_SHORT] = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_SHORT] = DEFAULT_RBUTTON_ACTION,
+								[BUTTON_L_PRESS_LONG]  = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_LONG]  = DEFAULT_RBUTTON_ACTION
+							},
 						}
 					}
 			};
