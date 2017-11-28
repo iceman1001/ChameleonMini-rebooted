@@ -1,71 +1,55 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
- * AUTHORS"). All rights reserved.
+/*
+ * Standards.c
  *
- * DEFINITIONS:
- *
- * "WORK": The material covered by this license includes the schematic
- * diagrams, designs, circuit or circuit board layouts, mechanical
- * drawings, documentation (in electronic or printed form), source code,
- * binary software, data files, assembled devices, and any additional
- * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
- * (https://github.com/skuep/ChameleonMini).
- *
- * LICENSE TERMS:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK are permitted provided that the
- * following conditions are met:
- *
- * Redistributions and use of this WORK, with or without modification, or
- * of substantial portions of this WORK must include the above copyright
- * notice, this list of conditions, the below disclaimer, and the following
- * attribution:
- *
- * "Based on ChameleonMini an open-source RFID emulator:
- * https://github.com/skuep/ChameleonMini"
- *
- * The attribution must be clearly visible to a user, for example, by being
- * printed on the circuit board and an enclosure, and by being displayed by
- * software (both in binary and source code form).
- *
- * At any time, the majority of the ORIGINAL AUTHORS may decide to give
- * written permission to an entity to use or redistribute the WORK (with or
- * without modification) WITHOUT having to include the above copyright
- * notice, this list of conditions, the below disclaimer, and the above
- * attribution.
- *
- * DISCLAIMER:
- *
- * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the hardware, software, and
- * documentation should not be interpreted as representing official
- * policies, either expressed or implied, of the ORIGINAL AUTHORS.
+ *  Created on: 15.02.2013
+ *      Author: skuser
  */
 
 #include "Configuration.h"
 #include "Settings.h"
 #include <avr/pgmspace.h>
+#include "Map.h"
+#include "AntennaLevel.h"
+
+/* Map IDs to text */
+static const MapEntryType PROGMEM ConfigurationMap[] = {
+    { .Id = CONFIG_NONE, 			.Text = "NONE" },
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+    { .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
+#endif
+#ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_1K, 	.Text = "MF_CLASSIC_1K" },
+#endif
+#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_1K_7B, 	.Text = "MF_CLASSIC_1K_7B" },
+#endif
+#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_4K, 	.Text = "MF_CLASSIC_4K" },
+#endif
+#ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_4K_7B, 	.Text = "MF_CLASSIC_4K_7B" },
+#endif
+#ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
+    { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
+#endif
+#ifdef CONFIG_ISO14443A_READER_SUPPORT
+    { .Id = CONFIG_ISO14443A_READER,	.Text = "ISO14443A_READER" },
+#endif
+};
 
 /* Include all Codecs and Applications */
 #include "Codec/Codec.h"
 #include "Application/Application.h"
 
 static void CodecInitDummy(void) { }
+static void CodecDeInitDummy(void) { }
 static void CodecTaskDummy(void) { }
 static void ApplicationInitDummy(void) {}
 static void ApplicationResetDummy(void) {}
 static void ApplicationTaskDummy(void) {}
+static void ApplicationTickDummy(void) {}
 static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return 0; }
 static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
@@ -75,10 +59,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ConfigurationID = CONFIG_NONE,
         .ConfigurationName = "CLOSED",
         .CodecInitFunc = CodecInitDummy,
+        .CodecDeInitFunc = CodecDeInitDummy,
         .CodecTaskFunc = CodecTaskDummy,
         .ApplicationInitFunc = ApplicationInitDummy,
         .ApplicationResetFunc = ApplicationResetDummy,
         .ApplicationTaskFunc = ApplicationTaskDummy,
+        .ApplicationTickFunc = ApplicationTickDummy,
         .ApplicationProcessFunc = ApplicationProcessDummy,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
@@ -91,10 +77,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ConfigurationID = CONFIG_MF_ULTRALIGHT,
 	.ConfigurationName = "MF_ULTRALIGHT",
 	.CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareUltralightAppInit,
 	.ApplicationResetFunc = MifareUltralightAppReset,
 	.ApplicationTaskFunc = MifareUltralightAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
 	.ApplicationProcessFunc = MifareUltralightAppProcess,
 	.ApplicationGetUidFunc = MifareUltralightGetUid,
 	.ApplicationSetUidFunc = MifareUltralightSetUid,
@@ -108,14 +96,33 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ConfigurationID = CONFIG_MF_CLASSIC_1K,
         .ConfigurationName = "MF_CLASSIC_1K",
         .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
         .ApplicationInitFunc = MifareClassicAppInit1K,
         .ApplicationResetFunc = MifareClassicAppReset,
         .ApplicationTaskFunc = MifareClassicAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
         .ApplicationProcessFunc = MifareClassicAppProcess,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = MifareClassicSetUid,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
+        .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+        .ReadOnly = false
+    },
+#endif
+#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
+    [CONFIG_MF_CLASSIC_1K_7B] = {
+        .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
+        .CodecTaskFunc = ISO14443ACodecTask,
+        .ApplicationInitFunc = MifareClassicAppInit1K7B,
+        .ApplicationResetFunc = MifareClassicAppReset,
+        .ApplicationTaskFunc = MifareClassicAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
+        .ApplicationProcessFunc = MifareClassicAppProcess,
+        .ApplicationGetUidFunc = MifareClassicGetUid,
+        .ApplicationSetUidFunc = MifareClassicSetUid,
+        .UidSize = ISO14443A_UID_SIZE_DOUBLE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
         .ReadOnly = false
     },
@@ -125,10 +132,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ConfigurationID = CONFIG_MF_CLASSIC_4K,
         .ConfigurationName = "MF_CLASSIC_4K",
         .CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
         .ApplicationInitFunc = MifareClassicAppInit4K,
         .ApplicationResetFunc = MifareClassicAppReset,
         .ApplicationTaskFunc = MifareClassicAppTask,
+        .ApplicationTickFunc = ApplicationTickDummy,
         .ApplicationProcessFunc = MifareClassicAppProcess,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = MifareClassicSetUid,
@@ -142,10 +151,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ConfigurationID = CONFIG_MF_DETECTION,
 	.ConfigurationName = "MF_DETECTION",
 	.CodecInitFunc = ISO14443ACodecInit,
+        .CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareDetectionInit,
 	.ApplicationResetFunc = MifareDetectionReset,
 	.ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTickFunc = ApplicationTickDummy,
 	.ApplicationProcessFunc = MifareDetectionAppProcess,
 	.ApplicationGetUidFunc = MifareClassicGetUid,
 	.ApplicationSetUidFunc = MifareClassicSetUid,
@@ -160,90 +171,48 @@ ConfigurationType ActiveConfiguration;
 
 void ConfigurationInit(void)
 {
+    memcpy_P(&ActiveConfiguration,
+            &ConfigurationTable[CONFIG_NONE], sizeof(ConfigurationType));
+
     ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
 }
 
 void ConfigurationSetById( ConfigurationEnum Configuration )
 {
+    CodecDeInit();
+
+    CommandLinePendingTaskBreak(); // break possibly pending task
+
 	GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
     /* Copy struct from PROGMEM to RAM */
     memcpy_P(&ActiveConfiguration,
             &ConfigurationTable[Configuration], sizeof(ConfigurationType));
 
-
-    ApplicationInit();
     CodecInit();
+    ApplicationInit();
 }
 
-bool ConfigurationSetByName(const char* ConfigurationName)
+void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 {
-    uint8_t i;
+    MapIdToText(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), GlobalSettings.ActiveSettingPtr->Configuration, Configuration, BufferSize);
+}
 
-    /* Loop through table trying to find the configuration */
-    for (i=0; i<(sizeof(ConfigurationTable) / sizeof(*ConfigurationTable)); i++) {
-        const char* pTableConfigName = ConfigurationTable[i].ConfigurationName;
-        const char* pRequestedConfigName = ConfigurationName;
-        bool StringMismatch = false;
-        char c = pgm_read_byte(pTableConfigName);
+bool ConfigurationSetByName(const char* Configuration)
+{
+    MapIdType Id;
 
-        /* Try to keep running until both strings end at the same point */
-        while ( !(c == '\0' && *pRequestedConfigName == '\0') ) {
-            if ( (c == '\0') || (*pRequestedConfigName == '\0') ) {
-                /* One String ended before the other did -> unequal length */
-                StringMismatch = true;
-                break;
-            }
-
-            if (c != *pRequestedConfigName) {
-                /* Character mismatch */
-                StringMismatch = true;
-                break;
-            }
-
-            /* Proceed to next character */
-            pTableConfigName++;
-            pRequestedConfigName++;
-
-            c = pgm_read_byte(pTableConfigName);
-        }
-
-        if (!StringMismatch) {
-            /* Configuration found */
-            ConfigurationSetById(i);
+    if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+        ConfigurationSetById(Id);
+        LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
             return true;
-        }
-    }
-
+    } else {
     return false;
 }
+}
 
-void ConfigurationGetList(char* ConfigListOut, uint16_t ByteCount)
+void ConfigurationGetList(char* List, uint16_t BufferSize)
 {
-    uint8_t i;
-
-    /* Account for '\0' */
-    ByteCount--;
-
-    for (i=0; i<CONFIG_COUNT; i++) {
-        const char* ConfigName = ConfigurationTable[i].ConfigurationName;
-        char c;
-
-        while( (c = pgm_read_byte(ConfigName)) != '\0' && ByteCount > CONFIGURATION_NAME_LENGTH_MAX) {
-            /* While not end-of-string and enough buffer to
-            * put a complete configuration name */
-            *ConfigListOut++ = c;
-            ConfigName++;
-            ByteCount--;
-        }
-
-        if ( i < (CONFIG_COUNT - 1) ) {
-            /* No comma on last configuration */
-            *ConfigListOut++ = ',';
-            ByteCount--;
-        }
-    }
-
-    *ConfigListOut = '\0';
+    MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
 
