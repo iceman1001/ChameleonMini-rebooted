@@ -29,6 +29,6 @@ void MemoryClear(void);
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount);
 
-uint8_t Read_Save(void* Buffer, uint16_t Address, uint16_t ByteCount);
-void Write_Save(void* Buffer, uint16_t Address, uint16_t ByteCount);
+uint8_t Read_Save(void* Buffer, uint32_t Address, uint16_t ByteCount);
+void Write_Save(void* Buffer, uint32_t Address, uint16_t ByteCount);
 #endif /* MEMORY_H_ */

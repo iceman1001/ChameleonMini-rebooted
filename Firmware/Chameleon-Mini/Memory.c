@@ -190,12 +190,12 @@ int MemoryInit(void)
 	return 1;
 }
 
-uint8_t Read_Save(void* Buffer, uint16_t Address, uint16_t ByteCount)
+uint8_t Read_Save(void* Buffer, uint32_t Address, uint16_t ByteCount)
 {
 	FlashRead(Buffer, Address, ByteCount);
 }
 
-void Write_Save(void* Buffer, uint16_t Address, uint16_t ByteCount)
+void Write_Save(void* Buffer, uint32_t Address, uint16_t ByteCount)
 {
 	FlashWrite(Buffer, Address, ByteCount);
 }
