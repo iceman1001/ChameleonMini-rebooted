@@ -1,6 +1,6 @@
 #include "Chameleon-Mini.h"
 
-#define genFun(size, key, i) key+i
+#define genFun(size, key, i) ((key) + (i))
 
 void ComPasssimple(uint8_t *toBeEncFileName, int key, int len)
 {
