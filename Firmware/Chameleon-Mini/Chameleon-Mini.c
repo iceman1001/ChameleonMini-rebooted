@@ -52,7 +52,6 @@ void led_mode(void) {
 	}
 }
 
-uint8_t coutter = 0;
 int main(void) {
 	SystemInit();
 	MemoryInit();
