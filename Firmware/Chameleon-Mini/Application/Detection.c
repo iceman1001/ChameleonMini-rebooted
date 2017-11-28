@@ -8,48 +8,13 @@
 #include "../Settings.h"
 #include <string.h>
 
-//#define MFCLASSIC_1K_ATQA_VALUE     0x0004
-//#define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
-//
-//#define MEM_UID_CL1_ADDRESS         0x00
-//#define MEM_UID_CL1_SIZE            4
-//
-//#define CMD_HALT                    0x50
-//#define CMD_HALT_FRAME_SIZE         2        /* Bytes without CRCA */
-//#define CMD_AUTH_A                  0x60
-//#define CMD_AUTH_B                  0x61
-//#define CMD_AUTH_FRAME_SIZE         2         /* Bytes without CRCA */
-//#define CMD_AUTH_RB_FRAME_SIZE      4        /* Bytes */
-//#define CMD_AUTH_BA_FRAME_SIZE      4        /* Bytes */
-//#define CMD_READ                    0x30
-//#define CMD_WRITE                   0xA0
-//#define CMD_DECREMENT               0xC0
-//#define CMD_INCREMENT               0xC1
-//#define CMD_RESTORE                 0xC2
-//#define CMD_TRANSFER                0xB0
-//
-//#define NAK_INVALID_ARG             0x00
-//#define NAK_CRC_ERROR               0x01
-//#define NAK_NOT_AUTHED              0x04
-//
-//#define ACK_NAK_FRAME_SIZE          4         /* Bits */
-//
-//#define MEM_SECTOR_ADDR_MASK        0x3C
-//#define MEM_BYTES_PER_BLOCK         16        /* Bytes */
-//
-//
-//
-//#define MEM_KEY_A_OFFSET            48        /* Bytes */
-//#define MEM_KEY_B_OFFSET            58        /* Bytes */
-//#define MEM_KEY_SIZE                6        /* Bytes */
-
- #define MFCLASSIC_1K_ATQA_VALUE     0x0004
+#define MFCLASSIC_1K_ATQA_VALUE     0x0004
 #define MFCLASSIC_4K_ATQA_VALUE     0x0002
- #define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
+#define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
 #define MFCLASSIC_4K_SAK_CL1_VALUE  0x18
  
- #define MEM_UID_CL1_ADDRESS         0x00
- #define MEM_UID_CL1_SIZE            4
+#define MEM_UID_CL1_ADDRESS         0x00
+#define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
 #define MEM_KEY_A_OFFSET            48        /* Bytes */
 #define MEM_KEY_B_OFFSET            58        /* Bytes */
@@ -66,13 +31,12 @@
 #define NAK_EEPROM_ERROR            0x05
 #define NAK_OTHER_ERROR             0x06
 
- #define CMD_AUTH_A                  0x60
- #define CMD_AUTH_B                  0x61
- #define CMD_AUTH_FRAME_SIZE         2         /* Bytes without CRCA */
- #define CMD_AUTH_RB_FRAME_SIZE      4        /* Bytes */
+#define CMD_AUTH_A                  0x60
+#define CMD_AUTH_B                  0x61
+#define CMD_AUTH_FRAME_SIZE         2         /* Bytes without CRCA */
+#define CMD_AUTH_RB_FRAME_SIZE      4        /* Bytes */
 #define CMD_AUTH_AB_FRAME_SIZE      8        /* Bytes */
- #define CMD_AUTH_BA_FRAME_SIZE      4        /* Bytes */
-
+#define CMD_AUTH_BA_FRAME_SIZE      4        /* Bytes */
 
  static enum {
 	 STATE_HALT,
@@ -87,12 +51,13 @@
 	 STATE_RESTORE
  } State;
 
- static uint16_t CardATQAValue;
- static uint8_t CardSAKValue;
- uint8_t data_svae[16];
-	static uint8_t turn_falga=0;
-	static uint8_t turn_falgb=0;
-	static uint8_t keyb_falg=0;
+static uint16_t CardATQAValue;
+static uint8_t CardSAKValue;
+uint8_t data_svae[16] = {0};
+static uint8_t turn_falga = 0;
+static uint8_t turn_falgb = 0;
+static uint8_t keyb_falg = 0;
+
 uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
 	//发来0x26 准备在此处做清零打算
