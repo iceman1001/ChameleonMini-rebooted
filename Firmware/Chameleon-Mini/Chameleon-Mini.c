@@ -75,7 +75,7 @@ int main(void) {
 				.ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
 				.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 						.Configuration = DEFAULT_CONFIGURATION,
-						.ButtonAction =	DEFAULT_BUTTON_ACTION,
+						.ButtonActions = DEFAULT_BUTTON_ACTION,
 						}
 					}
 			};
