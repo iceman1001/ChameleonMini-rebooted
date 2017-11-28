@@ -9,6 +9,7 @@
 #define ISO14443_3A_H_
 
 #include "../Common.h"
+#include <string.h>
 
 #define ISO14443A_UID_SIZE_SINGLE   4    /* bytes */
 #define ISO14443A_UID_SIZE_DOUBLE   7
