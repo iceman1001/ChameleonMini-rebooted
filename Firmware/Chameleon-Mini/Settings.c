@@ -1,8 +1,15 @@
 #include "Settings.h"
 #include <avr/eeprom.h>
 #include "Configuration.h"
-#include  "LED.h"
 #include <string.h>
+#include "LED.h"
+#include "Log.h"
+#include "Memory.h"
+#include "Terminal/CommandLine.h"
+#include "System.h"
+
+#define SETTING_TO_INDEX(S) (S - SETTINGS_FIRST)
+#define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)														
 
 SettingsType GlobalSettings = {
 	.ActiveSetting = DEFAULT_SETTING,
