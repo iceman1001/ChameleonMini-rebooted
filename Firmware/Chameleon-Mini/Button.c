@@ -103,7 +103,6 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
         	SettingsCycle();
 			SettingsSave();
         }
-    }
 }
 
 void ButtonInit(void)
@@ -125,7 +124,7 @@ void ButtonTick(void)
     	} else if (PressTickCounter == LONG_PRESS_TICK_COUNT) {
     		/* Long button press detected execute button action and advance PressTickCounter
     		 * to an invalid state. */
-    		ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonLongAction);
+    		ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
     		PressTickCounter++;
     	} else {
     		/* Button is still pressed, ignore */
@@ -135,7 +134,7 @@ void ButtonTick(void)
     	 * a recent short button press. */
     	if ( (PressTickCounter > 0) && (PressTickCounter <= LONG_PRESS_TICK_COUNT) ) {
     		/* We have a short button press */
-    		ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonAction);
+    		ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]);
     	}
 
     	PressTickCounter = 0;
@@ -174,18 +173,18 @@ void ButtonGetActionList(char* ListOut, uint16_t BufferSize)
 void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
 {
 #ifndef BUTTON_SETTING_GLOBAL
-	if (Type == BUTTON_PRESS_SHORT) {
-	GlobalSettings.ActiveSettingPtr->ButtonAction = Action;
-	} else if (Type == BUTTON_PRESS_LONG) {
-		GlobalSettings.ActiveSettingPtr->ButtonLongAction = Action;
+	if (Type == BUTTON_R_PRESS_SHORT) {
+	GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT] = Action;
+	} else if (Type == BUTTON_R_PRESS_LONG) {
+		GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG] = Action;
 	}
 #else
 	/* Write button action to all settings when using global settings */
 	for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
-		if (Type == BUTTON_PRESS_SHORT) {
-			GlobalSettings.Settings[i].ButtonAction = Action;
-		} else if (Type == BUTTON_PRESS_LONG) {
-			GlobalSettings.Settings[i].ButtonLongAction = Action;
+		if (Type == BUTTON_R_PRESS_SHORT) {
+			GlobalSettings.Settings[i].ButtonActions[BUTTON_R_PRESS_SHORT] = Action;
+		} else if (Type == BUTTON_R_PRESS_LONG) {
+			GlobalSettings.Settings[i].ButtonActions[BUTTON_R_PRESS_LONG] = Action;
 		}
 	}
 #endif
@@ -193,10 +192,10 @@ void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
 
 void ButtonGetActionByName(ButtonTypeEnum Type, char* ActionOut, uint16_t BufferSize)
 {
-	if (Type == BUTTON_PRESS_SHORT) {
-    strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonAction], BufferSize);
-	} else if (Type == BUTTON_PRESS_LONG) {
-		strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonLongAction], BufferSize);
+	if (Type == BUTTON_R_PRESS_SHORT) {
+    strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_SHORT]], BufferSize);
+	} else if (Type == BUTTON_R_PRESS_LONG) {
+		strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonActions[BUTTON_R_PRESS_LONG]], BufferSize);
 	} else {
 		/* Should not happen (TM) */
 		*ActionOut = '\0';
