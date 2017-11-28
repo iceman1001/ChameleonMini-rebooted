@@ -1,9 +1,16 @@
 #include "Crypto1.h"
 
+/* avoid compiler complaining at the shift macros */
+#pragma GCC diagnostic ignored "-Wuninitialized"
+
+// uncomment if platform is not avr
+// #define NO_INLINE_ASM 1
+
 #define PRNG_MASK        0x002D0000UL
 /* x^16 + x^14 + x^13 + x^11 + 1 */
 
 #define PRNG_SIZE        4 /* Bytes */
+#define NONCE_SIZE       4 /* Bytes */
 
 #define LFSR_MASK_EVEN    0x2010E1UL
 #define LFSR_MASK_ODD    0x3A7394UL
