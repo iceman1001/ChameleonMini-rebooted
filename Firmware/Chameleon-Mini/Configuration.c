@@ -56,8 +56,6 @@ static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
     [CONFIG_NONE] = {
-        .ConfigurationID = CONFIG_NONE,
-        .ConfigurationName = "CLOSED",
         .CodecInitFunc = CodecInitDummy,
         .CodecDeInitFunc = CodecDeInitDummy,
         .CodecTaskFunc = CodecTaskDummy,
@@ -74,8 +72,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
 [CONFIG_MF_ULTRALIGHT] = {
-	.ConfigurationID = CONFIG_MF_ULTRALIGHT,
-	.ConfigurationName = "MF_ULTRALIGHT",
 	.CodecInitFunc = ISO14443ACodecInit,
         .CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
@@ -93,8 +89,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     [CONFIG_MF_CLASSIC_1K] = {
-        .ConfigurationID = CONFIG_MF_CLASSIC_1K,
-        .ConfigurationName = "MF_CLASSIC_1K",
         .CodecInitFunc = ISO14443ACodecInit,
         .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
@@ -129,8 +123,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
     [CONFIG_MF_CLASSIC_4K] = {
-        .ConfigurationID = CONFIG_MF_CLASSIC_4K,
-        .ConfigurationName = "MF_CLASSIC_4K",
         .CodecInitFunc = ISO14443ACodecInit,
         .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
@@ -148,10 +140,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #endif
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 [CONFIG_MF_DETECTION] = {
-	.ConfigurationID = CONFIG_MF_DETECTION,
-	.ConfigurationName = "MF_DETECTION",
 	.CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
+    .CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareDetectionInit,
 	.ApplicationResetFunc = MifareDetectionReset,
