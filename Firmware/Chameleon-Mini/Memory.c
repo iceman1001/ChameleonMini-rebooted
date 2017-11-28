@@ -226,16 +226,16 @@ void MemoryClear(void)
 void MemoryRecall(void)
 {
 	/* Recall memory from permanent flash */
-	FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+	//FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 }
 
 void MemoryStore(void)
 {
 	/* Store current memory into permanent flash */
-	FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+	// FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 
-	LEDTrigger(LED_MEMORY_CHANGED, LED_OFF);
-	LEDTrigger(LED_MEMORY_STORED, LED_PULSE);
+	// LEDTrigger(LED_MEMORY_CHANGED, LED_OFF);
+	// LEDTrigger(LED_MEMORY_STORED, LED_PULSE);
 }
 
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
