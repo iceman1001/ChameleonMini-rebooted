@@ -10,11 +10,13 @@
 
 #include "../Common.h"
 #include "../Configuration.h"
+#include "../Log.h"
 
 /* Applications */
 #include "MifareClassic.h"
 #include "MifareUltralight.h"
 #include "Detection.h"
+#include "Reader14443A.h"
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
     ActiveConfiguration.ApplicationInitFunc();
@@ -42,6 +44,7 @@ INLINE void ApplicationGetUid(ConfigurationUidType Uid) {
 
 INLINE void ApplicationSetUid(ConfigurationUidType Uid) {
     ActiveConfiguration.ApplicationSetUidFunc(Uid);
+    LogEntry(LOG_INFO_UID_SET, Uid, ActiveConfiguration.UidSize);
 }
 
 #endif /* APPLICATION_H_ */
