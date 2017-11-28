@@ -190,7 +190,7 @@ int MemoryInit(void)
 	return 1;
 }
 
-uint8_t Read_Save(void* Buffer, uint32_t Address, uint16_t ByteCount)
+void Read_Save(void* Buffer, uint32_t Address, uint16_t ByteCount)
 {
 	FlashRead(Buffer, Address, ByteCount);
 }
@@ -222,6 +222,20 @@ void MemoryClear(void)
 		PageCount--;
 		PageAddress++;
 	}
+}
+void MemoryRecall(void)
+{
+	/* Recall memory from permanent flash */
+	FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+}
+
+void MemoryStore(void)
+{
+	/* Store current memory into permanent flash */
+	FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+
+	LEDTrigger(LED_MEMORY_CHANGED, LED_OFF);
+	LEDTrigger(LED_MEMORY_STORED, LED_PULSE);
 }
 
 bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
