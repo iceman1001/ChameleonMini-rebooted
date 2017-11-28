@@ -24,6 +24,10 @@ INLINE void ApplicationTask(void) {
     ActiveConfiguration.ApplicationTaskFunc();
 }
 
+INLINE void ApplicationTick(void) {
+    ActiveConfiguration.ApplicationTickFunc();
+}
+
 INLINE uint16_t ApplicationProcess(uint8_t* ByteBuffer, uint16_t ByteCount) {
     return ActiveConfiguration.ApplicationProcessFunc(ByteBuffer, ByteCount);
 }
