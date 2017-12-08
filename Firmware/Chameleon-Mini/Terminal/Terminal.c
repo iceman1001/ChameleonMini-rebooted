@@ -56,7 +56,7 @@ void TerminalSendBuffer(void* Buffer, uint16_t ByteCount)
 
 
 
-void TerminalSendBlock(void* Buffer, uint16_t ByteCount)
+void TerminalSendBlock(const void* Buffer, uint16_t ByteCount)
 {
     CDC_Device_SendData(&TerminalHandle, Buffer, ByteCount);
 }

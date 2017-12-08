@@ -45,7 +45,7 @@ void SettingsSave(void) {
 	uint8_t temp[35];
 	memcpy(temp, &GlobalSettings, sizeof(SettingsType));
 	ISO14443AAppendCRCA(temp, sizeof(SettingsType));
-	Write_Save(temp, 32*1024, sizeof(SettingsType)+2);
+	Write_Save(temp, (uint8_t)32*(uint16_t)1024, sizeof(SettingsType)+2);
 }
 
 void SettingsCycle(void) {
@@ -66,13 +66,16 @@ void SettingsCycle(void) {
 	}
 }
 
-void SettingsSetActiveById(uint8_t Setting) {
+bool SettingsSetActiveById(uint8_t Setting) {
 	if (Setting < SETTINGS_COUNT) {
 		GlobalSettings.ActiveSetting = Setting;
 		GlobalSettings.ActiveSettingPtr = &GlobalSettings.Settings[GlobalSettings.ActiveSetting];
 
 		/* Settings have changed. Progress changes through system */
 		ConfigurationInit();
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -92,8 +95,7 @@ bool SettingsSetActiveByName(const char* Setting) {
 	uint8_t SettingNr = Setting[0] - '0';
 
 	if ((Setting[1] == '\0') && (SettingNr < SETTINGS_COUNT)) {
-		SettingsSetActiveById(SettingNr);
-		return true;
+		return SettingsSetActiveById(SettingNr);
 	} else {
 		return false;
 	}

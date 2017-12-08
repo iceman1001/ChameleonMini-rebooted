@@ -81,8 +81,7 @@ CommandStatusIdType CommandGetVersion(char* OutParam)
 
 CommandStatusIdType CommandGetConfig(char* OutParam)
 {
-  snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-    PSTR("%s"), ActiveConfiguration.ConfigurationName);
+  ConfigurationGetByName(OutParam, TERMINAL_BUFFER_SIZE);
 
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 
@@ -226,14 +225,14 @@ CommandStatusIdType CommandExecButton(char* OutMessage)
 
 CommandStatusIdType CommandGetButton(char* OutParam)
 {
-    ButtonGetActionByName(OutParam, TERMINAL_BUFFER_SIZE);
+    ButtonGetActionByName(BUTTON_R_PRESS_SHORT, OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandSetButton(const char* InParam)
 {
-    if (ButtonSetActionByName(InParam)) {
+    if (ButtonSetActionByName(BUTTON_R_PRESS_SHORT, InParam)) {
         SettingsSave();
         return COMMAND_INFO_OK_ID;
     } else {

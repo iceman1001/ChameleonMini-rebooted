@@ -35,7 +35,7 @@ void TerminalTick(void);
 
 /*void TerminalSendBuffer(void* Buffer, uint16_t ByteCount);*/
 INLINE void TerminalSendByte(uint8_t Byte);
-void TerminalSendBlock(void* Buffer, uint16_t ByteCount);
+void TerminalSendBlock(const void* Buffer, uint16_t ByteCount);
 
 INLINE void TerminalSendChar(char c);
 void TerminalSendString(const char* s);

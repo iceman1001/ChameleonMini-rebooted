@@ -26,8 +26,8 @@ typedef struct {
     ButtonActionEnum ButtonActions[BUTTON_TYPE_COUNT]; /// Button actions for this setting.
     LogModeEnum LogMode; /// Log mode for this setting.
     ConfigurationEnum Configuration; /// Active configuration for this setting.
-    //LEDHookEnum LEDRedFunction; /// Red LED function for this setting.
-    //LEDHookEnum LEDGreenFunction; /// Green LED function for this setting.
+    LEDHookEnum LEDRedFunction; /// Red LED function for this setting.
+    LEDHookEnum LEDGreenFunction; /// Green LED function for this setting.
     uint16_t PendingTaskTimeout; /// Timeout for timeout commands for this setting, in multiples of 100 ms.
 } SettingsEntryType;
 

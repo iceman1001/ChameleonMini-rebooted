@@ -72,6 +72,9 @@ typedef uint16_t SystemRTCType;
 #define SYSTEM_TICK_FREQ    10
 #define SYSTEM_TICK_MS		(1000/SYSTEM_TICK_FREQ)
 
+/* Use GPIORE and GPIORF as global tick register */
+#define SYSTEM_TICK_REGISTER	(*((volatile uint16_t*) &GPIORE))
+
 void SystemInit(void);
 void SystemReset(void);
 void SystemEnterBootloader(void);
@@ -96,6 +99,10 @@ INLINE bool SystemTick100ms(void)
     }
 
     return false;
+}
+
+INLINE uint16_t SystemGetSysTick(void) {
+    return SYSTEM_TICK_REGISTER | RTC.CNT;
 }
 
 #endif /* SYSTEM_H */

@@ -66,7 +66,7 @@ int main(void) {
 		eeprom_write_byte( &pos, 0x55);
 	} else {
 		uint8_t temp[35];
-		Read_Save(temp, 32*1024, sizeof(SettingsType)+2);
+		Read_Save(temp, (uint8_t)32*(uint16_t)1024, sizeof(SettingsType)+2);
 		if (ISO14443ACheckCRCA(temp, sizeof(SettingsType))) {
 			memcpy(&GlobalSettings, temp, sizeof(SettingsType));
 		} else {

@@ -109,6 +109,10 @@ INLINE void CodecTask(void) {
     ActiveConfiguration.CodecTaskFunc();
 }
 
+INLINE void CodecDeInit(void) {
+    ActiveConfiguration.CodecDeInitFunc();
+}
+
 INLINE void CodecSetDemodPower(bool bOnOff) {
     CODEC_DEMOD_POWER_PORT.DIRSET = CODEC_DEMOD_POWER_MASK;
 

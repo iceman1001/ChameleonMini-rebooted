@@ -85,12 +85,14 @@ typedef uint8_t CommandStatusIdType;
 typedef const char CommandStatusMessageType[MAX_STATUS_LENGTH];
 
 typedef CommandStatusIdType (*CommandExecFuncType) (char* OutMessage);
+typedef CommandStatusIdType (*CommandExecParamFuncType) (char* OutMessage, const char* InParams);
 typedef CommandStatusIdType (*CommandSetFuncType) (const char* InParam);
 typedef CommandStatusIdType (*CommandGetFuncType) (char* OutParam);
 
 typedef struct {
   char Command[MAX_COMMAND_LENGTH];
   CommandExecFuncType ExecFunc;
+  CommandExecParamFuncType ExecParamFunc;
   CommandSetFuncType SetFunc;
   CommandGetFuncType GetFunc;
 } CommandEntryType;
