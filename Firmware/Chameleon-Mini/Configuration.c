@@ -51,7 +51,7 @@ static void ApplicationResetDummy(void) {}
 static void ApplicationTaskDummy(void) {}
 static void ApplicationTickDummy(void) {}
 static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return 0; }
-static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
+//static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 
 static const PROGMEM ConfigurationType ConfigurationTable[] = {

@@ -107,6 +107,7 @@ int main(void) {
 	AntennaLevelInit();
 	SystemInterruptInit();
 
+/*
 	#define num 8
 	static uint8_t src[num], tem[num];
 	for(uint8_t i=0; i < num; i++)
@@ -122,10 +123,12 @@ int main(void) {
 	tem[5] = SP_ReadCalibrationByte(PROD_SIGNATURES_START+0x0B);
 	tem[6] = SP_ReadCalibrationByte(PROD_SIGNATURES_START+0x0C);
 	tem[7] = SP_ReadCalibrationByte(PROD_SIGNATURES_START+0x0D);
+*/
 
 	led_mode();
 
-	while(src[0]==tem[0] && src[1]==tem[1] && src[2]==tem[2] && src[3]==tem[3] && src[4]==tem[4] && src[5]==tem[5] && src[6]==tem[6] && src[7]==tem[7] ) {
+//	while(src[0]==tem[0] && src[1]==tem[1] && src[2]==tem[2] && src[3]==tem[3] && src[4]==tem[4] && src[5]==tem[5] && src[6]==tem[6] && src[7]==tem[7] ) {
+	while(1) {
 		TerminalTask();
 		CodecTask();
 		ApplicationTask();

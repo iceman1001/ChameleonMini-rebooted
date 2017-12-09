@@ -1,9 +1,4 @@
 #include "Log.h"
-#include "Settings.h"
-#include "Terminal/Terminal.h"
-#include "System.h"
-#include "Map.h"
-#include "LEDHook.h"
 
 static uint8_t LogMem[LOG_SIZE];
 static uint8_t *LogMemPtr;

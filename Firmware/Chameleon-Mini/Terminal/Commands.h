@@ -74,6 +74,9 @@
 #define COMMAND_ERR_INVALID_USAGE       "INVALID COMMAND USAGE"
 #define COMMAND_ERR_INVALID_PARAM_ID    202
 #define COMMAND_ERR_INVALID_PARAM       "INVALID PARAMETER"
+#define COMMAND_ERR_TIMEOUT_ID          203
+#define COMMAND_ERR_TIMEOUT             "TIMEOUT"
+#define TIMEOUT_COMMAND                 255 // this is just for the CommandLine module to know that this is a timeout command
 
 
 #define COMMAND_CHAR_TRUE           '1'
@@ -86,7 +89,7 @@ typedef const char CommandStatusMessageType[MAX_STATUS_LENGTH];
 
 typedef CommandStatusIdType (*CommandExecFuncType) (char* OutMessage);
 typedef CommandStatusIdType (*CommandExecParamFuncType) (char* OutMessage, const char* InParams);
-typedef CommandStatusIdType (*CommandSetFuncType) (const char* InParam);
+typedef CommandStatusIdType (*CommandSetFuncType) (char* OutMessage, const char* InParam);
 typedef CommandStatusIdType (*CommandGetFuncType) (char* OutParam);
 
 typedef struct {
@@ -103,16 +106,16 @@ CommandStatusIdType CommandGetVersion(char* OutParam);
 #define COMMAND_CONFIG      "CONFIGMY"
 CommandStatusIdType CommandExecConfig(char* OutMessage);
 CommandStatusIdType CommandGetConfig(char* OutParam);
-CommandStatusIdType CommandSetConfig(const char* InParam);
+CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam);
 
 #define COMMAND_UID         "UIDMY"
 #define COMMAND_UID_RANDOM  "RANDOMMY"
 CommandStatusIdType CommandGetUid(char* OutParam);
-CommandStatusIdType CommandSetUid(const char* InParam);
+CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam);
 
 #define COMMAND_READONLY    "READONLYMY"
 CommandStatusIdType CommandGetReadOnly(char* OutParam);
-CommandStatusIdType CommandSetReadOnly(const char* InParam);
+CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam);
 
 #define COMMAND_UPLOAD      "UPLOADMY"
 CommandStatusIdType CommandExecUpload(char* OutMessage);
@@ -135,11 +138,28 @@ CommandStatusIdType CommandGetUidSize(char* OutParam);
 #define COMMAND_BUTTON      "BUTTONMY"
 CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);
-CommandStatusIdType CommandSetButton(const char* InParam);
+CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam);
 
+/*
+#define COMMAND_RBUTTON      "RBUTTON"
+CommandStatusIdType CommandGetRButton(char* OutParam);
+CommandStatusIdType CommandSetRButton(char* OutMessage, const char* InParam);
+
+#define COMMAND_RBUTTON_LONG "RBUTTON_LONG"
+CommandStatusIdType CommandGetRButtonLong(char* OutParam);
+CommandStatusIdType CommandSetRButtonLong(char* OutMessage, const char* InParam);
+
+#define COMMAND_LBUTTON      "LBUTTON"
+CommandStatusIdType CommandGetLButton(char* OutParam);
+CommandStatusIdType CommandSetLButton(char* OutMessage, const char* InParam);
+
+#define COMMAND_LBUTTON_LONG "LBUTTON_LONG"
+CommandStatusIdType CommandGetLButtonLong(char* OutParam);
+CommandStatusIdType CommandSetLButtonLong(char* OutMessage, const char* InParam);
+*/
 #define COMMAND_SETTING		"SETTINGMY"
 CommandStatusIdType CommandGetSetting(char* OutParam);
-CommandStatusIdType CommandSetSetting(const char* InParam);
+CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam);
 
 #define COMMAND_CLEAR		"CLEARMY"
 CommandStatusIdType CommandExecClear(char* OutParam);
@@ -154,7 +174,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam);
 
 #define COMMAND_DETECTION     "DETECTIONMY"
 CommandStatusIdType CommandGetDetection(char* OutParam);
-CommandStatusIdType CommandSetDetection(const char* InParam);
+CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 /* Defines the end of command list. This is no actual command */
 
 #endif /* COMMANDS_H_ */

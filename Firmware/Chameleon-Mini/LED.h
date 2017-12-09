@@ -103,10 +103,7 @@ void CARDLOWSetOff(uint8_t Mask) {
 
 extern uint8_t LEDPulseMask;
 
-static inline
-void LEDInit(void) {
-    LED_PORT.DIRSET = LED_MASK;
-}
+void LEDInit(void);
 
 static inline
 void LEDSetOn(uint8_t Mask) {
@@ -123,16 +120,14 @@ void LEDToggle(uint8_t Mask) {
     LED_PORT.OUTTGL = Mask;
 }
 
+
 static inline
 void LEDPulse(uint8_t Mask) {
 	LEDPulseMask = Mask;
 	LED_PORT.OUTSET = Mask;
 }
 
-static inline
-void LEDTick(void) {
-	LED_PORT.OUTCLR = LEDPulseMask;
-	LEDPulseMask = 0;
-}
+
+void LEDTick(void);
 
 #endif /* LED_H */

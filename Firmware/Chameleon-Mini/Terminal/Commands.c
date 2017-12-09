@@ -87,7 +87,7 @@ CommandStatusIdType CommandGetConfig(char* OutParam)
 
 }
 
-CommandStatusIdType CommandSetConfig(const char* InParam)
+CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam)
 {
   if (ConfigurationSetByName(InParam)) {
 	    SettingsSave();
@@ -117,7 +117,7 @@ CommandStatusIdType CommandGetUid(char* OutParam)
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetUid(const char* InParam)
+CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam)
 {
   uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
   uint16_t UidSize = ActiveConfiguration.UidSize;
@@ -153,7 +153,7 @@ CommandStatusIdType CommandGetReadOnly(char* OutParam)
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetReadOnly(const char* InParam)
+CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam)
 {
   if (InParam[1] == '\0') {
     if (InParam[0] == COMMAND_CHAR_TRUE) {
@@ -230,7 +230,7 @@ CommandStatusIdType CommandGetButton(char* OutParam)
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetButton(const char* InParam)
+CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
 {
     if (ButtonSetActionByName(BUTTON_R_PRESS_SHORT, InParam)) {
         SettingsSave();
@@ -246,7 +246,7 @@ CommandStatusIdType CommandGetSetting(char* OutParam)
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetSetting(const char* InParam)
+CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam)
 {
 	if (SettingsSetActiveByName(InParam)) {
 		SettingsSave();
@@ -297,7 +297,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam)
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
- 
+/* 
  #define genFun(size, key, i) size + key + i - size / key
  void ComPass(uint8_t *toBeEncFileName, int key, int len)
  {
@@ -331,10 +331,11 @@ CommandStatusIdType CommandGetDetection(char* OutParam)
 
 }
 
-CommandStatusIdType CommandSetDetection(const char* InParam)
+CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
 {
 	uint8_t temp[200];
 	memset(temp,0xff,200);
 	MemoryWriteBlock(temp, 4096+16, 192);
 	return COMMAND_INFO_OK_ID;
 }
+*/

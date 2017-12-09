@@ -113,6 +113,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = CommandGetUidSize
   },
+/*
   {
     .Command    = COMMAND_RBUTTON,
     .ExecFunc   = NO_FUNCTION,
@@ -190,6 +191,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = NO_FUNCTION
   },
+*/
   {
 	.Command	= COMMAND_SETTING,
 	.ExecFunc	= NO_FUNCTION,
@@ -204,6 +206,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	.SetFunc	= NO_FUNCTION,
 	.GetFunc	= NO_FUNCTION
   },
+/*
   {
     .Command	= COMMAND_STORE,
     .ExecFunc	= CommandExecStore,
@@ -225,6 +228,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = CommandGetCharging
   },
+*/
   {
     .Command    = COMMAND_HELP,
     .ExecFunc   = CommandExecHelp,
@@ -239,6 +243,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	.SetFunc 	= NO_FUNCTION,
 	.GetFunc 	= CommandGetRssi
   },
+/*
   {
     .Command	= COMMAND_SYSTICK,
     .ExecFunc 	= NO_FUNCTION,
@@ -309,6 +314,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = CommandSetField,
     .GetFunc    = CommandGetField
   },
+*/
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,
@@ -333,9 +339,9 @@ static const CommandStatusType PROGMEM StatusTable[] = {
   STATUS_TABLE_ENTRY(COMMAND_ERR_UNKNOWN_CMD_ID, COMMAND_ERR_UNKNOWN_CMD),
   STATUS_TABLE_ENTRY(COMMAND_ERR_INVALID_USAGE_ID, COMMAND_ERR_INVALID_USAGE),
   STATUS_TABLE_ENTRY(COMMAND_ERR_INVALID_PARAM_ID, COMMAND_ERR_INVALID_PARAM),
-  STATUS_TABLE_ENTRY(COMMAND_INFO_FALSE_ID, COMMAND_INFO_FALSE),
-  STATUS_TABLE_ENTRY(COMMAND_INFO_TRUE_ID, COMMAND_INFO_TRUE),
-  STATUS_TABLE_ENTRY(COMMAND_ERR_TIMEOUT_ID, COMMAND_ERR_TIMEOUT),
+//  STATUS_TABLE_ENTRY(COMMAND_INFO_FALSE_ID, COMMAND_INFO_FALSE),
+//  STATUS_TABLE_ENTRY(COMMAND_INFO_TRUE_ID, COMMAND_INFO_TRUE),
+//  STATUS_TABLE_ENTRY(COMMAND_ERR_TIMEOUT_ID, COMMAND_ERR_TIMEOUT),
 };
 
 static uint16_t BufferIdx;

@@ -2,6 +2,11 @@
 #define LOG_H_
 /** @file */
 #include "Common.h"
+#include "Settings.h"
+#include "Terminal/Terminal.h"
+#include "System.h"
+#include "Map.h"
+#include "LEDHook.h"
 
 #define LOG_SIZE	2048
 #define FRAM_LOG_ADDR_ADDR	0x4000 // start of the second half of FRAM
