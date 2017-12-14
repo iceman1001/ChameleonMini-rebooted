@@ -20,6 +20,7 @@ before_install:
 
 install:
   if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then 
+    cd Firmware/Chameleon-Mini/;
     make;
   fi
 
