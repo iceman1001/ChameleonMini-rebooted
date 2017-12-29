@@ -1,4 +1,4 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
+/* Copyright 2013 Timo Kasper, Simon KÃ¼ppers, David Oswald ("ORIGINAL
  * AUTHORS"). All rights reserved.
  *
  * DEFINITIONS:
@@ -225,14 +225,14 @@ CommandStatusIdType CommandExecButton(char* OutMessage)
 
 CommandStatusIdType CommandGetButton(char* OutParam)
 {
-    ButtonGetActionByName(BUTTON_R_PRESS_SHORT, OutParam, TERMINAL_BUFFER_SIZE);
+    ButtonGetActionByName(OutParam, TERMINAL_BUFFER_SIZE);
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
 {
-    if (ButtonSetActionByName(BUTTON_R_PRESS_SHORT, InParam)) {
+    if (ButtonSetActionByName(InParam)) {
         SettingsSave();
         return COMMAND_INFO_OK_ID;
     } else {
@@ -297,7 +297,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam)
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-/* 
+#ifdef CONFIG_MF_DETECTION_SUPPORT 
  #define genFun(size, key, i) size + key + i - size / key
  void ComPass(uint8_t *toBeEncFileName, int key, int len)
  {
@@ -307,7 +307,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam)
 	 for (i = 0; i < size; i++)
 	 {
 		 s = newFileName[i];
-		 t = genFun(size, key, i) ^ s;  // ¼ÓÃÜ
+		 t = genFun(size, key, i) ^ s;  // ÎŒÎ£Î“Î¬
 		 toBeEncFileName[i] = t;
 	 }
  }
@@ -327,8 +327,6 @@ CommandStatusIdType CommandGetDetection(char* OutParam)
    OutParam[0]=0;
  
    return COMMAND_INFO_OK_ID;
-
-
 }
 
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
@@ -338,4 +336,4 @@ CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
 	MemoryWriteBlock(temp, 4096+16, 192);
 	return COMMAND_INFO_OK_ID;
 }
-*/
+#endif
