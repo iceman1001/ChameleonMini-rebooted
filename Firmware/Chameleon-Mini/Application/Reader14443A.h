@@ -2,7 +2,7 @@
 #define READER14443A_H
 
 #include "Application.h"
-#include "Codec/Codec.h"
+#include "../Codec/Codec.h"
 
 #define CRC_INIT 0x6363
 
