@@ -234,7 +234,7 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         if (!checkParityBits(Buffer, BitCount))
         {
             ReaderState = STATE_IDLE;
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
+            //LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
             Reader14443ACodecStart();
             return 0;
         }
@@ -249,7 +249,7 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         if (!checkParityBits(Buffer, BitCount) || BitCount < 8)
         {
             ReaderState = STATE_IDLE;
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
+            //LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
             Reader14443ACodecStart();
             return 0;
         }
@@ -286,7 +286,7 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         }
         if (!checkParityBits(Buffer, BitCount))
         {
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
+            //LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
             ReaderState = STATE_IDLE;
             Reader14443ACodecStart();
             return 0;
@@ -322,7 +322,7 @@ INLINE uint16_t Reader14443A_Select(uint8_t * Buffer, uint16_t BitCount)
         }
         if (!checkParityBits(Buffer, BitCount))
         {
-            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
+            //LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
             return Reader14443A_Deselect(Buffer);
         }
         BitCount = removeParityBits(Buffer, BitCount);
@@ -640,7 +640,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 } else if (ReaderState == STATE_ATS) { // we have got the ATS
                     if (!checkParityBits(Buffer, BitCount))
                     {
-                        LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
+                        //LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
                         return Reader14443A_Deselect(Buffer);
                     }
                     BitCount = removeParityBits(Buffer, BitCount);
@@ -707,7 +707,7 @@ uint16_t Reader14443AAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         }
                         if (!checkParityBits(Buffer, BitCount))
                         {
-                            LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
+                            //LogEntry(LOG_ERR_APP_CHECKSUM_FAIL, Buffer, (BitCount + 8) / 7);
                             CardCandidatesIdx = 0;
                             return Reader14443A_Deselect(Buffer);
                         }
