@@ -9,7 +9,7 @@
 #define READER14443_2A_H_
 
 #include "Codec.h"
-#include "Terminal/CommandLine.h"
+#include "../Terminal/CommandLine.h"
 
 /* Codec Interface */
 void Reader14443ACodecInit(void);
