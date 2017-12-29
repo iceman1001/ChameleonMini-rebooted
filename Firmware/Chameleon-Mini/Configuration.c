@@ -51,7 +51,7 @@ static void ApplicationResetDummy(void) {}
 static void ApplicationTaskDummy(void) {}
 static void ApplicationTickDummy(void) {}
 static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return 0; }
-//static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
+static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
@@ -64,7 +64,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationTaskFunc = ApplicationTaskDummy,
         .ApplicationTickFunc = ApplicationTickDummy,
         .ApplicationProcessFunc = ApplicationProcessDummy,
-        .ApplicationGetUidFunc = MifareClassicGetUid,
+        .ApplicationGetUidFunc = ApplicationGetUidDummy,
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
@@ -84,6 +84,36 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationSetUidFunc = MifareUltralightSetUid,
 	.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
 	.MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+	.ReadOnly = false
+},
+[CONFIG_MF_ULTRALIGHT_EV1_80B] = {
+	.CodecInitFunc = ISO14443ACodecInit,
+	.CodecDeInitFunc = ISO14443ACodecDeInit,
+	.CodecTaskFunc = ISO14443ACodecTask,
+	.ApplicationInitFunc = MifareUltralightEV11AppInit,
+	.ApplicationResetFunc = MifareUltralightAppReset,
+	.ApplicationTaskFunc = MifareUltralightAppTask,
+	.ApplicationTickFunc = ApplicationTickDummy,
+	.ApplicationProcessFunc = MifareUltralightAppProcess,
+	.ApplicationGetUidFunc = MifareUltralightGetUid,
+	.ApplicationSetUidFunc = MifareUltralightSetUid,
+	.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+	.MemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
+	.ReadOnly = false
+},
+[CONFIG_MF_ULTRALIGHT_EV1_164B] = {
+	.CodecInitFunc = ISO14443ACodecInit,
+	.CodecDeInitFunc = ISO14443ACodecDeInit,
+	.CodecTaskFunc = ISO14443ACodecTask,
+	.ApplicationInitFunc = MifareUltralightEV12AppInit,
+	.ApplicationResetFunc = MifareUltralightAppReset,
+	.ApplicationTaskFunc = MifareUltralightAppTask,
+	.ApplicationTickFunc = ApplicationTickDummy,
+	.ApplicationProcessFunc = MifareUltralightAppProcess,
+	.ApplicationGetUidFunc = MifareUltralightGetUid,
+	.ApplicationSetUidFunc = MifareUltralightSetUid,
+	.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
+	.MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
 	.ReadOnly = false
 },
 #endif
@@ -161,18 +191,11 @@ ConfigurationType ActiveConfiguration;
 
 void ConfigurationInit(void)
 {
-    memcpy_P(&ActiveConfiguration,
-            &ConfigurationTable[CONFIG_NONE], sizeof(ConfigurationType));
-
     ConfigurationSetById(GlobalSettings.ActiveSettingPtr->Configuration);
 }
 
 void ConfigurationSetById( ConfigurationEnum Configuration )
 {
-    CodecDeInit();
-
-    CommandLinePendingTaskBreak(); // break possibly pending task
-
 	GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
     /* Copy struct from PROGMEM to RAM */
@@ -194,7 +217,7 @@ bool ConfigurationSetByName(const char* Configuration)
 
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
         ConfigurationSetById(Id);
-        LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
+        //LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
             return true;
     } else {
     return false;
@@ -205,4 +228,3 @@ void ConfigurationGetList(char* List, uint16_t BufferSize)
 {
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
-
