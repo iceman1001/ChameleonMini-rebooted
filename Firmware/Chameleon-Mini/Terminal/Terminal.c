@@ -67,7 +67,7 @@ static void ProcessByte(void) {
 
     if (Byte >= 0) {
         /* Byte received */
-    	LEDPulse(LED_RED);
+    	//LEDPulse(LED_RED);
 
         if (XModemProcessByte(Byte)) {
             /* XModem handled the byte */
@@ -141,13 +141,13 @@ void TerminalTick(void)
 /** Event handler for the library USB Connection event. */
 void EVENT_USB_Device_Connect(void)
 {
-    LEDSetOn(LED_GREEN);
+    //LEDSetOn(LED_GREEN);
 }
 
 /** Event handler for the library USB Disconnection event. */
 void EVENT_USB_Device_Disconnect(void)
 {
-    LEDSetOff(LED_GREEN);
+    //LEDSetOff(LED_GREEN);
 }
 
 
