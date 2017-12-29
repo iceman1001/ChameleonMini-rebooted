@@ -9,8 +9,7 @@
 #include "Codec.h"
 #include "../System.h"
 #include "../Application/Application.h"
-#include "LEDHook.h"
-#include "Terminal/Terminal.h"
+#include "../Terminal/Terminal.h"
 #include <util/delay.h>
 
 #define SAMPLE_RATE_SYSTEM_CYCLES		((uint16_t) (((uint64_t) F_CPU * ISO14443A_BIT_RATE_CYCLES) / CODEC_CARRIER_FREQ) )
@@ -325,8 +324,8 @@ void Reader14443ACodecTask(void)
                     case 0b00: // EOC
                         if (BitCount % 8) // copy the last byte, if there is an incomplete byte
                             CodecBuffer[BitCount / 8] = SampleRegister >> (8 - (BitCount % 8));
-                        LEDHook(LED_CODEC_RX, LED_PULSE);
-                        LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
+                        //LEDHook(LED_CODEC_RX, LED_PULSE);
+                        //LogEntry(LOG_INFO_CODEC_RX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
                         breakflag = true;
                         break;
 
@@ -383,8 +382,8 @@ void Reader14443ACodecTask(void)
             ACA.AC0CTRL = 0;
             CODEC_DEMOD_IN_PORT.INTCTRL = 0;
 
-            LEDHook(LED_CODEC_TX, LED_PULSE);
-            LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
+            //LEDHook(LED_CODEC_TX, LED_PULSE);
+            //LogEntry(LOG_INFO_CODEC_TX_DATA_W_PARITY, CodecBuffer, (BitCount + 7) / 8);
 
             /* Set state and start timer for Miller encoding. */
             State = STATE_MILLER_SOF0;
