@@ -8,9 +8,8 @@
 #include "ISO14443-2A.h"
 #include "../System.h"
 #include "../Application/Application.h"
-#include "../LEDHook.h"
 #include "Codec.h"
-#include "Log.h"
+#include "../Log.h"
 
 /* Sampling is done using internal clock, synchronized to the field modulation.
  * For that we need to convert the bit rate for the internal clock. */
@@ -418,8 +417,7 @@ void ISO14443ACodecTask(void) {
         uint16_t AnswerBitCount = ISO14443A_APP_NO_RESPONSE;
 
         if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
-            LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
-            LEDHook(LED_CODEC_RX, LED_PULSE);
+            //LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
 
             /* Call application if we received data */
             AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
@@ -436,8 +434,7 @@ void ISO14443ACodecTask(void) {
         }
 
         if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {
-            LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
-            LEDHook(LED_CODEC_TX, LED_PULSE);
+            //LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
 
             BitCount = AnswerBitCount;
             CodecBufferPtr = CodecBuffer;
@@ -460,4 +457,3 @@ void ISO14443ACodecTask(void) {
         StartDemod();
     }
 }
-
