@@ -7,7 +7,6 @@
 
 #include "Codec.h"
 #include "../System.h"
-#include "../LEDHook.h"
 
 uint16_t Reader_FWT = ISO14443A_RX_PENDING_TIMEOUT;
 
