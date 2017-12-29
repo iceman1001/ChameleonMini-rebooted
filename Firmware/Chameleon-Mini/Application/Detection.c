@@ -60,16 +60,16 @@ static uint8_t keyb_falg = 0;
 
 uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
-	//·¢À´0x26 ×¼±¸ÔÚ´Ë´¦×öÇåÁã´òËã
+	//å‘æ¥0x26 å‡†å¤‡åœ¨æ­¤å¤„åšæ¸…é›¶æ‰“ç®—
 	if(BitCount==7)
 	{
-		if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue))
+		if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false))
 		{
 			State=STATE_READY;
 			return BitCount;
 		}
 	}
-	//·¢À´0x93 0x20 »ò 0x93 0x70
+	//å‘æ¥0x93 0x20 æˆ– 0x93 0x70
 	if(BitCount==16 || BitCount==72)
 	{
 		if (Buffer[0] == ISO14443A_CMD_SELECT_CL1)
@@ -108,11 +108,11 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 				}
 			}
 		}
-		////·µ»Ø8Î»¼ÓÃÜ
+		////è¿”å›8ä½åŠ å¯†
 		if(BitCount==64 && State==STATE_AUTHING)
 		{
 			//LEDPulse(LED_RED);
-				switch(GlobalSettings.ActiveSetting)
+				/*switch(GlobalSettings.ActiveSetting)
 				{
 					case 0:
 					LEDPulse(LED_ONE);
@@ -140,19 +140,21 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 					break;
 					default:
 					break;
-				}
-		//´¢´æĞÅÏ¢
+				}*/
+		//å‚¨å­˜ä¿¡æ¯
 		memcpy(data_svae+8,Buffer,8);
 
 		if(!keyb_falg)
 		{
 		MemoryWriteBlock(data_svae, (turn_falga+1) * MEM_BYTES_PER_BLOCK+4096, MEM_BYTES_PER_BLOCK);
-		turn_falga= (++turn_falga)%6;
+		turn_falga++;
+		turn_falga = turn_falga % 6;
 		}	
 		else
 		{
 		MemoryWriteBlock(data_svae, (turn_falgb) * MEM_BYTES_PER_BLOCK + 112+4096, MEM_BYTES_PER_BLOCK);
-		turn_falgb= (++turn_falgb)%6;
+		turn_falgb++;
+		turn_falgb = turn_falgb % 6;
 		}
 				
 		}
@@ -166,7 +168,7 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
  void MifareDetectionInit(void)
  {
-     //ÕâÀï¿ÉÒÔ¸ÄÏÂ£¬ÒòÎªÊÇº¯ÊıÖ¸Õë¡£
+     //è¿™é‡Œå¯ä»¥æ”¹ä¸‹ï¼Œå› ä¸ºæ˜¯å‡½æ•°æŒ‡é’ˆã€‚
 	 State = STATE_IDLE;
 	 CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
 	 CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
