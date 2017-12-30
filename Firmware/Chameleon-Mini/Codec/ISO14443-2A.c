@@ -1,22 +1,73 @@
-/*
- * ISO14443A.c
+/* Copyright 2013 Timo Kasper, Simon Kόppers, David Oswald ("ORIGINAL
+ * AUTHORS"). All rights reserved.
  *
- *  Created on: 18.02.2013
- *      Author: skuser
+ * DEFINITIONS:
+ *
+ * "WORK": The material covered by this license includes the schematic
+ * diagrams, designs, circuit or circuit board layouts, mechanical
+ * drawings, documentation (in electronic or printed form), source code,
+ * binary software, data files, assembled devices, and any additional
+ * material provided by the ORIGINAL AUTHORS in the ChameleonMini project
+ * (https://github.com/skuep/ChameleonMini).
+ *
+ * LICENSE TERMS:
+ *
+ * Redistributions and use of this WORK, with or without modification, or
+ * of substantial portions of this WORK are permitted provided that the
+ * following conditions are met:
+ *
+ * Redistributions and use of this WORK, with or without modification, or
+ * of substantial portions of this WORK must include the above copyright
+ * notice, this list of conditions, the below disclaimer, and the following
+ * attribution:
+ *
+ * "Based on ChameleonMini an open-source RFID emulator:
+ * https://github.com/skuep/ChameleonMini"
+ *
+ * The attribution must be clearly visible to a user, for example, by being
+ * printed on the circuit board and an enclosure, and by being displayed by
+ * software (both in binary and source code form).
+ *
+ * At any time, the majority of the ORIGINAL AUTHORS may decide to give
+ * written permission to an entity to use or redistribute the WORK (with or
+ * without modification) WITHOUT having to include the above copyright
+ * notice, this list of conditions, the below disclaimer, and the above
+ * attribution.
+ *
+ * DISCLAIMER:
+ *
+ * THIS PRODUCT IS PROVIDED BY THE ORIGINAL AUTHORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE ORIGINAL AUTHORS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS PRODUCT, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * The views and conclusions contained in the hardware, software, and
+ * documentation should not be interpreted as representing official
+ * policies, either expressed or implied, of the ORIGINAL AUTHORS.
  */
 
 #include "ISO14443-2A.h"
 #include "../System.h"
 #include "../Application/Application.h"
-#include "../LEDHook.h"
 #include "Codec.h"
-#include "Log.h"
+#include "../Uart.h"
+/* Timing definitions for ISO14443A */
+#define ISO14443A_SUBCARRIER_DIVIDER    16
+#define ISO14443A_BIT_GRID_CYCLES       128
+#define ISO14443A_BIT_RATE_CYCLES       128
+#define ISO14443A_FRAME_DELAY_PREV1     (1236 - 24) /* compensate for ISR prolog */
+#define ISO14443A_FRAME_DELAY_PREV0     (1172 - 24)
 
 /* Sampling is done using internal clock, synchronized to the field modulation.
  * For that we need to convert the bit rate for the internal clock. */
 #define SAMPLE_RATE_SYSTEM_CYCLES		((uint16_t) (((uint64_t) F_CPU * ISO14443A_BIT_RATE_CYCLES) / CODEC_CARRIER_FREQ) )
-
-#define ISO14443A_MIN_BITS_PER_FRAME		7
 
 static volatile struct {
     volatile bool DemodFinished;
@@ -24,11 +75,6 @@ static volatile struct {
 } Flags = { 0 };
 
 typedef enum {
-    /* Demod */
-    DEMOD_DATA_BIT,
-    DEMOD_PARITY_BIT,
-
-    /* Loadmod */
     LOADMOD_FDT,
     LOADMOD_START,
     LOADMOD_START_BIT0,
@@ -40,49 +86,76 @@ typedef enum {
     LOADMOD_STOP_BIT0,
     LOADMOD_STOP_BIT1,
     LOADMOD_FINISHED
-} StateType;
+} LoadModStateType;
 
-/* Define pseudo variables to use fast register access. This is useful for global vars */
-#define DataRegister	Codec8Reg0
-#define StateRegister	Codec8Reg1
-#define ParityRegister	Codec8Reg2
-#define SampleIdxRegister Codec8Reg2
-#define SampleRegister	Codec8Reg3
-#define BitSent			CodecCount16Register1
-#define BitCount		CodecCount16Register2
-#define CodecBufferPtr	CodecPtrRegister1
-#define ParityBufferPtr	CodecPtrRegister2
+static volatile uint8_t* CodecBufferPtr;
+static volatile uint8_t* ParityBufferPtr;
+static volatile uint16_t BitCount;
+static volatile uint16_t BitSent;
+static volatile uint8_t DataRegister;
+static volatile uint8_t SampleRegister;
+static volatile bool IsParityBit;
+static volatile uint8_t LastBit;
+static volatile LoadModStateType LoadModState;
+static volatile bool SamplePosition;
+
+static void Initialize(void) {
+    /* Configure CARRIER input pin and route it to EVSYS */
+    CODEC_CARRIER_IN_PORT.DIRCLR = CODEC_CARRIER_IN_MASK;
+    CODEC_CARRIER_IN_PORT.CODEC_CARRIER_IN_PINCTRL = PORT_ISC_BOTHEDGES_gc;
+    EVSYS.CH6MUX = CODEC_CARRIER_IN_EVMUX;
+
+    /* Configure two DEMOD pins for input.
+     * Configure event channel 0 for rising edge (begin of modulation pause)
+     * Configure event channel 1 for falling edge (end of modulation pause) */
+    CODEC_DEMOD_IN_PORT.DIRCLR = CODEC_DEMOD_IN_MASK;
+    CODEC_DEMOD_IN_PORT.CODEC_DEMOD_IN_PINCTRL0 = PORT_ISC_RISING_gc;
+    CODEC_DEMOD_IN_PORT.CODEC_DEMOD_IN_PINCTRL1 = PORT_ISC_FALLING_gc;
+    CODEC_DEMOD_IN_PORT.INT0MASK = 0;
+    CODEC_DEMOD_IN_PORT.INTCTRL = PORT_INT0LVL_HI_gc;
+    EVSYS.CH0MUX = CODEC_DEMOD_IN_EVMUX0;
+    EVSYS.CH1MUX = CODEC_DEMOD_IN_EVMUX1;
+
+    /* Configure LOADMOD and SUBCARRIER output pins.
+     * Disable PSK modulation by setting pin to low. */
+    CODEC_LOADMOD_PORT.DIRSET = CODEC_LOADMOD_MASK;
+    CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+    CODEC_SUBCARRIER_PORT.DIRSET = CODEC_SUBCARRIER_MASK;
+    CODEC_SUBCARRIER_PORT.OUTCLR = CODEC_SUBCARRIER_MASK;
+
+    /* Configure subcarrier generation with 50% DC output using OOK */
+    CODEC_SUBCARRIER_TIMER.PER = ISO14443A_SUBCARRIER_DIVIDER - 1;
+    CODEC_SUBCARRIER_TIMER.CODEC_SUBCARRIER_CC_OOK = ISO14443A_SUBCARRIER_DIVIDER/2;
+    CODEC_SUBCARRIER_TIMER.CTRLB = CODEC_SUBCARRIER_CCEN_OOK | TC_WGMODE_SINGLESLOPE_gc;
+}
 
 static void StartDemod(void) {
     /* Activate Power for demodulator */
     CodecSetDemodPower(true);
-
-    CodecBufferPtr = CodecBuffer;
-    ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
-    DataRegister = 0;
-    SampleRegister = 0;
-    SampleIdxRegister = 0;
-    BitCount = 0;
-    StateRegister = DEMOD_DATA_BIT;
 
     /* Configure sampling-timer free running and sync to first modulation-pause. */
     CODEC_TIMER_SAMPLING.CNT = 0;
     CODEC_TIMER_SAMPLING.PER = SAMPLE_RATE_SYSTEM_CYCLES - 1;
     CODEC_TIMER_SAMPLING.CCA = 0xFFFF; /* CCA Interrupt is not active! */
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_DIV1_gc;
-    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
-    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCAIF_bm;
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc;
     CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCAINTLVL_HI_gc;
 
     /* Start looking out for modulation pause via interrupt. */
-    CODEC_DEMOD_IN_PORT.INTFLAGS = 0x03;
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
 ISR(CODEC_DEMOD_IN_INT0_VECT) {
     /* This is the first edge of the first modulation-pause after StartDemod.
-     * Now we have time to start
+     * Now we have time to prepare our timers and variables to start
      * demodulating beginning from one bit-width after this edge. */
+    CodecBufferPtr = CodecBuffer;
+    ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
+    DataRegister = 0;
+    SampleRegister = 0;
+    SamplePosition = 0;
+    BitCount = 0;
+    IsParityBit = false;
 
     /* Sampling timer has been preset to sample-rate and has automatically synced
      * to THIS first modulation pause. Thus after exactly one bit-width from here,
@@ -94,7 +167,7 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
      * where the pulsed miller encoded is located. */
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
     CODEC_TIMER_SAMPLING.PERBUF = SAMPLE_RATE_SYSTEM_CYCLES/2 - 1; /* Half bit width */
-    CODEC_TIMER_SAMPLING.CCABUF = SAMPLE_RATE_SYSTEM_CYCLES/8 - 14 - 1; /* Compensate for DIGFILT and ISR prolog */
+    CODEC_TIMER_SAMPLING.CCABUF = SAMPLE_RATE_SYSTEM_CYCLES/8 - 10 - 1; /* Compensate for DIGFILT and ISR prolog */
 
     /* Setup Frame Delay Timer and wire to EVSYS. Frame delay time is
      * measured from last change in RF field, therefore we use
@@ -103,10 +176,8 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
      * the correct FDT gets set automatically after demodulation. */
     CODEC_TIMER_LOADMOD.CNT = 0;
     CODEC_TIMER_LOADMOD.PER = 0xFFFF;
-    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODEND_EVSEL;
-    CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-    CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
-    CODEC_TIMER_LOADMOD.CTRLA = CODEC_TIMER_CARRIER_CLKSEL;
+    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH1_gc;
+    CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_EVCH6_gc;
 
     /* Disable this interrupt */
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
@@ -115,14 +186,16 @@ ISR(CODEC_DEMOD_IN_INT0_VECT) {
 ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
     /* This interrupt gets called twice for every bit to sample it. */
     uint8_t SamplePin = CODEC_DEMOD_IN_PORT.IN & CODEC_DEMOD_IN_MASK;
+    uint8_t NewSampleRegister;
 
-    /* Shift sampled bit into sampling register */
-    SampleRegister = (SampleRegister << 1) | (!SamplePin ? 0x01 : 0x00);
+    /* Shift sampled bit into sampling register and hold a local copy for fast access. */
+    NewSampleRegister = SampleRegister << 1;
+    NewSampleRegister |= (!SamplePin ? 0x01 : 0x00);
+    SampleRegister = NewSampleRegister;
 
-    if (SampleIdxRegister) {
-        SampleIdxRegister = 0;
+    if (SamplePosition) {
         /* Analyze the sampling register after 2 samples. */
-        if ((SampleRegister & 0x07) == 0x07) {
+        if ((NewSampleRegister & 0x07) == 0x07) {
             /* No carrier modulation for 3 sample points. EOC! */
             CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
             CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCAIF_bm;
@@ -133,15 +206,15 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
              * an interrupt once it has reached the FDT. */
             CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
 
-            if (SampleRegister & 0x08) {
-                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV1 - 40; /* compensate for ISR prolog */
+            if (LastBit) {
+                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV1;
             } else {
-                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV0 - 40; /* compensate for ISR prolog */
+                CODEC_TIMER_LOADMOD.PER = ISO14443A_FRAME_DELAY_PREV0;
             }
 
-            StateRegister = LOADMOD_FDT;
+            LoadModState = LOADMOD_FDT;
 
-            CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
+            CODEC_TIMER_LOADMOD.INTFLAGS = TC1_OVFIF_bm;
             CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_HI_gc;
 
             /* Determine if we did not receive a multiple of 8 bits.
@@ -164,7 +237,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
             Flags.DemodFinished = 1;
         } else {
             /* Otherwise, we check the two sample bits from the bit before. */
-            uint8_t BitSample = SampleRegister & 0xC;
+            uint8_t BitSample = NewSampleRegister & 0xC;
             uint8_t Bit = 0;
 
             if (BitSample != (0x0 << 2)) {
@@ -177,7 +250,9 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
                     Bit = 1;
                 }
 
-                if (StateRegister == DEMOD_DATA_BIT) {
+                LastBit = Bit;
+
+                if (!IsParityBit) {
                     /* This is a data bit, so shift it into the data register and
                      * hold a local copy of it. */
                     uint8_t NewDataRegister = DataRegister >> 1;
@@ -193,15 +268,14 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
 
                         /* Store bit for determining FDT at EOC and enable parity
                          * handling on next bit. */
-                        StateRegister = DEMOD_PARITY_BIT;
+                        IsParityBit = true;
                     }
 
-                } else if (StateRegister == DEMOD_PARITY_BIT) {
-                    /* This is a parity bit. Store it */
-                    *ParityBufferPtr++ = Bit;
-                    StateRegister = DEMOD_DATA_BIT;
                 } else {
-                    /* Should never Happen (TM) */
+                    /* This is a parity bit. Store it */
+                    /* TODO: Store parity and prevent overflow */
+                    //*ParityBufferPtr++ = Bit;
+                    IsParityBit = false;
                 }
             } else {
                 /* 00 sequence. -> No valid data yet. This also occurs if we just started
@@ -210,240 +284,190 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
         }
     } else {
         /* On odd sample position just sample. */
-        SampleIdxRegister = ~SampleIdxRegister;
     }
+
+    SamplePosition = !SamplePosition;
 
     /* Make sure the sampling timer gets automatically aligned to the
      * modulation pauses by using the RESTART event.
      * This can be understood as a "poor mans PLL" and makes sure that we are
      * never too far out the bit-grid while sampling. */
-    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | CODEC_TIMER_MODSTART_EVSEL;
+    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc;
 }
 
-ISR(CODEC_TIMER_LOADMOD_OVF_VECT) {
+ISR(CODEC_TIMER_OVF_VECT) {
     /* Bit rate timer. Output a half bit on the output. */
+    uint8_t Temp8;
+    uint16_t Temp16;
 
-    static void* JumpTable[] = {
-        [LOADMOD_FDT] = &&LOADMOD_FDT_LABEL,
-        [LOADMOD_START] = &&LOADMOD_START_LABEL,
-        [LOADMOD_START_BIT0] = &&LOADMOD_START_BIT0_LABEL,
-        [LOADMOD_START_BIT1] = &&LOADMOD_START_BIT1_LABEL,
-        [LOADMOD_DATA0] = &&LOADMOD_DATA0_LABEL,
-        [LOADMOD_DATA1] = &&LOADMOD_DATA1_LABEL,
-        [LOADMOD_PARITY0] = &&LOADMOD_PARITY0_LABEL,
-        [LOADMOD_PARITY1] = &&LOADMOD_PARITY1_LABEL,
-        [LOADMOD_STOP_BIT0] = &&LOADMOD_STOP_BIT0_LABEL,
-        [LOADMOD_STOP_BIT1] = &&LOADMOD_STOP_BIT1_LABEL,
-        [LOADMOD_FINISHED] = &&LOADMOD_FINISHED_LABEL
-    };
-
-    if ( (StateRegister >= LOADMOD_FDT) && (StateRegister <= LOADMOD_FINISHED) ) {
-        goto *JumpTable[StateRegister];
-    } else {
-        return;
-    }
-
-    LOADMOD_FDT_LABEL:
+    switch (LoadModState) {
+    case LOADMOD_FDT:
         /* No data has been produced, but FDT has ended. Switch over to bit-grid aligning. */
         CODEC_TIMER_LOADMOD.PER = ISO14443A_BIT_GRID_CYCLES - 1;
-        return;
+        break;
 
-    LOADMOD_START_LABEL:
-        /* Application produced data. With this interrupt we are aligned to the bit-grid. */
+    case LOADMOD_START:
+        /* Application produced data. With this interrupt we are aligned to the bit-grid.
+         * Start subcarrier generation and align to bitrate. */
+        CODEC_TIMER_LOADMOD.PER = ISO14443A_BIT_RATE_CYCLES / 2 - 1;
+        CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_EVCH6_gc;
+
         /* Fallthrough to first bit */
 
-    LOADMOD_START_BIT0_LABEL:
-        /* Start subcarrier generation, output startbit and align to bitrate. */
-        CodecSetLoadmodState(true);
-        CodecStartSubcarrier();
+    case LOADMOD_START_BIT0:
+    	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
+        LoadModState = LOADMOD_START_BIT1;
+        break;
 
-        CODEC_TIMER_LOADMOD.PER = ISO14443A_BIT_RATE_CYCLES / 2 - 1;
-        StateRegister = LOADMOD_START_BIT1;
-        return;
+    case LOADMOD_START_BIT1:
+    	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+        LoadModState = LOADMOD_DATA0;
 
-
-    LOADMOD_START_BIT1_LABEL:
-        CodecSetLoadmodState(false);
-        StateRegister = LOADMOD_DATA0;
-        ParityRegister = ~0;
-        BitSent = 0;
-
-        /* Prefetch first byte */
+        /* Fetch first byte */
         DataRegister = *CodecBufferPtr;
-        return;
+        break;
 
-    LOADMOD_DATA0_LABEL:
+    case LOADMOD_DATA0:
         if (DataRegister & 1) {
-            CodecSetLoadmodState(true);
-            ParityRegister = ~ParityRegister;
+        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         } else {
-            CodecSetLoadmodState(false);
+        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         }
 
-        StateRegister = LOADMOD_DATA1;
-        return;
+        LoadModState = LOADMOD_DATA1;
+        break;
 
-    LOADMOD_DATA1_LABEL:
-        if (DataRegister & 1) {
-            CodecSetLoadmodState(false);
+    case LOADMOD_DATA1:
+        Temp8 = DataRegister;
+
+        if (Temp8 & 1) {
+        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         } else {
-            CodecSetLoadmodState(true);
+        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         }
 
-        DataRegister = DataRegister >> 1;
-        BitSent++;
+        DataRegister = Temp8 >> 1;
 
-        if ((BitSent % 8) == 0) {
+        Temp16 = BitSent;
+        BitSent = ++Temp16;
+
+        if ((Temp16 & 0x07) == 0) {
             /* Byte boundary. Load parity bit and output it later. */
-            StateRegister = LOADMOD_PARITY0;
-        } else if (BitSent == BitCount) {
+            LoadModState = LOADMOD_PARITY0;
+            break;
+        }
+
+        if (Temp16 == BitCount) {
             /* End of transmission without byte boundary. Don't send parity. */
-            StateRegister = LOADMOD_STOP_BIT0;
-        } else {
-            /* Next bit is data */
-            StateRegister = LOADMOD_DATA0;
+            LoadModState = LOADMOD_STOP_BIT0;
+            break;
         }
 
-        return;
+        /* Next bit is data */
+        LoadModState = LOADMOD_DATA0;
 
-    LOADMOD_PARITY0_LABEL:
-        if (ParityBufferPtr != NULL) {
-            if (*ParityBufferPtr) {
-                CodecSetLoadmodState(true);
-            } else {
-                CodecSetLoadmodState(false);
-            }
+        break;
+
+    case LOADMOD_PARITY0:
+        if (*ParityBufferPtr) {
+        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         } else {
-            if (ParityRegister) {
-                CodecSetLoadmodState(true);
-            } else {
-                CodecSetLoadmodState(false);
-            }
+        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         }
-        StateRegister = LOADMOD_PARITY1;
-        return;
 
-    LOADMOD_PARITY1_LABEL:
-        if (ParityBufferPtr != NULL) {
-            if (*ParityBufferPtr) {
-                CodecSetLoadmodState(false);
-            } else {
-                CodecSetLoadmodState(true);
-            }
+        LoadModState = LOADMOD_PARITY1;
+        break;
 
-            ParityBufferPtr++;
+    case LOADMOD_PARITY1:
+        if (*ParityBufferPtr) {
+        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         } else {
-            if (ParityRegister) {
-                CodecSetLoadmodState(false);
-            } else {
-                CodecSetLoadmodState(true);
-            }
-
-            ParityRegister = ~0;
+        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         }
 
         if (BitSent == BitCount) {
             /* No data left */
-            StateRegister = LOADMOD_STOP_BIT0;
+            LoadModState = LOADMOD_STOP_BIT0;
         } else {
             /* Fetch next data and continue sending bits. */
+            ParityBufferPtr++;
             DataRegister = *++CodecBufferPtr;
-            StateRegister = LOADMOD_DATA0;
+            LoadModState = LOADMOD_DATA0;
         }
 
-        return;
+        break;
 
-    LOADMOD_STOP_BIT0_LABEL:
-        CodecSetLoadmodState(false);
-        StateRegister = LOADMOD_STOP_BIT1;
-        return;
+    case LOADMOD_STOP_BIT0:
+    	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+        LoadModState = LOADMOD_STOP_BIT1;
+        break;
 
-    LOADMOD_STOP_BIT1_LABEL:
-        CodecSetLoadmodState(false);
-        StateRegister = LOADMOD_FINISHED;
-        return;
+    case LOADMOD_STOP_BIT1:
+    	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+        LoadModState = LOADMOD_FINISHED;
+        break;
 
-    LOADMOD_FINISHED_LABEL:
+    case LOADMOD_FINISHED:
         /* We have written all of our bits. Deactivate the loadmod
          * timer. Also disable the bit-rate interrupt again. And
          * stop the subcarrier divider. */
         CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
         CODEC_TIMER_LOADMOD.INTCTRLA = 0;
-        CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, ISO14443A_SUBCARRIER_DIVIDER);
+        CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_OFF_gc;
 
         /* Signal application that we have finished loadmod */
         Flags.LoadmodFinished = 1;
-        return;
+        break;
+
+    default:
+        break;
+    }
 }
 
 void ISO14443ACodecInit(void) {
-    /* Initialize some global vars and start looking out for reader commands */
-    Flags.DemodFinished = 0;
-    Flags.LoadmodFinished = 0;
-
-    CodecInitCommon();
+    /* Initialize common peripherals and start listening
+     * for incoming data. */
+    Initialize();
     StartDemod();
-}
-
-void ISO14443ACodecDeInit(void)
-{
-    /* Gracefully shutdown codec */
-    CODEC_DEMOD_IN_PORT.INT0MASK = 0;
-
-    Flags.DemodFinished = 0;
-    Flags.LoadmodFinished = 0;
-
-    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-    CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_OFF_gc;
-    CODEC_TIMER_SAMPLING.INTCTRLB = TC_CCAINTLVL_OFF_gc;
-    CODEC_TIMER_SAMPLING.INTFLAGS = TC0_CCAIF_bm;
-
-
-    CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
-    CODEC_TIMER_LOADMOD.CTRLD = TC_EVACT_OFF_gc;
-    CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-    CODEC_TIMER_LOADMOD.INTFLAGS = TC0_OVFIF_bm;
-
-    CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OFF, 0);
-    CodecSetDemodPower(false);
-    CodecSetLoadmodState(false);
-
 }
 
 void ISO14443ACodecTask(void) {
     if (Flags.DemodFinished) {
         Flags.DemodFinished = 0;
         /* Reception finished. Process the received bytes */
+        CodecSetDemodPower(false);
+
         uint16_t DemodBitCount = BitCount;
         uint16_t AnswerBitCount = ISO14443A_APP_NO_RESPONSE;
 
-        if (DemodBitCount >= ISO14443A_MIN_BITS_PER_FRAME) {
-            LogEntry(LOG_INFO_CODEC_RX_DATA, CodecBuffer, (DemodBitCount+7)/8);
-            LEDHook(LED_CODEC_RX, LED_PULSE);
+        if (DemodBitCount > 0) {
 
             /* Call application if we received data */
             AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
-
+					    //for(uint16_t i=0;i<=DemodBitCount/8;i++)
+					    //uart_putc_hex(CodecBuffer[i]);
             if (AnswerBitCount & ISO14443A_APP_CUSTOM_PARITY) {
                 /* Application has generated it's own parity bits.
                  * Clear this option bit. */
                 AnswerBitCount &= ~ISO14443A_APP_CUSTOM_PARITY;
-                ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
             } else {
                 /* We have to generate the parity bits ourself */
-                ParityBufferPtr = 0;
+                for (uint8_t i = 0; i < (AnswerBitCount / 8); i++) {
+                    /* For each whole byte, generate a parity bit. */
+                    CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET + i] =
+                            ODD_PARITY(CodecBuffer[i]);
+                }
             }
+        } else {
+            ApplicationReset();
         }
 
         if (AnswerBitCount != ISO14443A_APP_NO_RESPONSE) {
-            LogEntry(LOG_INFO_CODEC_TX_DATA, CodecBuffer, (AnswerBitCount + 7) / 8);
-            LEDHook(LED_CODEC_TX, LED_PULSE);
-
             BitCount = AnswerBitCount;
+            BitSent = 0;
             CodecBufferPtr = CodecBuffer;
-            CodecSetSubcarrier(CODEC_SUBCARRIERMOD_OOK, ISO14443A_SUBCARRIER_DIVIDER);
-
-            StateRegister = LOADMOD_START;
+            ParityBufferPtr = &CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET];
+            LoadModState = LOADMOD_START;
         } else {
             /* No data to be processed. Disable loadmodding and start listening again */
             CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
@@ -460,4 +484,3 @@ void ISO14443ACodecTask(void) {
         StartDemod();
     }
 }
-

@@ -174,7 +174,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     switch(State) {
     case STATE_IDLE:
     case STATE_HALT:
-        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, true)) {
             State = STATE_READY1;
             return BitCount;
         }
@@ -262,7 +262,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 #endif
 
     case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
             State = STATE_READY1;
             return BitCount;
         } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
@@ -288,7 +288,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY2:
-    if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue)) {
+    if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
 	    State = STATE_READY1;
 	    return BitCount;
 	    } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
@@ -308,7 +308,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     break;
 
     case STATE_ACTIVE:
-        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
             State = STATE_READY1;
             return BitCount;
         } else if (Buffer[0] == CMD_HALT) {
@@ -650,6 +650,3 @@ void MifareClassicSetUid(ConfigurationUidType Uid)
     MemoryWriteBlock(&BCC, MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }
-
-
-

@@ -1,4 +1,4 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
+/* Copyright 2013 Timo Kasper, Simon KÃ¼ppers, David Oswald ("ORIGINAL
  * AUTHORS"). All rights reserved.
  *
  * DEFINITIONS:
@@ -170,11 +170,14 @@ CommandStatusIdType CommandExecHelp(char* OutMessage);
 #define COMMAND_RSSI		"RSSIMY"
 CommandStatusIdType CommandGetRssi(char* OutParam);
 
-#define COMMAND_LIST_END    ""
-
-#define COMMAND_DETECTION     "DETECTIONMY"
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+#define COMMAND_DETECTION	"DETECTIONMY"
 CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
+#endif
+
+#define COMMAND_LIST_END    ""
+
 /* Defines the end of command list. This is no actual command */
 
 #endif /* COMMANDS_H_ */

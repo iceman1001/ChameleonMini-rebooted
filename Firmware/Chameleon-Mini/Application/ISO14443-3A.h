@@ -46,10 +46,10 @@
     ( ByteBuffer[0] ^ ByteBuffer[1] ^ ByteBuffer[2] ^ ByteBuffer[3] )
 
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
-bool ISO14443ACheckCRCA(void* Buffer, uint16_t ByteCount);
+bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
-INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue);
+INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
 
 INLINE
 bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue)
@@ -58,7 +58,7 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
     uint8_t NVB = DataPtr[1];
     //uint8_t CollisionByteCount = (NVB >> 4) & 0x0F;
     //uint8_t CollisionBitCount =  (NVB >> 0) & 0x0F;
-	
+
     switch (NVB) {
     case ISO14443A_NVB_AC_START:
         /* Start of anticollision procedure.
@@ -124,11 +124,12 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
 }
 
 INLINE
-bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
+bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt)
 {
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
-    if ( (DataPtr[0] == ISO14443A_CMD_REQA) || (DataPtr[0] == ISO14443A_CMD_WUPA) ){
+    if ( ((! FromHalt) && (DataPtr[0] == ISO14443A_CMD_REQA)) ||
+         (DataPtr[0] == ISO14443A_CMD_WUPA) ){
         DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
         DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
 
@@ -136,6 +137,8 @@ bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue)
 
         return true;
     } else {
+        *BitCount = 0;
+
         return false;
     }
 }

@@ -6,8 +6,8 @@
  */
 
 #include "CommandLine.h"
-#include "Settings.h"
-#include "System.h"
+#include "../Settings.h"
+#include "../System.h"
 
 #define CHAR_GET_MODE   '?'     /* <Command>? */
 #define CHAR_SET_MODE   '='     /* <Command>=<Param> */
@@ -113,21 +113,14 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = CommandGetUidSize
   },
-/*
   {
-    .Command    = COMMAND_RBUTTON,
-    .ExecFunc   = NO_FUNCTION,
+    .Command    = COMMAND_BUTTON,
+    .ExecFunc   = CommandExecButton,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetRButton,
-    .GetFunc    = CommandGetRButton
+    .SetFunc    = CommandSetButton,
+    .GetFunc    = CommandGetButton
   },
-  {
-    .Command    = COMMAND_RBUTTON_LONG,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetRButtonLong,
-    .GetFunc    = CommandGetRButtonLong
-  },
+  /*
   {
     .Command    = COMMAND_LBUTTON,
     .ExecFunc   = NO_FUNCTION,

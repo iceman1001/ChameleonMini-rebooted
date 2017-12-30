@@ -16,10 +16,7 @@ SettingsType GlobalSettings = {
 	.ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
 	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 				.Configuration = DEFAULT_CONFIGURATION,
-				.ButtonActions = {
-					[BUTTON_L_PRESS_SHORT] = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_SHORT] = DEFAULT_RBUTTON_ACTION,
-					[BUTTON_L_PRESS_LONG]  = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_LONG]  = DEFAULT_RBUTTON_ACTION
-					},
+				.ButtonAction = DEFAULT_BUTTON_ACTION,
 				} 
 			}
 };
@@ -29,10 +26,7 @@ SettingsType EEMEM StoredSettings = {
 
 	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 			.Configuration = DEFAULT_CONFIGURATION,
-			.ButtonActions = {
-                [BUTTON_L_PRESS_SHORT] = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_SHORT] = DEFAULT_RBUTTON_ACTION,
-                [BUTTON_L_PRESS_LONG]  = DEFAULT_LBUTTON_ACTION, [BUTTON_R_PRESS_LONG]  = DEFAULT_RBUTTON_ACTION
-				},
+			.ButtonAction = DEFAULT_BUTTON_ACTION,
 			}
 		}
 };
@@ -42,10 +36,9 @@ void SettingsLoad(void) {
 }
 
 void SettingsSave(void) {
-	uint8_t temp[35];
-	memcpy(temp, &GlobalSettings, sizeof(SettingsType));
-	ISO14443AAppendCRCA(temp, sizeof(SettingsType));
-	Write_Save(temp, (uint8_t)32*(uint16_t)1024, sizeof(SettingsType)+2);
+#if ENABLE_EEPROM_SETTINGS
+	eeprom_write_block(&GlobalSettings, &StoredSettings, sizeof(SettingsType));
+#endif
 }
 
 void SettingsCycle(void) {
@@ -56,11 +49,7 @@ void SettingsCycle(void) {
 		Setting = (Setting + 1) % SETTINGS_COUNT;
 
 		if (GlobalSettings.Settings[Setting].Configuration != CONFIG_NONE) {
- 
-			 	if (Setting < SETTINGS_COUNT) {
-				 	GlobalSettings.ActiveSetting = Setting;
-				 	GlobalSettings.ActiveSettingPtr = &GlobalSettings.Settings[GlobalSettings.ActiveSetting];
-			 	}
+			SettingsSetActiveById(Setting);
 			break;
 		}
 	}

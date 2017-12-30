@@ -1,4 +1,4 @@
-/* Copyright 2013 Timo Kasper, Simon Küppers, David Oswald ("ORIGINAL
+/* Copyright 2013 Timo Kasper, Simon KÃ¼ppers, David Oswald ("ORIGINAL
  * AUTHORS"). All rights reserved.
  *
  * DEFINITIONS:
@@ -54,6 +54,13 @@
  */
 
 #include "Common.h"
+
+const uint8_t PROGMEM BitReverseByteTable[256] = {
+	#   define R2(n)     n,     n + 2*64,     n + 1*64,     n + 3*64
+	#   define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
+	#   define R6(n) R4(n), R4(n + 2*4 ), R4(n + 1*4 ), R4(n + 3*4 )
+	R6(0), R6(2), R6(1), R6(3)
+};
 
 const uint8_t PROGMEM OddParityByteTable[256] = {
     1, 	0, 	0, 	1, 	0, 	1, 	1,	0,	0,	1,	1,	0, 	1, 	0, 	0, 	1,
@@ -131,8 +138,3 @@ uint16_t HexStringToBuffer(void* Buffer, uint16_t MaxBytes, const char* HexIn)
 
     return ByteCount;
 }
-
-
-
-
-
