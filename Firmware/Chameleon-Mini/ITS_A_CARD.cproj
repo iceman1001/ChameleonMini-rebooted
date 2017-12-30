@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
@@ -203,8 +203,74 @@
       <ToolNumber>00A000500294</ToolNumber>
       <ToolName>JTAGICE mkII</ToolName>
     </com_atmel_avrdbg_tool_jtagicemkii>
+    <ResetRule>0</ResetRule>
+    <EraseKey />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainSettings>
+      <AvrGcc>
+  <avrgcc.common.Device>-mmcu=atxmega32a4u -B "%24(PackRepoDir)\atmel\XMEGAA_DFP\1.0.36\gcc\dev\atxmega32a4u"</avrgcc.common.Device>
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>NDEBUG</Value>
+      <Value>BOARD=BOARD_NONE</Value>
+      <Value>F_USB=48000000UL</Value>
+      <Value>F_CPU=32000000UL</Value>
+      <Value>ARCH=ARCH_XMEGA</Value>
+      <Value>USE_LUFA_CONFIG_HEADER</Value>
+      <Value>DEFAULT_SETTING=0</Value>
+      <Value>DEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K</Value>
+      <Value>DEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
+      <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
+      <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
+      <Value>CONFIG_MF_CLASSIC_4K_SUPPORT</Value>
+      <Value>SUPPORT_MF_CLASSIC_MAGIC_MODE</Value>
+      <Value>ENABLE_EEPROM_SETTINGS</Value>
+      <Value>SUPPORT_FIRMWARE_UPGRADE</Value>
+    </ListValues>
+  </avrgcc.compiler.symbols.DefSymbols>
+  <avrgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../src</Value>
+      <Value>../src/LUFA</Value>
+      <Value>../src/config</Value>
+      <Value>%24(PackRepoDir)\atmel\XMEGAA_DFP\1.0.36\include</Value>
+      <Value>../Application</Value>
+      <Value>../Codec</Value>
+      <Value>../Terminal</Value>
+    </ListValues>
+  </avrgcc.compiler.directories.IncludePaths>
+  <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+  <avrgcc.compiler.optimization.OtherFlags>-fdata-sections</avrgcc.compiler.optimization.OtherFlags>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.compiler.miscellaneous.OtherFlags>-mrelax -std=gnu99 -fno-strict-aliasing -fno-jump-tables</avrgcc.compiler.miscellaneous.OtherFlags>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+  <avrgcc.linker.miscellaneous.LinkerFlags>-Wl,--relax</avrgcc.linker.miscellaneous.LinkerFlags>
+  <avrgcc.assembler.general.AssemblerFlags>-DARCH=ARCH_XMEGA -DBOARD=BOARD_NONE -DF_CPU=32000000UL -DF_USB=48000000UL -DUSE_LUFA_CONFIG_HEADER</avrgcc.assembler.general.AssemblerFlags>
+  <avrgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>../src</Value>
+      <Value>../src/LUFA</Value>
+      <Value>../src/config</Value>
+    </ListValues>
+  </avrgcc.assembler.general.IncludePaths>
+</AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
       <AvrGcc>
         <avrgcc.common.Device>-mmcu=atxmega32a4u -B "%24(PackRepoDir)\atmel\XMEGAA_DFP\1.0.36\gcc\dev\atxmega32a4u"</avrgcc.common.Device>
@@ -217,14 +283,14 @@
         <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
         <avrgcc.compiler.symbols.DefSymbols>
           <ListValues>
-            <Value>NDEBUG</Value>
+            <Value>DEBUG</Value>
             <Value>BOARD=BOARD_NONE</Value>
             <Value>F_USB=48000000UL</Value>
             <Value>F_CPU=32000000UL</Value>
             <Value>ARCH=ARCH_XMEGA</Value>
             <Value>USE_LUFA_CONFIG_HEADER</Value>
             <Value>DEFAULT_SETTING=0</Value>
-            <Value>DEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K</Value>
+            <Value>DEFAULT_CONFIGURATION=CONFIG_NONE</Value>
             <Value>DEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
             <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
             <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
@@ -245,10 +311,11 @@
             <Value>../Terminal</Value>
           </ListValues>
         </avrgcc.compiler.directories.IncludePaths>
-        <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+        <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
         <avrgcc.compiler.optimization.OtherFlags>-fdata-sections</avrgcc.compiler.optimization.OtherFlags>
         <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
         <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
         <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
         <avrgcc.compiler.miscellaneous.OtherFlags>-mrelax -std=gnu99 -fno-strict-aliasing -fno-jump-tables</avrgcc.compiler.miscellaneous.OtherFlags>
         <avrgcc.linker.libraries.Libraries>
@@ -265,73 +332,8 @@
             <Value>../src/config</Value>
           </ListValues>
         </avrgcc.assembler.general.IncludePaths>
+        <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
       </AvrGcc>
-    </ToolchainSettings>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <ToolchainSettings>
-      <AvrGcc>
-  <avrgcc.common.Device>-mmcu=atxmega32a4u -B "%24(PackRepoDir)\atmel\XMEGAA_DFP\1.0.36\gcc\dev\atxmega32a4u"</avrgcc.common.Device>
-  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
-  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
-  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
-  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
-  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
-  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
-  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
-  <avrgcc.compiler.symbols.DefSymbols>
-    <ListValues>
-      <Value>DEBUG</Value>
-      <Value>BOARD=BOARD_NONE</Value>
-      <Value>F_USB=48000000UL</Value>
-      <Value>F_CPU=32000000UL</Value>
-      <Value>ARCH=ARCH_XMEGA</Value>
-      <Value>USE_LUFA_CONFIG_HEADER</Value>
-      <Value>DEFAULT_SETTING=0</Value>
-      <Value>DEFAULT_CONFIGURATION=CONFIG_NONE</Value>
-      <Value>DEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
-      <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
-      <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
-      <Value>CONFIG_MF_CLASSIC_4K_SUPPORT</Value>
-      <Value>CONFIG_MF_DETECTION_SUPPORT</Value>
-      <Value>ENABLE_EEPROM_SETTINGS</Value>
-      <Value>SUPPORT_FIRMWARE_UPGRADE</Value>
-    </ListValues>
-  </avrgcc.compiler.symbols.DefSymbols>
-  <avrgcc.compiler.directories.IncludePaths>
-    <ListValues>
-      <Value>../src</Value>
-      <Value>../src/LUFA</Value>
-      <Value>../src/config</Value>
-      <Value>%24(PackRepoDir)\atmel\XMEGAA_DFP\1.0.36\include</Value>
-      <Value>../Application</Value>
-      <Value>../Codec</Value>
-      <Value>../Terminal</Value>
-    </ListValues>
-  </avrgcc.compiler.directories.IncludePaths>
-  <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
-  <avrgcc.compiler.optimization.OtherFlags>-fdata-sections</avrgcc.compiler.optimization.OtherFlags>
-  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
-  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
-  <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
-  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-  <avrgcc.compiler.miscellaneous.OtherFlags>-mrelax -std=gnu99 -fno-strict-aliasing -fno-jump-tables</avrgcc.compiler.miscellaneous.OtherFlags>
-  <avrgcc.linker.libraries.Libraries>
-    <ListValues>
-      <Value>libm</Value>
-    </ListValues>
-  </avrgcc.linker.libraries.Libraries>
-  <avrgcc.linker.miscellaneous.LinkerFlags>-Wl,--relax</avrgcc.linker.miscellaneous.LinkerFlags>
-  <avrgcc.assembler.general.AssemblerFlags>-DARCH=ARCH_XMEGA -DBOARD=BOARD_NONE -DF_CPU=32000000UL -DF_USB=48000000UL -DUSE_LUFA_CONFIG_HEADER</avrgcc.assembler.general.AssemblerFlags>
-  <avrgcc.assembler.general.IncludePaths>
-    <ListValues>
-      <Value>../src</Value>
-      <Value>../src/LUFA</Value>
-      <Value>../src/config</Value>
-    </ListValues>
-  </avrgcc.assembler.general.IncludePaths>
-  <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
-</AvrGcc>
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
@@ -357,6 +359,9 @@
     <Folder Include="src\LUFA\LUFA\Platform\XMEGA\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AntennaLevel.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Application\Crypto1.c">
       <SubType>compile</SubType>
     </Compile>
@@ -372,10 +377,22 @@
     <Compile Include="Application\MifareUltralight.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Application\Reader14443A.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Codec\Codec.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Codec\ISO14443-2A.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Codec\Reader14443-2A.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Log.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Map.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="sp_driver.s">
