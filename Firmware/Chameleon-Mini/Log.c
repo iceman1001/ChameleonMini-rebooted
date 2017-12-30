@@ -3,7 +3,6 @@
 #include "Terminal/Terminal.h"
 #include "System.h"
 #include "Map.h"
-#include "LEDHook.h"
 
 static uint8_t LogMem[LOG_SIZE];
 static uint8_t *LogMemPtr;
@@ -46,7 +45,6 @@ static void LogFuncMemory(LogEntryEnum Entry, const void* Data, uint8_t Length)
     } else {
         /* If memory full. Deactivate logmode */
         LogSetModeById(LOG_MODE_OFF);
-        LEDHook(LED_LOG_MEM_FULL, LED_ON);
     }
 }
 
@@ -80,7 +78,7 @@ void LogInit(void)
         WriteEEPBlock((uint16_t) &LogFRAMAddrValid, &result, 1);
     }
 
-    LogEntry(LOG_INFO_SYSTEM_BOOT, NULL, 0);
+    //LogEntry(LOG_INFO_SYSTEM_BOOT, NULL, 0);
 }
 
 void LogTick(void)
@@ -155,7 +153,6 @@ void LogMemClear(void)
     LogSRAMClear();
     LogFRAMAddr = FRAM_LOG_START_ADDR;
     MemoryWriteBlock(&LogFRAMAddr, FRAM_LOG_ADDR_ADDR, 2);
-    LEDHook(LED_LOG_MEM_FULL, LED_OFF);
 }
 
 uint16_t LogMemFree(void)
