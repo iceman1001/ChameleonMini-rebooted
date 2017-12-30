@@ -44,7 +44,6 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #include "Application/Application.h"
 
 static void CodecInitDummy(void) { }
-static void CodecDeInitDummy(void) { }
 static void CodecTaskDummy(void) { }
 static void ApplicationInitDummy(void) {}
 static void ApplicationResetDummy(void) {}
@@ -57,7 +56,6 @@ static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
     [CONFIG_NONE] = {
         .CodecInitFunc = CodecInitDummy,
-        .CodecDeInitFunc = CodecDeInitDummy,
         .CodecTaskFunc = CodecTaskDummy,
         .ApplicationInitFunc = ApplicationInitDummy,
         .ApplicationResetFunc = ApplicationResetDummy,
@@ -73,7 +71,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
 [CONFIG_MF_ULTRALIGHT] = {
 	.CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareUltralightAppInit,
 	.ApplicationResetFunc = MifareUltralightAppReset,
@@ -88,7 +85,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 },
 [CONFIG_MF_ULTRALIGHT_EV1_80B] = {
 	.CodecInitFunc = ISO14443ACodecInit,
-	.CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareUltralightEV11AppInit,
 	.ApplicationResetFunc = MifareUltralightAppReset,
@@ -103,7 +99,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 },
 [CONFIG_MF_ULTRALIGHT_EV1_164B] = {
 	.CodecInitFunc = ISO14443ACodecInit,
-	.CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareUltralightEV12AppInit,
 	.ApplicationResetFunc = MifareUltralightAppReset,
@@ -120,7 +115,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
     [CONFIG_MF_CLASSIC_1K] = {
         .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
         .ApplicationInitFunc = MifareClassicAppInit1K,
         .ApplicationResetFunc = MifareClassicAppReset,
@@ -137,7 +131,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
     [CONFIG_MF_CLASSIC_1K_7B] = {
         .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
         .ApplicationInitFunc = MifarePlus1kAppInit_7B,
         .ApplicationResetFunc = MifareClassicAppReset,
@@ -154,7 +147,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
     [CONFIG_MF_CLASSIC_4K] = {
         .CodecInitFunc = ISO14443ACodecInit,
-        .CodecDeInitFunc = ISO14443ACodecDeInit,
         .CodecTaskFunc = ISO14443ACodecTask,
         .ApplicationInitFunc = MifareClassicAppInit4K,
         .ApplicationResetFunc = MifareClassicAppReset,
@@ -171,7 +163,6 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 [CONFIG_MF_DETECTION] = {
 	.CodecInitFunc = ISO14443ACodecInit,
-    .CodecDeInitFunc = ISO14443ACodecDeInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
 	.ApplicationInitFunc = MifareDetectionInit,
 	.ApplicationResetFunc = MifareDetectionReset,
@@ -228,3 +219,4 @@ void ConfigurationGetList(char* List, uint16_t BufferSize)
 {
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
+
