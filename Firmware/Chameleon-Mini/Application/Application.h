@@ -16,7 +16,7 @@
 #include "MifareClassic.h"
 #include "MifareUltralight.h"
 #include "Detection.h"
-#include "Reader14443A.h"
+
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
     ActiveConfiguration.ApplicationInitFunc();
