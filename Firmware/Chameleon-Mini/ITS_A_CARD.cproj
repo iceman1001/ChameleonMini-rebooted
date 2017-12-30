@@ -377,16 +377,10 @@
     <Compile Include="Application\MifareUltralight.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Application\Reader14443A.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="Codec\Codec.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Codec\ISO14443-2A.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="Codec\Reader14443-2A.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Log.c">
