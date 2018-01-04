@@ -66,4 +66,3 @@ echo Flashing the files onto the "Chameleon-Mini Rev-E Rebooted"...
 echo.
 
 echo If there are no errors above, flashing the firmware to your "Chameleon-Mini Rev-E Rebooted" should be finished now. Enjoy!
-pause > nul
