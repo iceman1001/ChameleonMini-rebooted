@@ -298,42 +298,53 @@ CommandStatusIdType CommandGetRssi(char* OutParam)
 }
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT 
- #define genFun(size, key, i) size + key + i - size / key
- void ComPass(uint8_t *toBeEncFileName, int key, int len)
+ #define genFun(size, key, i)  ((size) + (key) + (i) - (size) / (key))
+ //#define genFun(size, key, i)  size + key + i - size / key
+ #define MEM_OFFSET_DETECTION_DATA  4096 + 16
+ #define MEM_LEN_DETECTION_DATA 192
+
+ /* Function to encrypt the transfer for collected data */
+ void ComPass(char *toBeEncFileName, int key, int len)
  {
-	 uint8_t newFileName[275] = { 0 };
+	 char newFileName[275] = { 0 };
 	 memcpy(newFileName, toBeEncFileName, len);
 	 int i, s, t, size = len;
 	 for (i = 0; i < size; i++)
 	 {
 		 s = newFileName[i];
-		 t = genFun(size, key, i) ^ s;  // ΌΣΓά
+		 t = genFun(size, key, i) ^ s;
 		 toBeEncFileName[i] = t;
 	 }
  }
 
-CommandStatusIdType CommandGetDetection(char* OutParam)
-{
-   MemoryReadBlock(OutParam, 0, 16);
+ CommandStatusIdType CommandGetDetection(char* OutParam)
+ {
+	 /* Read UID / s0-b0 */
+	 MemoryReadBlock(OutParam, 0, 16);
 
-   MemoryReadBlock(OutParam+16, 4096+16, 192);
+	 /* Read saved nonce data from authentication */
+	 MemoryReadBlock(OutParam+16, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
 
-   ISO14443AAppendCRCA(OutParam, 208);
-   ComPass(OutParam,123321,208);
+	 /* add file integrity */
+	 ISO14443AAppendCRCA(OutParam, 208);
+	 
+	 /* encrypt data */
+	 ComPass(OutParam, (int)123321, 208);
 
-   for(uint16_t num=0;num<208+2;num++)
-   TerminalSendChar(OutParam[num]);
+	 /* send data */
+	 for(uint16_t num=0; num < 208+2; num++)
+	 TerminalSendChar(OutParam[num]);
 
-   OutParam[0]=0;
- 
-   return COMMAND_INFO_OK_ID;
-}
+	 OutParam[0]=0;
+	 return COMMAND_INFO_OK_ID;
+ }
 
-CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
-{
-	uint8_t temp[200];
-	memset(temp,0xff,200);
-	MemoryWriteBlock(temp, 4096+16, 192);
-	return COMMAND_INFO_OK_ID;
-}
+ CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
+ {
+	 /* Fill memory for detection with 0xFF,  clearing it */
+	 uint8_t t[200];
+	 memset(t, 0xff, 200);
+	 MemoryWriteBlock(t, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
+	 return COMMAND_INFO_OK_ID;
+ }
 #endif
