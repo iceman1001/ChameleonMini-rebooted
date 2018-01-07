@@ -14,8 +14,8 @@
 #include "LED.h"
 #include "Memory.h"
 
-#define SETTINGS_COUNT		(MEMORY_SIZE / MEMORY_SIZE_PER_SETTING)
-#define SETTINGS_FIRST		1
+#define SETTINGS_COUNT		8
+#define SETTINGS_FIRST		0
 #define SETTINGS_LAST		(SETTINGS_FIRST + SETTINGS_COUNT - 1)
 
 /** Defines one setting.

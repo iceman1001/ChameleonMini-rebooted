@@ -308,6 +308,14 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = CommandGetField
   },
 */
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+  {
+	  .Command    = COMMAND_DETECTION,
+	  .ExecFunc   = NO_FUNCTION,
+	  .SetFunc    = CommandSetDetection,
+	  .GetFunc    = CommandGetDetection,
+  },
+#endif
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,

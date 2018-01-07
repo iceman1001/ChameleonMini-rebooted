@@ -21,7 +21,7 @@
 #define MEMORY_FLASH_SCK	PIN1_bm
 
 #define MEMORY_PAGE_SIZE		256
-#define MEMORY_SIZE_PER_SETTING	8192
+#define MEMORY_SIZE_PER_SETTING	4096
 
 int MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
