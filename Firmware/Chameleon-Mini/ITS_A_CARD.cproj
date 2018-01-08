@@ -231,7 +231,7 @@
       <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
       <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
       <Value>CONFIG_MF_CLASSIC_4K_SUPPORT</Value>
-      <Value>SUPPORT_MF_CLASSIC_MAGIC_MODE</Value>
+      <Value>CONFIG_MF_DETECTION_SUPPORT</Value>
       <Value>ENABLE_EEPROM_SETTINGS</Value>
       <Value>SUPPORT_FIRMWARE_UPGRADE</Value>
     </ListValues>
@@ -295,7 +295,7 @@
             <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
             <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
             <Value>CONFIG_MF_CLASSIC_4K_SUPPORT</Value>
-            <Value>SUPPORT_MF_CLASSIC_MAGIC_MODE</Value>
+            <Value>CONFIG_MF_DETECTION_SUPPORT</Value>
             <Value>ENABLE_EEPROM_SETTINGS</Value>
             <Value>SUPPORT_FIRMWARE_UPGRADE</Value>
           </ListValues>

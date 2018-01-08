@@ -56,7 +56,7 @@ void SettingsCycle(void) {
 }
 
 bool SettingsSetActiveById(uint8_t Setting) {
-	if (Setting < SETTINGS_COUNT) {
+	if ( (Setting >= SETTINGS_FIRST) && (Setting <= SETTINGS_LAST) ) {
 		GlobalSettings.ActiveSetting = Setting;
 		GlobalSettings.ActiveSettingPtr = &GlobalSettings.Settings[GlobalSettings.ActiveSetting];
 
