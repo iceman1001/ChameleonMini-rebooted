@@ -1,5 +1,5 @@
 /*
- * Flash.c
+ * Memory.c
  *
  *  Created on: 20.03.2013
  *      Author: skuser
@@ -11,6 +11,7 @@
 #include "Settings.h"
 #include "LED.h"
 
+#define FLASH_CMD_READ					0x03
 #define FLASH_CMD_STATUS_REG_READ		0xD7
 #define FLASH_CMD_MEM_TO_BUF1			0x53
 #define FLASH_CMD_MEM_TO_BUF2			0x55
@@ -130,7 +131,7 @@ INLINE void FlashRead(void* Buffer, uint32_t Address, uint16_t ByteCount)
 	while(FlashIsBusy());
 
 	MEMORY_FLASH_PORT.OUTCLR = MEMORY_FLASH_CS;
-	SPITransferByte(0x03);
+	SPITransferByte(FLASH_CMD_READ);
 	SPITransferByte( (Address >> 16) & 0xFF );
 	SPITransferByte( (Address >> 8) & 0xFF );
 	SPITransferByte( (Address >> 0) & 0xFF );
@@ -190,24 +191,18 @@ int MemoryInit(void)
 	return 1;
 }
 
-void Read_Save(void* Buffer, uint32_t Address, uint16_t ByteCount)
-{
-	FlashRead(Buffer, Address, ByteCount);
-}
-
-void Write_Save(void* Buffer, uint32_t Address, uint16_t ByteCount)
-{
-	FlashWrite(Buffer, Address, ByteCount);
-}
-
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
+	if (ByteCount == 0)
+		return;
 	uint32_t FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
 	FlashRead(Buffer, FlashAddress, ByteCount);
 }
 
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
+	if (ByteCount == 0)
+		return;
 	uint32_t FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
 	FlashWrite(Buffer, FlashAddress, ByteCount);
 }
