@@ -69,56 +69,40 @@
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
-CommandStatusIdType CommandGetVersion(char* OutParam)
-{
-  snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR(
-    "Chameleon-new-1.0"
-    )
-  );
-
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
+CommandStatusIdType CommandGetVersion(char* OutParam) {
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon-new-1.0"));
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetConfig(char* OutParam)
-{
-  ConfigurationGetByName(OutParam, TERMINAL_BUFFER_SIZE);
-
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
-
+CommandStatusIdType CommandGetConfig(char* OutParam) {
+	ConfigurationGetByName(OutParam, TERMINAL_BUFFER_SIZE);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam)
-{
-  if (ConfigurationSetByName(InParam)) {
-	    SettingsSave();
-    return COMMAND_INFO_OK_ID;
-  } else {
-    return COMMAND_ERR_INVALID_PARAM_ID;
-  }
+CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam) {
+	if (ConfigurationSetByName(InParam)) {
+		SettingsSave();
+		return COMMAND_INFO_OK_ID;
+	} else {
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
 }
 
-CommandStatusIdType CommandExecConfig(char* OutMessage)
-{
+CommandStatusIdType CommandExecConfig(char* OutMessage) {
   ConfigurationGetList(OutMessage, TERMINAL_BUFFER_SIZE);
-
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetUid(char* OutParam)
-{
+CommandStatusIdType CommandGetUid(char* OutParam) {
   uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
   uint16_t UidSize = ActiveConfiguration.UidSize;
 
   ApplicationGetUid(UidBuffer);
-
-  BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE,
-    UidBuffer, UidSize);
-
+  BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, UidBuffer, UidSize);
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam) {
   uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
   uint16_t UidSize = ActiveConfiguration.UidSize;
 
@@ -136,7 +120,6 @@ CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam)
   }
 
   ApplicationSetUid(UidBuffer);
-
   return COMMAND_INFO_OK_ID;
 }
 
@@ -168,70 +151,53 @@ CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam)
   return COMMAND_ERR_INVALID_PARAM_ID;
 }
 
-CommandStatusIdType CommandExecUpload(char* OutMessage)
-{
+CommandStatusIdType CommandExecUpload(char* OutMessage) {
     XModemReceive(MemoryUploadBlock);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
-CommandStatusIdType CommandExecDownload(char* OutMessage)
-{
+CommandStatusIdType CommandExecDownload(char* OutMessage) {
     XModemSend(MemoryDownloadBlock);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
-CommandStatusIdType CommandExecReset(char* OutMessage)
-{
-  USB_Detach();
-  USB_Disable();
-
-  SystemReset();
-
-  return COMMAND_INFO_OK_ID;
+CommandStatusIdType CommandExecReset(char* OutMessage) {
+	USB_Detach();
+	USB_Disable();
+	SystemReset();
+	return COMMAND_INFO_OK_ID;
 }
 
 #ifdef SUPPORT_FIRMWARE_UPGRADE
-CommandStatusIdType CommandExecUpgrade(char* OutMessage)
-{
-  USB_Detach();
-  USB_Disable();
-
-  SystemEnterBootloader();
-
-  return COMMAND_INFO_OK_ID;
+CommandStatusIdType CommandExecUpgrade(char* OutMessage) {
+	USB_Detach();
+	USB_Disable();
+	SystemEnterBootloader();
+	return COMMAND_INFO_OK_ID;
 }
 #endif
 
-CommandStatusIdType CommandGetMemSize(char* OutParam)
-{
-  snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.MemorySize);
-
-  return COMMAND_INFO_OK_WITH_TEXT_ID;
+CommandStatusIdType CommandGetMemSize(char* OutParam) {
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.MemorySize);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetUidSize(char* OutParam)
-{
+CommandStatusIdType CommandGetUidSize(char* OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.UidSize);
-
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandExecButton(char* OutMessage)
-{
+CommandStatusIdType CommandExecButton(char* OutMessage) {
     ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
-
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetButton(char* OutParam)
-{
+CommandStatusIdType CommandGetButton(char* OutParam) {
     ButtonGetActionByName(OutParam, TERMINAL_BUFFER_SIZE);
-
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam) {
     if (ButtonSetActionByName(InParam)) {
         SettingsSave();
         return COMMAND_INFO_OK_ID;
@@ -240,14 +206,12 @@ CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
     }
 }
 
-CommandStatusIdType CommandGetSetting(char* OutParam)
-{
+CommandStatusIdType CommandGetSetting(char* OutParam) {
 	SettingsGetActiveByName(OutParam, TERMINAL_BUFFER_SIZE);
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam) {
 	if (SettingsSetActiveByName(InParam)) {
 		SettingsSave();
 		return COMMAND_INFO_OK_ID;
@@ -256,14 +220,12 @@ CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam)
 	}
 }
 
-CommandStatusIdType CommandExecClear(char* OutParam)
-{
+CommandStatusIdType CommandExecClear(char* OutParam) {
 	MemoryClear();
 	return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandExecHelp(char* OutMessage)
-{
+CommandStatusIdType CommandExecHelp(char* OutMessage) {
     const CommandEntryType* EntryPtr = CommandTable;
     uint16_t ByteCount = TERMINAL_BUFFER_SIZE - 1; /* Account for '\0' */
 
@@ -288,17 +250,13 @@ CommandStatusIdType CommandExecHelp(char* OutMessage)
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetRssi(char* OutParam)
-{
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-        PSTR("%5u mV"), AntennaLevelGet());
-
-
+CommandStatusIdType CommandGetRssi(char* OutParam) {
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%5u mV"), AntennaLevelGet());
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT 
- #define genFun(size, key, i)  ((size) + (key) + (i) - (size) / (key))
+ #define genFun(size, key, i)  size + key + i - size / key
  //#define genFun(size, key, i)  size + key + i - size / key
  #define MEM_OFFSET_DETECTION_DATA  4096 + 16
  #define MEM_LEN_DETECTION_DATA 192
@@ -325,13 +283,13 @@ CommandStatusIdType CommandGetRssi(char* OutParam)
 	 /* Read saved nonce data from authentication */
 	 MemoryReadBlock(OutParam+16, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
 
-	 /* add file integrity */
+	 /* add file integrity to byte !! 209, 210 !! */
 	 ISO14443AAppendCRCA(OutParam, 208);
 	 
-	 /* encrypt data */
+	 /* encrypt data , but not CRC*/
 	 ComPass(OutParam, (int)123321, 208);
 
-	 /* send data */
+	 /* send data + CRC */
 	 for(uint16_t num=0; num < 208+2; num++)
 	 TerminalSendChar(OutParam[num]);
 
