@@ -1,4 +1,3 @@
-
 #include "Button.h"
 #include "Random.h"
 #include "Common.h"
@@ -6,8 +5,8 @@
 
 static const char PROGMEM ButtonActionTable[][32] =
 {
-    [BUTTON_ACTION_NONE] = "NONE",
-    [BUTTON_ACTION_UID_RANDOM] = "UID_RANDOM",
+    [BUTTON_ACTION_NONE] = "CLOSED",
+    [BUTTON_ACTION_UID_RANDOM] = "RANDOM_UID",
     [BUTTON_ACTION_UID_LEFT_INCREMENT] = "UID_LEFT_INCREMENT",
     [BUTTON_ACTION_UID_RIGHT_INCREMENT] = "UID_RIGHT_INCREMENT",
     [BUTTON_ACTION_UID_LEFT_DECREMENT] = "UID_LEFT_DECREMENT",
