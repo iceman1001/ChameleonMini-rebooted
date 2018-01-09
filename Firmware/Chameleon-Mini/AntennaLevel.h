@@ -70,8 +70,7 @@
 #define ANTENNA_LEVEL_NUMERATOR	((uint32_t) (ANTENNA_LEVEL_MILLIVOLT * ANTENNA_LEVEL_FACTOR * ANTENNA_LEVEL_SCALE + .5))
 #define ANTENNA_LEVEL_DENOMINATOR (ANTENNA_LEVEL_SCALE)
 
-static inline
-void AntennaLevelInit(void)
+static inline void AntennaLevelInit(void)
 {
 	ADCA.CTRLA = ADC_ENABLE_bm;
 	ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc;
@@ -82,8 +81,7 @@ void AntennaLevelInit(void)
 
 }
 
-static inline
-uint16_t AntennaLevelGet(void)
+static inline uint16_t AntennaLevelGet(void)
 {
 	ADCA.CH0.CTRL |= ADC_CH_START_bm;
 	while( !(ADCA.CH0.INTFLAGS & ADC_CH_CHIF_bm) );
