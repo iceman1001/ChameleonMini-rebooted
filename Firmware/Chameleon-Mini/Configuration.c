@@ -1,5 +1,5 @@
 /*
- * Standards.c
+ * Configuration.c
  *
  *  Created on: 15.02.2013
  *      Author: skuser
@@ -13,7 +13,7 @@
 
 /* Map IDs to text */
 static const MapEntryType PROGMEM ConfigurationMap[] = {
-    { .Id = CONFIG_NONE, 			.Text = "NONE" },
+    { .Id = CONFIG_NONE, 			.Text = "CLOSED" },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     { .Id = CONFIG_MF_ULTRALIGHT, 	.Text = "MF_ULTRALIGHT" },
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
@@ -30,6 +30,9 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_4K_7B, 	.Text = "MF_CLASSIC_4K_7B" },
+#endif
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+	{ .Id = CONFIG_MF_DETECTION, 	.Text = "MF_DETECTION" },
 #endif
 #ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
     { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
