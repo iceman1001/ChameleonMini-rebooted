@@ -11,32 +11,15 @@ void led_mode(void) {
 	CARDLOWSetOff(LED_EIGHT);
 
 	switch(GlobalSettings.ActiveSetting) {
-		case 0:
-			CARDHEIGHSetOn(LED_ONE);
-			break;
-		case 1:
-			CARDHEIGHSetOn(LED_TWO);
-			break;
-		case 2:
-			CARDHEIGHSetOn(LED_THREE);
-			break;
-		case 3:
-			CARDHEIGHSetOn(LED_FOUR);
-			break;
-		case 4:
-			CARDLOWSetOn(LED_FIVE);
-			break;
-		case 5:
-			CARDLOWSetOn(LED_SIX);
-			break;
-		case 6:
-			CARDLOWSetOn(LED_SEVEN);
-			break;
-		case 7:
-			CARDLOWSetOn(LED_EIGHT);
-			break;
-		default:
-			break;
+		case 0: CARDHEIGHSetOn(LED_ONE); break;
+		case 1: CARDHEIGHSetOn(LED_TWO); break;
+		case 2: CARDHEIGHSetOn(LED_THREE); break;
+		case 3: CARDHEIGHSetOn(LED_FOUR); break;
+		case 4: CARDLOWSetOn(LED_FIVE); break;
+		case 5:	CARDLOWSetOn(LED_SIX); break;
+		case 6:	CARDLOWSetOn(LED_SEVEN); break;
+		case 7:	CARDLOWSetOn(LED_EIGHT); break;
+		default: break;
 	}
 }
 
