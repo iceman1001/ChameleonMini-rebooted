@@ -41,22 +41,6 @@ void delay_us(unsigned int t)
 	}
 }
 
-////用户数据读取
-//uint8_t user_read(uint8_t *rx, uint16_t *len)
-//{
-    //uint16_t len_temp=fifo_buf.len;
-    //*len=fifo_buf.len;
-//
-	//if(*len==0)
-	//return 0;
-	//else
-	//{
-		//while((*len)--)
-		//(*rx++) = fifo_buffer_read();
-	//}
-	//*len=len_temp;
-	//return 1;
-//}
 uint16_t user_read(uint8_t *rx)
 {
 	uint8_t *ptr = rx;
@@ -294,10 +278,6 @@ void uart_init(void)
 	//USART_RxdInterruptLevel_Set(&USART,USART_RXCINTLVL_LO_gc);
 	USART_RxdInterruptLevel_Set(&USART,USART_RXCINTLVL_HI_gc);
 	
-	///* Enable interrupts. */
-	//PMIC.CTRL |= PMIC_LOLVLEN_bm;
-	//sei();
-
 }
 
 /*
