@@ -60,20 +60,22 @@ static uint8_t keyb_falg = 0;
 
 uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
-	//发来0x26 准备在此处做清零打算
-	if(BitCount==7)
-	{
+	/* 0x26 / 0x52 Wakeup */
+    if ( (BitCount == 7) &&
+    /* precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount */
+    ((Buffer[0] == ISO14443A_CMD_REQA) || (Buffer[0] == ISO14443A_CMD_WUPA)) ) {
+
+		State = STATE_HALT;
 		if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false))
 		{
-			State=STATE_READY;
+			State = STATE_READY;
 			return BitCount;
 		}
 	}
-	//发来0x93 0x20 或 0x93 0x70
-	if(BitCount==16 || BitCount==72)
-	{
-		if (Buffer[0] == ISO14443A_CMD_SELECT_CL1)
-		{
+
+	//0x93 0x20 & 0x93 0x70  (select anticol)
+	if (BitCount==16 || BitCount==72) {
+		if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
 			uint8_t UidCL1[4];
 			MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
 			if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue))
@@ -81,94 +83,55 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 		}
 	}
 
-	if(State != STATE_AUTHED_IDLE)
-	{
-		if(BitCount==32)
-		{
-			if((Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B))
-			{
+	if (State != STATE_AUTHED_IDLE) {
+		if (BitCount==32) {
+			if ((Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
 				if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
 
-					uint8_t CardNonce[4]={0x01,0x20,0x01,0x45};
+					uint8_t CardNonce[4]={0x01, 0x20, 0x01, 0x45};
 
 					/* Generate a random nonce and read UID and key from memory */
 					RandomGetBuffer(CardNonce, sizeof(CardNonce));
-					memcpy(data_svae,Buffer,4);
-					memcpy(data_svae+4,CardNonce,4);
+					memcpy(data_svae, Buffer, 4);
+					memcpy(data_svae+4, CardNonce, 4);
 
-					if(Buffer[0] == CMD_AUTH_B) keyb_falg=1;
-					else keyb_falg=0;
+					if (Buffer[0] == CMD_AUTH_B) 
+						keyb_falg = 1;
+					else
+						keyb_falg = 0;
 
 					State = STATE_AUTHING;
 
 					for (uint8_t i=0; i<sizeof(CardNonce); i++)
-					Buffer[i] = CardNonce[i];
+						Buffer[i] = CardNonce[i];
 
 					return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
 				}
 			}
 		}
 		////返回8位加密
-		if(BitCount==64 && State==STATE_AUTHING)
-		{
-			//LEDPulse(LED_RED);
-				/*switch(GlobalSettings.ActiveSetting)
-				{
-					case 0:
-					LEDPulse(LED_ONE);
-					break;
-					case 1:
-					LEDPulse(LED_TWO);
-					break;
-					case 2:
-					LEDPulse(LED_THREE);
-					break;
-					case 3:
-					LEDPulse(LED_FOUR);
-					break;
-					case 4:
-					LEDPulse(LED_FIVE);
-					break;
-					case 5:
-					LEDPulse(LED_SIX);
-					break;
-					case 6:
-					LEDPulse(LED_SEVEN);
-					break;
-					case 7:
-					LEDPulse(LED_EIGHT);
-					break;
-					default:
-					break;
-				}*/
+		if (BitCount==64 && State == STATE_AUTHING) {
 		//储存信息
-		memcpy(data_svae+8,Buffer,8);
+			memcpy(data_svae+8, Buffer, 8);
 
-		if(!keyb_falg)
-		{
-		MemoryWriteBlock(data_svae, (turn_falga+1) * MEM_BYTES_PER_BLOCK+4096, MEM_BYTES_PER_BLOCK);
-		turn_falga++;
-		turn_falga = turn_falga % 6;
-		}	
-		else
-		{
-		MemoryWriteBlock(data_svae, (turn_falgb) * MEM_BYTES_PER_BLOCK + 112+4096, MEM_BYTES_PER_BLOCK);
-		turn_falgb++;
-		turn_falgb = turn_falgb % 6;
-		}
+			if (!keyb_falg) {
+				MemoryWriteBlock(data_svae, (turn_falga+1) * MEM_BYTES_PER_BLOCK+4096, MEM_BYTES_PER_BLOCK);
+				turn_falga++;
+				turn_falga = turn_falga % 6;
+			} else {
+				MemoryWriteBlock(data_svae, (turn_falgb) * MEM_BYTES_PER_BLOCK + 112+4096, MEM_BYTES_PER_BLOCK);
+				turn_falgb++;
+				turn_falgb = turn_falgb % 6;
+			}
 				
 		}
 	}
 
-
 	/* No response has been sent, when we reach here */
     return ISO14443A_APP_NO_RESPONSE;
-
  }
 
- void MifareDetectionInit(void)
- {
-     //这里可以改下，因为是函数指针。
+ void MifareDetectionInit(void)  {
 	 State = STATE_IDLE;
 	 CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
 	 CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
@@ -176,5 +139,4 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
  void MifareDetectionReset(void)
  {
-	//State = STATE_IDLE;
  }
