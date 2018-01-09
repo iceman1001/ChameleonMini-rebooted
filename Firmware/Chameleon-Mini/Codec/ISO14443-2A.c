@@ -454,8 +454,7 @@ void ISO14443ACodecTask(void) {
                 /* We have to generate the parity bits ourself */
                 for (uint8_t i = 0; i < (AnswerBitCount / 8); i++) {
                     /* For each whole byte, generate a parity bit. */
-                    CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET + i] =
-                            ODD_PARITY(CodecBuffer[i]);
+                    CodecBuffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(CodecBuffer[i]);
                 }
             }
         } else {
