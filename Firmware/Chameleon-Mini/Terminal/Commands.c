@@ -270,7 +270,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
 	 for (i = 0; i < size; i++)
 	 {
 		 s = newFileName[i];
-		 t = genFun(size, key, i) ^ s;
+		 t = (genFun(size, key, i)) ^ s;
 		 toBeEncFileName[i] = t;
 	 }
  }
