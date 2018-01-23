@@ -3,7 +3,6 @@
 #include "Configuration.h"
 #include <string.h>
 #include "LED.h"
-#include "Log.h"
 #include "Memory.h"
 #include "Terminal/CommandLine.h"
 #include "System.h"
