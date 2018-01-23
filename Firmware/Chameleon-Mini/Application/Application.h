@@ -10,7 +10,6 @@
 
 #include "../Common.h"
 #include "../Configuration.h"
-#include "../Log.h"
 
 /* Applications */
 #include "MifareClassic.h"
