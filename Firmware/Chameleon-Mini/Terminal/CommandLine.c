@@ -236,6 +236,13 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	.SetFunc 	= NO_FUNCTION,
 	.GetFunc 	= CommandGetRssi
   },
+  {
+	.Command	= COMMAND_PWD,
+	.ExecFunc 	= NO_FUNCTION,
+    .ExecParamFunc = NO_FUNCTION,
+	.SetFunc 	= NO_FUNCTION,
+	.GetFunc 	= CommandGetUltralightPassword
+  },  
 /*
   {
     .Command	= COMMAND_SYSTICK,
@@ -325,8 +332,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
   }
 };
 
-#define STATUS_TABLE_ENTRY(Id, Text) \
-  { Id, STRINGIFY(Id) ":" Text }
+#define STATUS_TABLE_ENTRY(Id, Text)  { Id, STRINGIFY(Id) ":" Text }
 
 typedef struct {
     CommandStatusIdType Id;
@@ -351,20 +357,16 @@ void (*CommandLinePendingTaskTimeout) (void) = NO_FUNCTION; // gets called on Ti
 static bool TaskPending = false;
 static uint16_t TaskPendingSince;
 
-static const char* GetStatusMessageP(CommandStatusIdType StatusId)
-{
+static const char* GetStatusMessageP(CommandStatusIdType StatusId) {
     uint8_t i;
-
     for (i = 0; i < ARRAY_COUNT(StatusTable); i++) {
         if (pgm_read_byte(&StatusTable[i].Id) == StatusId)
             return StatusTable[i].Message;
     }
-
     return (void*) 0;
 }
 
-static CommandStatusIdType CallCommandFunc(
-    const CommandEntryType* CommandEntry, char CommandDelimiter, char* pParam) {
+static CommandStatusIdType CallCommandFunc(	const CommandEntryType* CommandEntry, char CommandDelimiter, char* pParam) {
   char* pTerminalBuffer = (char*) TerminalBuffer;
   CommandStatusIdType Status = COMMAND_ERR_INVALID_USAGE_ID;
 
@@ -393,8 +395,7 @@ static CommandStatusIdType CallCommandFunc(
     /* This should not happen (TM) */
   }
 
-    if (Status == TIMEOUT_COMMAND)
-    {
+	if (Status == TIMEOUT_COMMAND) {
         TaskPending = true;
         TaskPendingSince = SystemGetSysTick();
     }
@@ -403,8 +404,7 @@ static CommandStatusIdType CallCommandFunc(
     return Status;
 }
 
-static void DecodeCommand(void)
-{
+static void DecodeCommand(void) {
   uint8_t i;
   bool CommandFound = false;
   CommandStatusIdType StatusId = COMMAND_ERR_UNKNOWN_CMD_ID;
@@ -425,9 +425,9 @@ static void DecodeCommand(void)
     /* Search in command table */
     for (i = 0; i < ARRAY_COUNT(CommandTable); i++) {
       if (strcmp_P(pTerminalBuffer, CommandTable[i].Command) == 0) {
+
         /* Command found. Clear buffer, and call appropriate function */
         char* pParam = ++pCommandDelimiter;
-
         pTerminalBuffer[0] = '\0';
         CommandFound = true;
 
@@ -452,114 +452,103 @@ static void DecodeCommand(void)
   }
 }
 
-void CommandLineInit(void)
-{
+void CommandLineInit(void) {
   BufferIdx = 0;
 }
 
-bool CommandLineProcessByte(uint8_t Byte) {
-  if (IS_CHARACTER(Byte)){
+bool CommandLineProcessByte(uint8_t b) {
+	if (IS_CHARACTER(b)) {
+		
     /* Store uppercase character */
-    if (IS_LOWERCASE(Byte)) {
-      Byte = TO_UPPERCASE(Byte);
-    }
+		if (IS_LOWERCASE(b))
+			b = TO_UPPERCASE(b);
 
     /* Prevent buffer overflow and account for '\0' */
-        if (BufferIdx < TERMINAL_BUFFER_SIZE - 1) {
-      TerminalBuffer[BufferIdx++] = Byte;
-    }
-  }else if (Byte == '\r') {
+		if (BufferIdx < TERMINAL_BUFFER_SIZE - 1)
+			TerminalBuffer[BufferIdx++] = b;
+
+	} else if (b == '\r') {
     /* Process on \r. Terminate string and decode. */
     TerminalBuffer[BufferIdx] = '\0';
     BufferIdx = 0;
 
         if (!TaskPending)
     DecodeCommand();
-  }else if (Byte == '\b') {
+
+	} else if (b == '\b') {
     /* Backspace. Delete last character in buffer. */
-    if (BufferIdx > 0) {
+		if (BufferIdx > 0)
       BufferIdx--;
-    }
-  } else if (Byte == 0x1B){
+
+	} else if (b == 0x1B) {
     /* Drop buffer on escape */
     BufferIdx = 0;
   } else {
     /* Ignore other chars */
   }
-
   return true;
 }
 
-INLINE void Timeout(void)
-{
+INLINE void Timeout(void) {
     TaskPending = false;
     TerminalSendStringP(GetStatusMessageP(COMMAND_ERR_TIMEOUT_ID));
     TerminalSendStringP(PSTR(STATUS_MESSAGE_TRAILER));
 
-    if (CommandLinePendingTaskTimeout != NO_FUNCTION)
-    {
+    if (CommandLinePendingTaskTimeout != NO_FUNCTION) {
         CommandLinePendingTaskTimeout(); // call the function that ends the task
         CommandLinePendingTaskTimeout = NO_FUNCTION;
     }
 }
 
-void CommandLineTick(void)
-{
-    if (TaskPending &&
-            GlobalSettings.ActiveSettingPtr->PendingTaskTimeout != 0 && // 0 means no timeout
-            SYSTICK_DIFF_100MS(TaskPendingSince) >= GlobalSettings.ActiveSettingPtr->PendingTaskTimeout) // timeout expired
-    {
+void CommandLineTick(void) {
+    if (TaskPending
+			 && GlobalSettings.ActiveSettingPtr->PendingTaskTimeout != 0	// 0 means no timeout
+             && SYSTICK_DIFF_100MS(TaskPendingSince) >= GlobalSettings.ActiveSettingPtr->PendingTaskTimeout) {	// timeout expired
         Timeout();
     }
 }
 
-void CommandLinePendingTaskBreak(void)
-{
+void CommandLinePendingTaskBreak(void) {
     if (!TaskPending)
         return;
 
     Timeout();
 }
 
-void CommandLinePendingTaskFinished(CommandStatusIdType ReturnStatusID, char const * const OutMessage)
-{
+void CommandLinePendingTaskFinished(CommandStatusIdType ReturnStatusID, char const * const OutMessage) {
     if (!TaskPending) // if no task is pending, no task can be finished
         return;
-    TaskPending = false;
 
+    TaskPending = false;
     TerminalSendStringP(GetStatusMessageP(ReturnStatusID));
     TerminalSendStringP(PSTR(STATUS_MESSAGE_TRAILER));
 
-    if (OutMessage != NULL)
-    {
+    if (OutMessage != NULL) {
         TerminalSendString(OutMessage);
         TerminalSendStringP(PSTR(OPTIONAL_ANSWER_TRAILER));
     }
 }
 
-void CommandLineAppendData(void const * const Buffer, uint16_t Bytes)
-{
+void CommandLineAppendData(void const * const Buffer, uint16_t Bytes) {
     char* pTerminalBuffer = (char*) TerminalBuffer;
 
-    uint16_t tmpBytes = Bytes;
+    uint16_t tmp = Bytes;
     if (Bytes > (TERMINAL_BUFFER_SIZE / 2))
-        tmpBytes = TERMINAL_BUFFER_SIZE / 2;
-    Bytes -= tmpBytes;
+        tmp = TERMINAL_BUFFER_SIZE / 2;
+    Bytes -= tmp;
 
-    BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer, tmpBytes);
+    BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer, tmp);
     TerminalSendString(pTerminalBuffer);
 
     uint8_t i = 1;
-    while (Bytes > (TERMINAL_BUFFER_SIZE / 2))
-    {
+    while (Bytes > (TERMINAL_BUFFER_SIZE / 2)) {
         Bytes -= TERMINAL_BUFFER_SIZE / 2;
         BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer + i * TERMINAL_BUFFER_SIZE / 2, TERMINAL_BUFFER_SIZE);
         TerminalSendString(pTerminalBuffer);
         i++;
     }
 
-    if (Bytes > 0)
-    {
+    if (Bytes > 0) {
         BufferToHexString(pTerminalBuffer, TERMINAL_BUFFER_SIZE, Buffer + i * TERMINAL_BUFFER_SIZE / 2, Bytes);
         TerminalSendString(pTerminalBuffer);
     }

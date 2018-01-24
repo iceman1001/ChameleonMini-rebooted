@@ -10,7 +10,6 @@
 
 #include "Button.h"
 #include "Configuration.h"
-#include "Log.h"
 #include "LED.h"
 #include "Memory.h"
 
@@ -24,7 +23,6 @@
  */
 typedef struct {
     ButtonActionEnum ButtonAction; /// Button action for this setting.
-    LogModeEnum LogMode; /// Log mode for this setting.
     ConfigurationEnum Configuration; /// Active configuration for this setting.
     uint16_t PendingTaskTimeout; /// Timeout for timeout commands for this setting, in multiples of 100 ms.
 } SettingsEntryType;

@@ -126,21 +126,21 @@ INLINE void FlashBufferToMemory(uint16_t PageAddress)
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 }
 
-INLINE void FlashRead(void* Buffer, uint32_t Address, uint16_t ByteCount)
+INLINE void FlashRead(void* Buffer, uint16_t Address, uint16_t ByteCount)
 {
 	while(FlashIsBusy());
 
 	MEMORY_FLASH_PORT.OUTCLR = MEMORY_FLASH_CS;
 	SPITransferByte(FLASH_CMD_READ);
-	SPITransferByte( (Address >> 16) & 0xFF );
+	//SPITransferByte( (Address >> 16) & 0xFF );
+	SPITransferByte( 0 );
 	SPITransferByte( (Address >> 8) & 0xFF );
 	SPITransferByte( (Address >> 0) & 0xFF );
 	SPIReadBlock(Buffer, ByteCount);
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 }
 
-INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
-{
+INLINE void FlashWrite(const void* Buffer, uint16_t Address, uint16_t ByteCount) {
 	while(ByteCount > 0) {
 		uint16_t PageAddress = Address / MEMORY_PAGE_SIZE;
 		uint8_t ByteAddress = Address % MEMORY_PAGE_SIZE;
@@ -155,8 +155,7 @@ INLINE void FlashWrite(const void* Buffer, uint32_t Address, uint16_t ByteCount)
 	}
 }
 
-INLINE void FlashClearPage(uint16_t PageAddress)
-{
+INLINE void FlashClearPage(uint16_t PageAddress) {
 	while(FlashIsBusy());
 
 	MEMORY_FLASH_PORT.OUTCLR = MEMORY_FLASH_CS;
@@ -167,8 +166,7 @@ INLINE void FlashClearPage(uint16_t PageAddress)
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 }
 
-int MemoryInit(void)
-{
+void MemoryInit(void) {
 	/* Configure MEMORY_FLASH_USART for SPI master mode 0 with maximum clock frequency */
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 	
@@ -186,31 +184,43 @@ int MemoryInit(void)
 	if ( !(FlashReadStatusRegister() & FLASH_STATUS_REG_PAGESIZE_BIT) ) {
 		/* Configure for 256 byte Dataflash if not already done. */
 		FlashConfigurePageSize();
-		//return 0;
 	}
-	return 1;
 }
 
-void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount)
-{
+void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount) {
 	if (ByteCount == 0)
 		return;
-	uint32_t FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
+
+	uint32_t FlashAddress;
+	if ( GlobalSettings.ActiveSetting == 0 )
+		FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_4K;
+	else
+		FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_1K;
+
 	FlashRead(Buffer, FlashAddress, ByteCount);
 }
 
-void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount)
-{
+void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount) {
 	if (ByteCount == 0)
 		return;
-	uint32_t FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING;
+	uint16_t FlashAddress;
+	if ( GlobalSettings.ActiveSetting == 0 )
+		FlashAddress = Address + (uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_4K;
+	else
+		FlashAddress = Address + (uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_1K;
 	FlashWrite(Buffer, FlashAddress, ByteCount);
 }
 
-void MemoryClear(void)
-{
-	uint32_t PageAddress = ((uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING) / MEMORY_PAGE_SIZE;
-	uint16_t PageCount = MEMORY_SIZE_PER_SETTING / MEMORY_PAGE_SIZE;
+void MemoryClear(void) {
+	uint16_t PageAddress;
+	uint16_t PageCount;
+	if ( GlobalSettings.ActiveSetting == 0 ) {
+		PageAddress = ((uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_4K) / MEMORY_PAGE_SIZE;
+		PageCount = MEMORY_SIZE_PER_SETTING_4K / MEMORY_PAGE_SIZE;
+	} else {
+		PageAddress = ((uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_1K) / MEMORY_PAGE_SIZE;
+		PageCount = MEMORY_SIZE_PER_SETTING_1K / MEMORY_PAGE_SIZE;
+	}
 
 	while(PageCount > 0) {
 		FlashClearPage(PageAddress);
@@ -218,46 +228,68 @@ void MemoryClear(void)
 		PageAddress++;
 	}
 }
-void MemoryRecall(void)
-{
+void MemoryRecall(void) {
 	/* Recall memory from permanent flash */
-	//FlashRead(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+	//FlashRead(Memory, (uint16_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 }
 
-void MemoryStore(void)
-{
+void MemoryStore(void) {
 	/* Store current memory into permanent flash */
-	// FlashWrite(Memory, (uint32_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
+	// FlashWrite(Memory, (uint16_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
 
 	// LEDTrigger(LED_MEMORY_CHANGED, LED_OFF);
 	// LEDTrigger(LED_MEMORY_STORED, LED_PULSE);
 }
 
-bool MemoryUploadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
-{
-    if (BlockAddress >= MEMORY_SIZE_PER_SETTING) {
+bool MemoryUploadBlock(void* Buffer, uint16_t BlockAddress, uint16_t ByteCount) {
+	if ( GlobalSettings.ActiveSetting == 0 ) {
+		if (BlockAddress >= MEMORY_SIZE_PER_SETTING_4K) {
         /* Prevent writing out of bounds by silently ignoring it */
         return true;
     } else {
     	/* Calculate bytes left in memory and start writing */
-    	uint32_t BytesLeft = MEMORY_SIZE_PER_SETTING - BlockAddress;
+			uint16_t BytesLeft = MEMORY_SIZE_PER_SETTING_4K - BlockAddress;
 		ByteCount = MIN(ByteCount, BytesLeft);
 		MemoryWriteBlock(Buffer, BlockAddress, ByteCount);
 		return true;
+		}
+	} else {
+		if (BlockAddress >= MEMORY_SIZE_PER_SETTING_1K) {
+			/* Prevent writing out of bounds by silently ignoring it */
+			return true;
+			} else {
+			/* Calculate bytes left in memory and start writing */
+			uint16_t BytesLeft = MEMORY_SIZE_PER_SETTING_1K - BlockAddress;
+			ByteCount = MIN(ByteCount, BytesLeft);
+			MemoryWriteBlock(Buffer, BlockAddress, ByteCount);
+			return true;
+		}
     }
 }
 
-bool MemoryDownloadBlock(void* Buffer, uint32_t BlockAddress, uint16_t ByteCount)
-{
-    if (BlockAddress >= MEMORY_SIZE_PER_SETTING) {
+bool MemoryDownloadBlock(void* Buffer, uint16_t BlockAddress, uint16_t ByteCount) {
+	if ( GlobalSettings.ActiveSetting == 0 ) {
+		if (BlockAddress >= MEMORY_SIZE_PER_SETTING_4K) {
         /* There are bytes out of bounds to be read. Notify that we are done. */
         return false;
     } else {
     	/* Calculate bytes left in memory and issue reading */
-    	uint32_t BytesLeft = MEMORY_SIZE_PER_SETTING - BlockAddress;
+    		uint16_t BytesLeft = MEMORY_SIZE_PER_SETTING_4K - BlockAddress;
 		ByteCount = MIN(ByteCount, BytesLeft);
     	MemoryReadBlock(Buffer, BlockAddress, ByteCount);
         return true;
+		}
+	} else {
+		if (BlockAddress >= MEMORY_SIZE_PER_SETTING_1K) {
+			/* There are bytes out of bounds to be read. Notify that we are done. */
+			return false;
+			} else {
+			/* Calculate bytes left in memory and issue reading */
+			uint16_t BytesLeft = MEMORY_SIZE_PER_SETTING_1K - BlockAddress;
+			ByteCount = MIN(ByteCount, BytesLeft);
+			MemoryReadBlock(Buffer, BlockAddress, ByteCount);
+			return true;
+		}
     }
 }
 

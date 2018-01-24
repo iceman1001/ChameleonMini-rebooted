@@ -383,9 +383,6 @@
     <Compile Include="Codec\ISO14443-2A.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Log.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="Map.c">
       <SubType>compile</SubType>
     </Compile>

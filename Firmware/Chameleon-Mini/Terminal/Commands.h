@@ -170,6 +170,9 @@ CommandStatusIdType CommandExecHelp(char* OutMessage);
 #define COMMAND_RSSI		"RSSIMY"
 CommandStatusIdType CommandGetRssi(char* OutParam);
 
+#define COMMAND_PWD			"PWDMY"
+CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
+
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 #define COMMAND_DETECTION	"DETECTIONMY"
 CommandStatusIdType CommandGetDetection(char* OutParam);

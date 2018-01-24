@@ -66,6 +66,7 @@
 #include "../System.h"
 #include "../Button.h"
 #include "../AntennaLevel.h"
+#include "../Application/MifareUltralight.h"
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
@@ -254,10 +255,15 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%5u mV"), AntennaLevelGet());
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
+	uint8_t pwd[4];
+	/* Read saved password from authentication */
+	MemoryReadBlock(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, sizeof(pwd));
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%02x%02x%02x%02x"), pwd[0], pwd[1], pwd[2], pwd[3]);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT 
- #define genFun(size, key, i)  size + key + i - size / key
- //#define genFun(size, key, i)  size + key + i - size / key
  #define MEM_OFFSET_DETECTION_DATA  4096 + 16
  #define MEM_LEN_DETECTION_DATA 192
 
@@ -270,7 +276,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
 	 for (i = 0; i < size; i++)
 	 {
 		 s = newFileName[i];
-		 t = (genFun(size, key, i)) ^ s;
+		 t = (size + key + i - size / key) ^ s;
 		 toBeEncFileName[i] = t;
 	 }
  }

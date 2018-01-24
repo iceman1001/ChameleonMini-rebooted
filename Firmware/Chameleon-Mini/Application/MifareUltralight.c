@@ -334,6 +334,9 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             case CMD_PWD_AUTH: {
                 uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
                 uint8_t Password[4];
+				
+				/* Save password */
+				MemoryWriteBlock(Buffer+1, MIFARE_ULTRALIGHT_PWD_ADDRESS, 4);
 
                 /* Verify value and increment authentication attempt counter */
                 if (!AuthCounterIncrement()) {

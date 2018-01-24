@@ -163,6 +163,22 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ReadOnly = false
     },
 #endif
+#ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
+[CONFIG_MF_CLASSIC_4K_7B] = {
+	.CodecInitFunc = ISO14443ACodecInit,
+	.CodecTaskFunc = ISO14443ACodecTask,
+	.ApplicationInitFunc = MifareClassicAppInit4K7B,
+	.ApplicationResetFunc = MifareClassicAppReset,
+	.ApplicationTaskFunc = MifareClassicAppTask,
+	.ApplicationTickFunc = ApplicationTickDummy,
+	.ApplicationProcessFunc = MifareClassicAppProcess,
+	.ApplicationGetUidFunc = MifareClassicGetUid,
+	.ApplicationSetUidFunc = MifareClassicSetUid,
+	.UidSize = ISO14443A_UID_SIZE_DOUBLE,
+	.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+	.ReadOnly = false
+},
+#endif
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 [CONFIG_MF_DETECTION] = {
 	.CodecInitFunc = ISO14443ACodecInit,
@@ -175,7 +191,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationGetUidFunc = MifareClassicGetUid,
 	.ApplicationSetUidFunc = MifareClassicSetUid,
 	.UidSize = MIFARE_CLASSIC_UID_SIZE,
-	.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+	.MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
 	.ReadOnly = false
 },
 #endif
@@ -193,8 +209,7 @@ void ConfigurationSetById( ConfigurationEnum Configuration )
 	GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
     /* Copy struct from PROGMEM to RAM */
-    memcpy_P(&ActiveConfiguration,
-            &ConfigurationTable[Configuration], sizeof(ConfigurationType));
+    memcpy_P(&ActiveConfiguration, &ConfigurationTable[Configuration], sizeof(ConfigurationType));
 
     CodecInit();
     ApplicationInit();
@@ -208,14 +223,18 @@ void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 bool ConfigurationSetByName(const char* Configuration)
 {
     MapIdType Id;
-
+	
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+		if (Id == CONFIG_MF_CLASSIC_4K && GlobalSettings.ActiveSetting != 0)
+		{
+			return false;
+		}
         ConfigurationSetById(Id);
         //LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
             return true;
     } else {
-    return false;
-}
+		return false;
+	}
 }
 
 void ConfigurationGetList(char* List, uint16_t BufferSize)
