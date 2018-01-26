@@ -29,12 +29,17 @@ typedef enum {
 	BUTTON_ACTION_COUNT
 } ButtonActionEnum;
 
+typedef enum {
+	BUTTON_PRESS_SHORT,
+	BUTTON_PRESS_LONG
+} ButtonTypeEnum;
+
 void ButtonInit(void);
 void ButtonTick(void);
 
 void ButtonGetActionList(char* ListOut, uint16_t BufferSize);
-void ButtonSetActionById(ButtonActionEnum Action);
-void ButtonGetActionByName(char* ActionOut, uint16_t BufferSize);
-bool ButtonSetActionByName(const char* Action);
+void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action);
+void ButtonGetActionByName(ButtonTypeEnum Type, char* ActionOut, uint16_t BufferSize);
+bool ButtonSetActionByName(ButtonTypeEnum Type, const char* Action);
 
 #endif /* BUTTON_H_ */
