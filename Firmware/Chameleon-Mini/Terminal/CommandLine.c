@@ -120,21 +120,14 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = CommandSetButton,
     .GetFunc    = CommandGetButton
   },
+  {
+	.Command    = COMMAND_BUTTON_LONG,
+	.ExecFunc   = CommandExecButtonLong,
+    .ExecParamFunc = NO_FUNCTION,
+	.SetFunc    = CommandSetButtonLong,
+	.GetFunc    = CommandGetButtonLong
+  },
   /*
-  {
-    .Command    = COMMAND_LBUTTON,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetLButton,
-    .GetFunc    = CommandGetLButton
-  },
-  {
-    .Command    = COMMAND_LBUTTON_LONG,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetLButtonLong,
-    .GetFunc    = CommandGetLButtonLong
-  },
   {
     .Command    = COMMAND_LEDGREEN,
     .ExecFunc   = NO_FUNCTION,

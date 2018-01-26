@@ -3,6 +3,8 @@
 #include "Common.h"
 #include "Settings.h"
 
+#define LONG_PRESS_TICK_COUNT	10
+
 static const char PROGMEM ButtonActionTable[][32] =
 {
     [BUTTON_ACTION_NONE] = "CLOSED",
@@ -20,100 +22,125 @@ void ButtonInit(void)
 	BUTTON_PORT.BUTTON_PINCTRL = PORT_OPC_PULLUP_gc;
 }
 
+static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
+{
+	uint8_t UidBuffer[32];
+
+	if (ButtonAction == BUTTON_ACTION_UID_RANDOM) {
+		for (uint8_t i=0; i<ActiveConfiguration.UidSize; i++) {
+			UidBuffer[i] = RandomGetByte();
+		}
+
+		ApplicationSetUid(UidBuffer);
+	} else if (ButtonAction == BUTTON_ACTION_UID_LEFT_INCREMENT) {
+		ApplicationGetUid(UidBuffer);
+		bool Carry = 1;
+		uint8_t i;
+
+		for (i=0; i<ActiveConfiguration.UidSize; i++) {
+			if (Carry) {
+				if (UidBuffer[i] == 0xFF) {
+					Carry = 1;
+				} else {
+					Carry = 0;
+				}
+
+				UidBuffer[i] = (UidBuffer[i] + 1) & 0xFF;
+			}
+		}
+
+		ApplicationSetUid(UidBuffer);
+	} else if (ButtonAction == BUTTON_ACTION_UID_RIGHT_INCREMENT) {
+		ApplicationGetUid(UidBuffer);
+		bool Carry = 1;
+		uint8_t i = ActiveConfiguration.UidSize;
+
+		while(i-- > 0) {
+			if (Carry) {
+				if (UidBuffer[i] == 0xFF) {
+					Carry = 1;
+				} else {
+					Carry = 0;
+				}
+
+				UidBuffer[i] = (UidBuffer[i] + 1) & 0xFF;
+			}
+		}
+
+		ApplicationSetUid(UidBuffer);
+	} else if (ButtonAction == BUTTON_ACTION_UID_LEFT_DECREMENT) {
+		ApplicationGetUid(UidBuffer);
+		bool Carry = 1;
+		uint8_t i;
+
+		for (i=0; i<ActiveConfiguration.UidSize; i++) {
+			if (Carry) {
+				if (UidBuffer[i] == 0x00) {
+					Carry = 1;
+				} else {
+					Carry = 0;
+				}
+
+				UidBuffer[i] = (UidBuffer[i] - 1) & 0xFF;
+			}
+		}
+
+		ApplicationSetUid(UidBuffer);
+	} else if (ButtonAction == BUTTON_ACTION_UID_RIGHT_DECREMENT) {
+		ApplicationGetUid(UidBuffer);
+		bool Carry = 1;
+		uint8_t i = ActiveConfiguration.UidSize;
+
+		while(i-- > 0) {
+			if (Carry) {
+				if (UidBuffer[i] == 0x00) {
+					Carry = 1;
+				} else {
+					Carry = 0;
+				}
+
+				UidBuffer[i] = (UidBuffer[i] - 1) & 0xFF;
+			}
+		}
+
+		ApplicationSetUid(UidBuffer);
+	} else if (ButtonAction == BUTTON_ACTION_CYCLE_SETTINGS) {
+		SettingsCycle();
+	}
+}
+
 void ButtonTick(void)
 {
-    static uint8_t LastButtonState = 0;
+    //static uint8_t LastButtonState = 0;
+    static uint8_t PressTickCounter = 0;
     uint8_t ThisButtonState = ~BUTTON_PORT.IN;
-    uint8_t ThisButtonChange = ThisButtonState ^ LastButtonState;
-    uint8_t ThisButtonPress = ThisButtonChange & ThisButtonState;
-    LastButtonState = ThisButtonState;
+    //uint8_t ThisButtonChange = ThisButtonState ^ LastButtonState;
+    //uint8_t ThisButtonPress = ThisButtonChange & ThisButtonState;
+    //LastButtonState = ThisButtonState;
 
-    if ( ThisButtonPress & BUTTON_MASK ) {
-        uint8_t UidBuffer[32];
-        ButtonActionEnum ButtonAction = GlobalSettings.ActiveSettingPtr->ButtonAction;
+    if (ThisButtonState & BUTTON_MASK) {
+    	/* Button is currently pressed */
+    	if (PressTickCounter < LONG_PRESS_TICK_COUNT) {
+    		/* Count ticks while button is being pressed */
+    		PressTickCounter++;
+    	} else if (PressTickCounter == LONG_PRESS_TICK_COUNT) {
+    		/* Long button press detected execute button action and advance PressTickCounter
+    		 * to an invalid state. */
+    		ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonLongAction);
+    		PressTickCounter++;
+    	} else {
+    		/* Button is still pressed, ignore */
+    	}
+    } else if (!(ThisButtonState & BUTTON_MASK)) {
+    	/* Button is currently not being pressed. Check if PressTickCounter contains
+    	 * a recent short button press. */
+    	if ( (PressTickCounter > 0) && (PressTickCounter <= LONG_PRESS_TICK_COUNT) ) {
+    		/* We have a short button press */
+    		ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonAction);
+    	}
 
-        if (ButtonAction == BUTTON_ACTION_UID_RANDOM) {
-            for (uint8_t i=0; i<ActiveConfiguration.UidSize; i++) {
-                UidBuffer[i] = RandomGetByte();
-            }
-
-            ApplicationSetUid(UidBuffer);
-        } else if (ButtonAction == BUTTON_ACTION_UID_LEFT_INCREMENT) {
-            ApplicationGetUid(UidBuffer);
-            bool Carry = 1;
-            uint8_t i;
-
-            for (i=0; i<ActiveConfiguration.UidSize; i++) {
-                if (Carry) {
-                    if (UidBuffer[i] == 0xFF) {
-                        Carry = 1;
-                    } else {
-                        Carry = 0;
-                    }
-
-                    UidBuffer[i] = (UidBuffer[i] + 1) & 0xFF;
-                }
-            }
-
-            ApplicationSetUid(UidBuffer);
-        } else if (ButtonAction == BUTTON_ACTION_UID_RIGHT_INCREMENT) {
-            ApplicationGetUid(UidBuffer);
-            bool Carry = 1;
-            uint8_t i = ActiveConfiguration.UidSize;
-
-            while(i-- > 0) {
-                if (Carry) {
-                    if (UidBuffer[i] == 0xFF) {
-                        Carry = 1;
-                    } else {
-                        Carry = 0;
-                    }
-
-                    UidBuffer[i] = (UidBuffer[i] + 1) & 0xFF;
-                }
-            }
-
-            ApplicationSetUid(UidBuffer);
-        } else if (ButtonAction == BUTTON_ACTION_UID_LEFT_DECREMENT) {
-            ApplicationGetUid(UidBuffer);
-            bool Carry = 1;
-            uint8_t i;
-
-            for (i=0; i<ActiveConfiguration.UidSize; i++) {
-                if (Carry) {
-                    if (UidBuffer[i] == 0x00) {
-                        Carry = 1;
-                    } else {
-                        Carry = 0;
-                    }
-
-                    UidBuffer[i] = (UidBuffer[i] - 1) & 0xFF;
-                }
-            }
-
-            ApplicationSetUid(UidBuffer);
-        } else if (ButtonAction == BUTTON_ACTION_UID_RIGHT_DECREMENT) {
-            ApplicationGetUid(UidBuffer);
-            bool Carry = 1;
-            uint8_t i = ActiveConfiguration.UidSize;
-
-            while(i-- > 0) {
-                if (Carry) {
-                    if (UidBuffer[i] == 0x00) {
-                        Carry = 1;
-                    } else {
-                        Carry = 0;
-                    }
-
-                    UidBuffer[i] = (UidBuffer[i] - 1) & 0xFF;
-                }
-            }
-
-            ApplicationSetUid(UidBuffer);
-        } else if (ButtonAction == BUTTON_ACTION_CYCLE_SETTINGS) {
-        	SettingsCycle();
-        }
-    }
+    	PressTickCounter = 0;
+	}
 }
 
 void ButtonGetActionList(char* ListOut, uint16_t BufferSize)
@@ -145,27 +172,49 @@ void ButtonGetActionList(char* ListOut, uint16_t BufferSize)
     *ListOut = '\0';
 }
 
-void ButtonSetActionById(ButtonActionEnum Action)
+void ButtonSetActionById(ButtonTypeEnum Type, ButtonActionEnum Action)
 {
-	GlobalSettings.ActiveSettingPtr->ButtonAction = Action;
+	#ifndef BUTTON_SETTING_GLOBAL
+	if (Type == BUTTON_PRESS_SHORT) {
+		GlobalSettings.ActiveSettingPtr->ButtonAction = Action;
+		} else if (Type == BUTTON_PRESS_LONG) {
+		GlobalSettings.ActiveSettingPtr->ButtonLongAction = Action;
+	}
+	#else
+	/* Write button action to all settings when using global settings */
+	for (uint8_t i=0; i<SETTINGS_COUNT; i++) {
+		if (Type == BUTTON_PRESS_SHORT) {
+			GlobalSettings.Settings[i].ButtonAction = Action;
+			} else if (Type == BUTTON_PRESS_LONG) {
+			GlobalSettings.Settings[i].ButtonLongAction = Action;
+		}
+	}
+	#endif
 }
 
-void ButtonGetActionByName(char* ActionOut, uint16_t BufferSize)
+void ButtonGetActionByName(ButtonTypeEnum Type, char* ActionOut, uint16_t BufferSize)
 {
-    strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonAction], BufferSize);
+	if (Type == BUTTON_PRESS_SHORT) {
+		strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonAction], BufferSize);
+		} else if (Type == BUTTON_PRESS_LONG) {
+		strncpy_P(ActionOut, ButtonActionTable[GlobalSettings.ActiveSettingPtr->ButtonLongAction], BufferSize);
+		} else {
+		/* Should not happen (TM) */
+		*ActionOut = '\0';
+	}
 }
 
-bool ButtonSetActionByName(const char* Action)
+bool ButtonSetActionByName(ButtonTypeEnum Type, const char* Action)
 {
-    uint8_t i;
+	uint8_t i;
 
-    for (i=0; i<BUTTON_ACTION_COUNT; i++) {
-        if (strcmp_P(Action, ButtonActionTable[i]) == 0) {
-            ButtonSetActionById(i);
-            return true;
-        }
-    }
+	for (i=0; i<BUTTON_ACTION_COUNT; i++) {
+		if (strcmp_P(Action, ButtonActionTable[i]) == 0) {
+			ButtonSetActionById(Type, i);
+			return true;
+		}
+	}
 
-    /* Button action not found */
-    return false;
+	/* Button action not found */
+	return false;
 }

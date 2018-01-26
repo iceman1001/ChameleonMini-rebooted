@@ -368,24 +368,6 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                 }
                 /* Returned counter length is 3 bytes */
                 MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
-				if (CounterId == 0x01)
-				{
-					Buffer[0] = 0x00;
-					Buffer[1] = 0x00;
-					Buffer[2] = 0x01;
-				}
-				else if (CounterId == 0x02)
-				{
-					Buffer[0] = 0x00;
-					Buffer[1] = 0x00;
-					Buffer[2] = 0x01;
-				}
-				else
-				{
-					Buffer[0] = 0x00;
-					Buffer[1] = 0x00;
-					Buffer[2] = 0x00;
-				}
                 ISO14443AAppendCRCA(Buffer, 3);
                 return (3 + ISO14443A_CRCA_SIZE) * 8;
             }

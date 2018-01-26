@@ -225,16 +225,17 @@ bool ConfigurationSetByName(const char* Configuration)
     MapIdType Id;
 	
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
+#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
 		if (Id == CONFIG_MF_CLASSIC_4K && GlobalSettings.ActiveSetting != 0)
 		{
 			return false;
 		}
+#endif
         ConfigurationSetById(Id);
-        //LogEntry(LOG_INFO_CONFIG_SET, Configuration, StringLength(Configuration, CONFIGURATION_NAME_LENGTH_MAX-1));
-            return true;
+        return true;
     } else {
-		return false;
-	}
+	return false;
+    }
 }
 
 void ConfigurationGetList(char* List, uint16_t BufferSize)

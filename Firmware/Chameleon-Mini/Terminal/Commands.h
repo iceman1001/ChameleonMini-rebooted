@@ -140,23 +140,11 @@ CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);
 CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam);
 
-/*
-#define COMMAND_RBUTTON      "RBUTTON"
-CommandStatusIdType CommandGetRButton(char* OutParam);
-CommandStatusIdType CommandSetRButton(char* OutMessage, const char* InParam);
+#define COMMAND_BUTTON_LONG "BUTTON_LONGMY"
+CommandStatusIdType CommandExecButtonLong(char* OutMessage);
+CommandStatusIdType CommandGetButtonLong(char* OutParam);
+CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam);
 
-#define COMMAND_RBUTTON_LONG "RBUTTON_LONG"
-CommandStatusIdType CommandGetRButtonLong(char* OutParam);
-CommandStatusIdType CommandSetRButtonLong(char* OutMessage, const char* InParam);
-
-#define COMMAND_LBUTTON      "LBUTTON"
-CommandStatusIdType CommandGetLButton(char* OutParam);
-CommandStatusIdType CommandSetLButton(char* OutMessage, const char* InParam);
-
-#define COMMAND_LBUTTON_LONG "LBUTTON_LONG"
-CommandStatusIdType CommandGetLButtonLong(char* OutParam);
-CommandStatusIdType CommandSetLButtonLong(char* OutMessage, const char* InParam);
-*/
 #define COMMAND_SETTING		"SETTINGMY"
 CommandStatusIdType CommandGetSetting(char* OutParam);
 CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam);
