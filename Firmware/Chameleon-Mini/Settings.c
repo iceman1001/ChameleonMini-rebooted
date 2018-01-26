@@ -16,6 +16,7 @@ SettingsType GlobalSettings = {
 	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 				.Configuration = DEFAULT_CONFIGURATION,
 				.ButtonAction = DEFAULT_BUTTON_ACTION,
+				.ButtonLongAction = DEFAULT_BUTTON_LONG_ACTION,
 				} 
 			}
 };
@@ -26,6 +27,7 @@ SettingsType EEMEM StoredSettings = {
 	.Settings = { [0 ... (SETTINGS_COUNT-1)] =	{
 			.Configuration = DEFAULT_CONFIGURATION,
 			.ButtonAction = DEFAULT_BUTTON_ACTION,
+			.ButtonLongAction = DEFAULT_BUTTON_LONG_ACTION,
 			}
 		}
 };
