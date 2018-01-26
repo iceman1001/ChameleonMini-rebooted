@@ -188,23 +188,48 @@ CommandStatusIdType CommandGetUidSize(char* OutParam) {
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandExecButton(char* OutMessage) {
-    ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
+CommandStatusIdType CommandExecButton(char* OutMessage)
+{
+	ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandGetButton(char* OutParam) {
-    ButtonGetActionByName(OutParam, TERMINAL_BUFFER_SIZE);
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
+CommandStatusIdType CommandGetButton(char* OutParam)
+{
+	ButtonGetActionByName(BUTTON_PRESS_SHORT, OutParam, TERMINAL_BUFFER_SIZE);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam) {
-    if (ButtonSetActionByName(InParam)) {
-        SettingsSave();
-        return COMMAND_INFO_OK_ID;
-    } else {
-        return COMMAND_ERR_INVALID_PARAM_ID;
-    }
+CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
+{
+	if (ButtonSetActionByName(BUTTON_PRESS_SHORT, InParam)) {
+		SettingsSave();
+		return COMMAND_INFO_OK_ID;
+		} else {
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+}
+
+CommandStatusIdType CommandExecButtonLong(char* OutMessage)
+{
+	ButtonGetActionList(OutMessage, TERMINAL_BUFFER_SIZE);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetButtonLong(char* OutParam)
+{
+	ButtonGetActionByName(BUTTON_PRESS_LONG, OutParam, TERMINAL_BUFFER_SIZE);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam)
+{
+	if (ButtonSetActionByName(BUTTON_PRESS_LONG, InParam)) {
+		SettingsSave();
+		return COMMAND_INFO_OK_ID;
+		} else {
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
 }
 
 CommandStatusIdType CommandGetSetting(char* OutParam) {
