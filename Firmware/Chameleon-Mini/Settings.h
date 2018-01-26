@@ -23,6 +23,7 @@
  */
 typedef struct {
     ButtonActionEnum ButtonAction; /// Button action for this setting.
+	ButtonActionEnum ButtonLongAction; /// Long button action for this setting.
     ConfigurationEnum Configuration; /// Active configuration for this setting.
     uint16_t PendingTaskTimeout; /// Timeout for timeout commands for this setting, in multiples of 100 ms.
 } SettingsEntryType;
