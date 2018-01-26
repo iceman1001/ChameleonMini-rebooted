@@ -111,12 +111,12 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 
 void ButtonTick(void)
 {
-    static uint8_t LastButtonState = 0;
+    //static uint8_t LastButtonState = 0;
     static uint8_t PressTickCounter = 0;
     uint8_t ThisButtonState = ~BUTTON_PORT.IN;
     //uint8_t ThisButtonChange = ThisButtonState ^ LastButtonState;
     //uint8_t ThisButtonPress = ThisButtonChange & ThisButtonState;
-    LastButtonState = ThisButtonState;
+    //LastButtonState = ThisButtonState;
 
     if (ThisButtonState & BUTTON_MASK) {
     	/* Button is currently pressed */
