@@ -32,8 +32,8 @@ To upgrade the firmware of your ChameleonMini
 For RevG owners,  
 please visit the [Getting Started page](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
-For RevE Rebooted owners,
-plese visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Flashing---windows)
+For RevE Rebooted owners,  
+please visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Flashing---windows)
 
 ## Supported Cards and Codecs
 --------------------------
