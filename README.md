@@ -40,7 +40,16 @@ please visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-
 See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
 
 ## GUI 
-There is a partial source code release for the GUI.  Look at the issues to find the url to pastebin.
+Based on the partial source code release for the GUI we created a new GUI.
+[iceman Chameleon Mini GUI](https://github.com/iceman1001/ChameleonMini-rebootedGUI) 
+It is a windows .net based software and it is really nice to work with.
+Has support for Chameleon Mini revE / revG commands
+and dump management,  
+and color templates for dumps,
+and multilanguage
+
+Built by @bogition and @iceman1001
+
 
 
 ## Questions
