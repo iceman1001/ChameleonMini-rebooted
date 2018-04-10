@@ -2,6 +2,8 @@
 #define CRYPTO1_H
 
 #include <stdint.h>
+#include "Crypto1_asm.h"
+#include <avr/pgmspace.h>
 
 /* Gets the current keystream-bit, without shifting the internal LFSR */
 uint8_t Crypto1FilterOutput(void);
@@ -18,6 +20,9 @@ uint8_t Crypto1Byte(void);
 
 /* Generate 4 Bits of key stream */
 uint8_t Crypto1Nibble(void);
+
+/* Generate 1 Bit of key stream */
+uint8_t Crypto1Bit(uint8_t In, uint8_t AuthFilter);
 
 /* Execute 'ClockCount' cycles on the PRNG state 'State' */
 void Crypto1PRNG(uint8_t State[4], uint16_t ClockCount);

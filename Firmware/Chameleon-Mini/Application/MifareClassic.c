@@ -335,7 +335,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 uint16_t KeyAddress = (uint16_t) SectorAddress * MEM_BYTES_PER_BLOCK + KeyOffset;
                 uint8_t Key[6];
                 uint8_t Uid[4];
-			uint8_t CardNonce[4]={0x01,0x20,0x01,0x45};
+			    uint8_t CardNonce[4]={0x01,0x20,0x01,0x45};
+                uint8_t CardNonceSuccessor1[4]={0x63, 0xe5, 0xbc, 0xa7};
+                uint8_t CardNonceSuccessor2[4]={0x99, 0x37, 0x30, 0xbd};
 
                 /* Generate a random nonce and read UID and key from memory */
                 //RandomGetBuffer(CardNonce, sizeof(CardNonce));
@@ -346,16 +348,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 MemoryReadBlock(Key, KeyAddress, MEM_KEY_SIZE);
 
                 /* Precalculate the reader response from card-nonce */
-                for (uint8_t i=0; i<sizeof(ReaderResponse); i++)
-                    ReaderResponse[i] = CardNonce[i];
-
-                Crypto1PRNG(ReaderResponse, 64);
+                memcpy(ReaderResponse,CardNonceSuccessor1,4);
 
                 /* Precalculate our response from the reader response */
-                for (uint8_t i=0; i<sizeof(CardResponse); i++)
-                    CardResponse[i] = ReaderResponse[i];
-
-                Crypto1PRNG(CardResponse, 32);
+                memcpy(CardResponse,CardNonceSuccessor2,4);
 
                 /* Respond with the random card nonce and expect further authentication
                 * form the reader in the next frame. */
