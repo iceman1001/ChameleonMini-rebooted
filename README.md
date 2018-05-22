@@ -14,9 +14,8 @@ After talks with manufacturer, they also came to the conclusion that it should b
 Since this firmware isn't in the official Chameleon mini repo,  I decided to make a 'iceman fork' of it.*
 
 ## Donate
-<a href='https://pledgie.com/campaigns/35206'><img alt='Click here to lend your support to: Iceman&#x27;s donation fund and make a donation at pledgie.com !' src='https://pledgie.com/campaigns/35206.png?skin_name=chrome' border='0' ></a>
-
-https://paypal.me/iceman1001/ Feel free to donate. All support is welcome.
+Feel free to donate. All support is welcome.
+https://paypal.me/iceman1001/ 
 
 monereo:  43mNJLpgBVaTvyZmX9ajcohpvVkaRy1kbZPm8tqAb7itZgfuYecgkRF36rXrKFUkwEGeZedPsASRxgv4HPBHvJwyJdyvQuP
 
@@ -70,3 +69,4 @@ A list of those who contributed to this repo in order to make it work. The commu
 -  @bogiton
 -  @doegox
 -  @ceres-c
+-  @iskuri

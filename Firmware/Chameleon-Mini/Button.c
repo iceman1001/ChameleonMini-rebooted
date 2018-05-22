@@ -27,7 +27,15 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 	uint8_t UidBuffer[32];
 
 	if (ButtonAction == BUTTON_ACTION_UID_RANDOM) {
-		for (uint8_t i=0; i<ActiveConfiguration.UidSize; i++) {
+
+		/* iceman,   2018,  this random functionality could be more localized to the current cardtype in use.
+			ie.  for Ultralight based cards with 7byte uid,  skip manufacturing byte
+		*/
+
+		ApplicationGetUid(UidBuffer);
+
+		/* skip manufacturing byte UID0 */
+		for (uint8_t i=1; i<ActiveConfiguration.UidSize-1; i++) {
 			UidBuffer[i] = RandomGetByte();
 		}
 
