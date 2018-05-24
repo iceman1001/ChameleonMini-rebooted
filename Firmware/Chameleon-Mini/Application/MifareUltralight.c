@@ -203,7 +203,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
     /* Handle the compatibility write command */
     if (ArmedForCompatWrite) {
         ArmedForCompatWrite = false;
-        AppWritePage(CompatWritePageAddress, &Buffer[2]);
+        AppWritePage(CompatWritePageAddress, &Buffer[0]);
         Buffer[0] = ACK_VALUE;
         return ACK_FRAME_SIZE;
     }
