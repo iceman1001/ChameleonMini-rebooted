@@ -23,6 +23,8 @@
 #define MEMORY_SIZE_PER_SETTING_4K	4096
 #define MEMORY_SIZE_PER_SETTING_1K	1024
 
+void FlashReadManufacturerDeviceInfo(void* Buffer);
+
 void MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount);
