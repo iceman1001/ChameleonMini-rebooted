@@ -79,6 +79,7 @@ INLINE bool FlashIsBusy(void)
 	return !(FlashReadStatusRegister() & FLASH_STATUS_REG_READY_BIT);
 }
 
+// 256b size
 INLINE void FlashConfigurePageSize(void)
 {
 	uint8_t Sequence[] = {0x3D, 0x2A, 0x80, 0xA6};
