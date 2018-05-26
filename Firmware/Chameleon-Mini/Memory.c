@@ -20,6 +20,7 @@
 #define FLASH_CMD_BUF1_TO_MEM_ERASE		0x83
 #define FLASH_CMD_BUF2_TO_MEM_ERASE		0x86
 #define FLASH_CMD_PAGE_ERASE			0x81
+#define FLASH_CMD_READMANUFDEVICEINFO   0x9F
 
 #define FLASH_STATUS_REG_READY_BIT		(1<<7)
 #define FLASH_STATUS_REG_COMP_BIT		(1<<6)
@@ -163,6 +164,15 @@ INLINE void FlashClearPage(uint16_t PageAddress) {
 	SPITransferByte( (PageAddress >> 8) & 0xFF );
 	SPITransferByte( (PageAddress >> 0) & 0xFF );
 	SPITransferByte( 0 );
+	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
+}
+
+void FlashReadManufacturerDeviceInfo(void* Buffer) {
+	while(FlashIsBusy());
+
+	MEMORY_FLASH_PORT.OUTCLR = MEMORY_FLASH_CS;
+	SPITransferByte(FLASH_CMD_READMANUFDEVICEINFO);
+	SPIReadBlock(Buffer, 4);
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 }
 

@@ -167,6 +167,10 @@ CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
 
+#define COMMAND_SPI_FLASH_INFO  "SPI_FLASH_INFOMY"
+CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage);
+CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam);
+
 #define COMMAND_LIST_END    ""
 
 /* Defines the end of command list. This is no actual command */
