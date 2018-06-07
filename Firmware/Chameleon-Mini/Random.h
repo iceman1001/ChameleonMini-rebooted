@@ -8,6 +8,7 @@
 #ifndef RANDOM_H_
 #define RANDOM_H_
 
+#include <stdlib.h>
 #include "Common.h"
 
 void RandomInit(void);
