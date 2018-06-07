@@ -88,10 +88,11 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 			if ((Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
 				if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
 
-					uint8_t CardNonce[4]={0x01, 0x20, 0x01, 0x45};
+					uint8_t CardNonce[4] = {0};
 
 					/* Generate a random nonce and read UID and key from memory */
 					RandomGetBuffer(CardNonce, sizeof(CardNonce));
+					
 					memcpy(data_svae, Buffer, 4);
 					memcpy(data_svae+4, CardNonce, 4);
 
@@ -112,14 +113,23 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 		////返回8位加密
 		if (BitCount==64 && State == STATE_AUTHING) {
 		//储存信息
-			memcpy(data_svae+8, Buffer, 8);
+			memcpy(data_svae + 8, Buffer, 8);
 
 			if (!keyb_falg) {
-				MemoryWriteBlock(data_svae, (turn_falga+1) * MEM_BYTES_PER_BLOCK+4096, MEM_BYTES_PER_BLOCK);
+				
+				// MEM_OFFSET_DETECTION_DATA				
+				//#define MEM_OFFSET_DETECTION_DATA  4096 + 16
+				// Since there is lots more of space in flashmemory,  it should be able to save many more nonces.
+				// also, current implementation overwrites memory space for next slot.
+				//
+				// KEY A) 0,1,2,3,4,5  *  16 + 4096 
+				// KEY B) 0,1,2,3,4,5  *  16 + +112 + 4096 
+				// 5*16 ? 
+				MemoryWriteBlock(data_svae, (turn_falga * MEM_BYTES_PER_BLOCK) + 4096, MEM_BYTES_PER_BLOCK);
 				turn_falga++;
 				turn_falga = turn_falga % 6;
 			} else {
-				MemoryWriteBlock(data_svae, (turn_falgb) * MEM_BYTES_PER_BLOCK + 112+4096, MEM_BYTES_PER_BLOCK);
+				MemoryWriteBlock(data_svae, (turn_falgb * MEM_BYTES_PER_BLOCK) + 112 + 4096, MEM_BYTES_PER_BLOCK);
 				turn_falgb++;
 				turn_falgb = turn_falgb % 6;
 			}
@@ -131,12 +141,11 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
     return ISO14443A_APP_NO_RESPONSE;
  }
 
- void MifareDetectionInit(void)  {
+ void MifareDetectionInit(void) {
 	 State = STATE_IDLE;
 	 CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
 	 CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
  }
 
- void MifareDetectionReset(void)
- {
+ void MifareDetectionReset(void) {
  }
