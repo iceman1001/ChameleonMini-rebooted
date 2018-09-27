@@ -58,7 +58,7 @@
 
 #include "../Common.h"
 
-#define MAX_COMMAND_LENGTH          16
+#define MAX_COMMAND_LENGTH          16 // If this is more than 16 bytes, my unit becomes unresponvise with 8th entry.
 #define MAX_STATUS_LENGTH           32
 
 
@@ -167,7 +167,7 @@ CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
 
-#define COMMAND_SPI_FLASH_INFO  "SPI_FLASH_INFOMY"
+#define COMMAND_SPI_FLASH_INFO  "SPI_FLASHINFOMY"
 CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage);
 CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam);
 
