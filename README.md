@@ -14,8 +14,7 @@ After talks with manufacturer, they also came to the conclusion that it should b
 Since this firmware isn't in the official Chameleon mini repo,  I decided to make a 'iceman fork' of it.*
 
 ## Donate
-Feel free to donate. All support is welcome.
-https://paypal.me/iceman1001/ 
+https://www.patreon.com/iceman1001  Feel free to donate. All support is welcome.
 
 monereo:  43mNJLpgBVaTvyZmX9ajcohpvVkaRy1kbZPm8tqAb7itZgfuYecgkRF36rXrKFUkwEGeZedPsASRxgv4HPBHvJwyJdyvQuP
 
