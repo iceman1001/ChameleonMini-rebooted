@@ -1,4 +1,4 @@
-ChameleonMini RevE - rebooted
+ChameleonMini RevE - Rebooted
 =============================
 
 [![Build Status](https://travis-ci.org/iceman1001/ChameleonMini-rebooted.svg?branch=master)](https://travis-ci.org/iceman1001/ChameleonMini-rebooted)
@@ -6,7 +6,7 @@ ChameleonMini RevE - rebooted
 
 ![Image chameleon mini revE - rebooted](http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg)
 
-# Attribution from LICENSE.TXT
+# Attribution LICENSE
 "Based on the open-source NFC tool ChameleonMini:
 https://github.com/emsec/ChameleonMini"
 
@@ -57,8 +57,6 @@ and multilanguage
 
 Built by @bogition and @iceman1001
 
-
-
 ## Questions
 ---------
 If you have any questions, please visit the issues page to the related hardware device you own and ask your questions there so everyone benefits from the answer.
@@ -77,6 +75,15 @@ The code repository contains
 * Firmware: The complete firmware including a modified Atmel DFU bootloader and LUFA
 * Software: Contains a python tool for an easy configuration (and more) of the ChameleonMini, Note that this is currently under construction
 
+## Where to buy?
+------------------------
+| Shop | URL | Device |
+| ------ | ------ | ------ |
+| Kaos | [https://shop.kasper.it/][store1] | Rev G |
+| Lab401 | [https://lab401.com/][store2] | Rev E Rebooted |
+| rfxsecure | [https://www.rfxsecure.com/][store3] | Rev E Rebooted |
+
+
 ## Perpetual glory!
 
 A list of those who contributed to this repo in order to make it work. The community owns you all a deep and sincere thank you.
@@ -84,3 +91,7 @@ A list of those who contributed to this repo in order to make it work. The commu
 -  @doegox
 -  @ceres-c
 -  @iskuri
+
+   [store1]: <https://shop.kasper.it/>
+   [store2]: <https://lab401.com/>
+   [store3]: <https://www.rfxsecure.com/>
