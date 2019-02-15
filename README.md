@@ -29,7 +29,6 @@ monereo:  43mNJLpgBVaTvyZmX9ajcohpvVkaRy1kbZPm8tqAb7itZgfuYecgkRF36rXrKFUkwEGeZe
 Let us make this fork awesume to play with. Do please play with it. Get excited and experiment with your enhanced Chameleon Mini device!
 
 ## First Steps
------------
 This repo is focused on RevE Rebooted,    you can find useful information on [our wiki here](https://github.com/iceman1001/ChameleonMini-rebooted/wiki)
 
 ### To upgrade the firmware of your ChameleonMini
@@ -42,7 +41,6 @@ please visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-
 
 
 ## Supported Cards and Codecs
---------------------------
 See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
 
 
@@ -58,7 +56,6 @@ and multilanguage
 Built by @bogition and @iceman1001
 
 ## Questions
----------
 If you have any questions, please visit the issues page to the related hardware device you own and ask your questions there so everyone benefits from the answer.
 
 For RevG owners,  
@@ -69,14 +66,12 @@ please visit the [REV_E Rebooted Issues page](https://github.com/iceman1001/Cham
 
 
 ## Repository Structure
---------------------
 The code repository contains
 * Drivers: Chameleon drivers for Windows and Linux
 * Firmware: The complete firmware including a modified Atmel DFU bootloader and LUFA
 * Software: Contains a python tool for an easy configuration (and more) of the ChameleonMini, Note that this is currently under construction
 
 ## Where to buy?
-------------------------
 | Shop | URL | Device |
 | ------ | ------ | ------ |
 | Kaos | [https://shop.kasper.it/][store1] | Rev G |
@@ -85,7 +80,6 @@ The code repository contains
 
 
 ## Perpetual glory!
-
 A list of those who contributed to this repo in order to make it work. The community owns you all a deep and sincere thank you.
 -  @bogiton
 -  @doegox
