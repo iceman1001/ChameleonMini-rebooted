@@ -1,10 +1,16 @@
-ChameleonMini-rebooted
-======================
+ChameleonMini RevE - rebooted
+=============================
 
 [![Build Status](https://travis-ci.org/iceman1001/ChameleonMini-rebooted.svg?branch=master)](https://travis-ci.org/iceman1001/ChameleonMini-rebooted)
 [![Latest release](https://img.shields.io/github/release/iceman1001/ChameleonMini-rebooted.svg)](https://github.com/iceman1001/ChameleonMini-rebooted/releases/latest)
 
 ![Image chameleon mini revE - rebooted](http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg)
+
+# Attribution from LICENSE.TXT
+"Based on the open-source NFC tool ChameleonMini:
+https://github.com/emsec/ChameleonMini"
+
+[license](https://github.com/iceman1001/ChameleonMini-rebooted/blob/master/LICENSE.txt)
 
 # Excited news!
 
@@ -18,6 +24,7 @@ https://www.patreon.com/iceman1001  Feel free to donate. All support is welcome.
 
 monereo:  43mNJLpgBVaTvyZmX9ajcohpvVkaRy1kbZPm8tqAb7itZgfuYecgkRF36rXrKFUkwEGeZedPsASRxgv4HPBHvJwyJdyvQuP
 
+
 ## Notice      
 Let us make this fork awesume to play with. Do please play with it. Get excited and experiment with your enhanced Chameleon Mini device!
 
@@ -25,7 +32,7 @@ Let us make this fork awesume to play with. Do please play with it. Get excited 
 -----------
 This repo is focused on RevE Rebooted,    you can find useful information on [our wiki here](https://github.com/iceman1001/ChameleonMini-rebooted/wiki)
 
-To upgrade the firmware of your ChameleonMini
+### To upgrade the firmware of your ChameleonMini
 
 For RevG owners,  
 please visit the [Getting Started page](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
@@ -33,9 +40,11 @@ please visit the [Getting Started page](http://rawgit.com/emsec/ChameleonMini/ma
 For RevE Rebooted owners,  
 please visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Flashing---windows)
 
+
 ## Supported Cards and Codecs
 --------------------------
 See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
+
 
 ## GUI 
 Based on the partial source code release for the GUI we created a new GUI.
@@ -52,7 +61,13 @@ Built by @bogition and @iceman1001
 
 ## Questions
 ---------
-If you have any questions, please visit the [Issues page](https://github.com/emsec/ChameleonMini/issues) and ask your questions there so everyone benefits from the answer.
+If you have any questions, please visit the issues page to the related hardware device you own and ask your questions there so everyone benefits from the answer.
+
+For RevG owners,  
+please visit the [REV_G Issues page](https://github.com/emsec/ChameleonMini/issues) 
+
+For RevE Rebooted owners,  
+please visit the [REV_E Rebooted Issues page](https://github.com/iceman1001/ChameleonMini-rebooted/issues)
 
 
 ## Repository Structure
