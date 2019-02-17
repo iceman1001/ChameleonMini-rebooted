@@ -71,7 +71,8 @@
 extern const PROGMEM CommandEntryType CommandTable[];
 
 CommandStatusIdType CommandGetVersion(char* OutParam) {
-	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon-new-1.0"));
+	//snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon-new-1.0"));
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon Mini %s v%d.%d (%s)"),FIRMWARE_NAME, FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR, FIRMWARE_FORK_AUTHOR );
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
@@ -205,7 +206,7 @@ CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
 	if (ButtonSetActionByName(BUTTON_PRESS_SHORT, InParam)) {
 		SettingsSave();
 		return COMMAND_INFO_OK_ID;
-		} else {
+	} else {
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	}
 }
@@ -227,7 +228,7 @@ CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam)
 	if (ButtonSetActionByName(BUTTON_PRESS_LONG, InParam)) {
 		SettingsSave();
 		return COMMAND_INFO_OK_ID;
-		} else {
+	} else {
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	}
 }
@@ -280,6 +281,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%5u mV"), AntennaLevelGet());
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 	uint8_t pwd[4];
 	/* Read saved password from authentication */
@@ -322,9 +324,9 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 
 	 /* send data + CRC */
 	 for(uint16_t num=0; num < 208+2; num++)
-	 TerminalSendChar(OutParam[num]);
+		TerminalSendChar(OutParam[num]);
 
-	 OutParam[0]=0;
+	 OutParam[0] = 0;
 	 return COMMAND_INFO_OK_ID;
  }
 

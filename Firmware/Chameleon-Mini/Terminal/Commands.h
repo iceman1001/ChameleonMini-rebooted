@@ -61,6 +61,11 @@
 #define MAX_COMMAND_LENGTH          16 // If this is more than 16 bytes, my unit becomes unresponvise with 8th entry.
 #define MAX_STATUS_LENGTH           32
 
+// Firmware version details.
+#define FIRMWARE_VERSION_MAJOR			1
+#define FIRMWARE_VERSION_MINOR 			2
+#define FIRMWARE_NAME					"Rebooted"
+#define FIRMWARE_FORK_AUTHOR			"Iceman"
 
 #define COMMAND_INFO_OK_ID              100
 #define COMMAND_INFO_OK                 "OK"

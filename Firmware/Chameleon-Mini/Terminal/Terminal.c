@@ -1,12 +1,9 @@
-
 #include "Terminal.h"
 #include "../System.h"
 #include "../LED.h"
-
 #include "../LUFADescriptors.h"
 
 #define INIT_DELAY		(2000 / SYSTEM_TICK_MS)
-
 
 USB_ClassInfo_CDC_Device_t TerminalHandle = {
     .Config = {
@@ -37,30 +34,22 @@ void TerminalSendString(const char* s) {
 
 void TerminalSendStringP(const char* s) {
     char c;
-
     while( (c = pgm_read_byte(s++)) != '\0' ) {
         TerminalSendChar(c);
     }
 }
 
 #if 0
-void TerminalSendBuffer(void* Buffer, uint16_t ByteCount)
-{
+void TerminalSendBuffer(void* Buffer, uint16_t ByteCount) {
     char* pTerminalBuffer = (char*) TerminalBuffer;
-
     BufferToHexString(pTerminalBuffer, sizeof(TerminalBuffer), Buffer, ByteCount);
-
     TerminalSendString(pTerminalBuffer);
 }
 #endif
 
-
-
-void TerminalSendBlock(const void* Buffer, uint16_t ByteCount)
-{
+void TerminalSendBlock(const void* Buffer, uint16_t ByteCount) {
     CDC_Device_SendData(&TerminalHandle, Buffer, ByteCount);
 }
-
 
 static void ProcessByte(void) {
     int16_t Byte = CDC_Device_ReceiveByte(&TerminalHandle);
@@ -77,8 +66,7 @@ static void ProcessByte(void) {
     }
 }
 
-static void SenseVBus(void)
-{
+static void SenseVBus(void) {
     switch(TerminalState) {
     case TERMINAL_UNINITIALIZED:
     	if (TERMINAL_VBUS_PORT.IN & TERMINAL_VBUS_MASK) {
@@ -117,50 +105,38 @@ static void SenseVBus(void)
     }
 }
 
-void TerminalInit(void)
-{
+void TerminalInit(void) {
     TERMINAL_VBUS_PORT.DIRCLR = TERMINAL_VBUS_MASK;
 }
 
-void TerminalTask(void)
-{
+void TerminalTask(void) {
 	CDC_Device_USBTask(&TerminalHandle);
 	USB_USBTask();
-
     ProcessByte();
 }
 
-void TerminalTick(void)
-{
+void TerminalTick(void) {
 	SenseVBus();
-
     XModemTick();
     CommandLineTick();
 }
 
 /** Event handler for the library USB Connection event. */
-void EVENT_USB_Device_Connect(void)
-{
+void EVENT_USB_Device_Connect(void) {
     //LEDSetOn(LED_GREEN);
 }
 
 /** Event handler for the library USB Disconnection event. */
-void EVENT_USB_Device_Disconnect(void)
-{
+void EVENT_USB_Device_Disconnect(void) {
     //LEDSetOff(LED_GREEN);
 }
 
-
 /** Event handler for the library USB Configuration Changed event. */
-void EVENT_USB_Device_ConfigurationChanged(void)
-{
+void EVENT_USB_Device_ConfigurationChanged(void) {
     CDC_Device_ConfigureEndpoints(&TerminalHandle);
 }
 
 /** Event handler for the library USB Control Request reception event. */
-void EVENT_USB_Device_ControlRequest(void)
-{
+void EVENT_USB_Device_ControlRequest(void) {
     CDC_Device_ProcessControlRequest(&TerminalHandle);
 }
-
-
