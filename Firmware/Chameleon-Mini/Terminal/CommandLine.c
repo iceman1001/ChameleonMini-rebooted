@@ -316,6 +316,12 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	  .GetFunc    = CommandGetDetection,
   },
 #endif
+  {
+	  .Command    = COMMAND_SPI_FLASH_INFO,
+	  .ExecFunc   = CommandExecSPIFlashInfo,
+	  .SetFunc    = NO_FUNCTION,
+	  .GetFunc    = CommandGetSPIFlashInfo,
+  },
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,

@@ -58,9 +58,14 @@
 
 #include "../Common.h"
 
-#define MAX_COMMAND_LENGTH          16
+#define MAX_COMMAND_LENGTH          16 // If this is more than 16 bytes, my unit becomes unresponvise with 8th entry.
 #define MAX_STATUS_LENGTH           32
 
+// Firmware version details.
+#define FIRMWARE_VERSION_MAJOR			1
+#define FIRMWARE_VERSION_MINOR 			2
+#define FIRMWARE_NAME					"Rebooted"
+#define FIRMWARE_FORK_AUTHOR			"Iceman"
 
 #define COMMAND_INFO_OK_ID              100
 #define COMMAND_INFO_OK                 "OK"
@@ -166,6 +171,10 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
 CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
+
+#define COMMAND_SPI_FLASH_INFO  "SPI_FLASHINFOMY"
+CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage);
+CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam);
 
 #define COMMAND_LIST_END    ""
 

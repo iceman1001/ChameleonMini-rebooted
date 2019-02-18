@@ -71,7 +71,8 @@
 extern const PROGMEM CommandEntryType CommandTable[];
 
 CommandStatusIdType CommandGetVersion(char* OutParam) {
-	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon-new-1.0"));
+	//snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon-new-1.0"));
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon Mini %s v%d.%d (%s)"),FIRMWARE_NAME, FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR, FIRMWARE_FORK_AUTHOR );
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
@@ -205,7 +206,7 @@ CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam)
 	if (ButtonSetActionByName(BUTTON_PRESS_SHORT, InParam)) {
 		SettingsSave();
 		return COMMAND_INFO_OK_ID;
-		} else {
+	} else {
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	}
 }
@@ -227,7 +228,7 @@ CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam)
 	if (ButtonSetActionByName(BUTTON_PRESS_LONG, InParam)) {
 		SettingsSave();
 		return COMMAND_INFO_OK_ID;
-		} else {
+	} else {
 		return COMMAND_ERR_INVALID_PARAM_ID;
 	}
 }
@@ -280,6 +281,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%5u mV"), AntennaLevelGet());
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 	uint8_t pwd[4];
 	/* Read saved password from authentication */
@@ -322,9 +324,9 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 
 	 /* send data + CRC */
 	 for(uint16_t num=0; num < 208+2; num++)
-	 TerminalSendChar(OutParam[num]);
+		TerminalSendChar(OutParam[num]);
 
-	 OutParam[0]=0;
+	 OutParam[0] = 0;
 	 return COMMAND_INFO_OK_ID;
  }
 
@@ -337,3 +339,32 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 	 return COMMAND_INFO_OK_ID;
  }
 #endif
+
+CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage)
+{
+	uint8_t b[4];
+	FlashReadManufacturerDeviceInfo(b);
+	uint8_t ManufacturerId = b[0];
+	uint8_t FamilyCode = b[1] >> 5;
+	uint8_t DensityCode = b[1] & 0x1F;
+	uint8_t MLC_Code = b[2] >> 5;
+	uint8_t ProductVersionCode = b[2] & 0x1F;
+	uint16_t Mbits = 0;
+	if ((DensityCode >= 2) && (DensityCode <= 8) && (FamilyCode == 1))
+		Mbits = 1 << (DensityCode - 2); 
+	// Minimum: AT45DB011D Density Code : 00010 = 1-Mbit 
+	// Maximum: AT45DB642D Density Code : 01000 = 64-Mbit
+	snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, 
+		PSTR("Manufacturer ID: %02xh\r\nFamily code: %d\r\nDensity code: %d\r\nMLC Code: %d\r\nProduct version: %d\r\nFlash memory size: %d-Mbit (%d-KByte)"), 
+		ManufacturerId, FamilyCode, DensityCode, MLC_Code, ProductVersionCode, Mbits, Mbits * 128); 
+		// Precalculated 1024 / 8 = 128, to prevent uint16_t overflow for possible 64-Mbit flash
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam)
+{
+	uint8_t b[4];
+	FlashReadManufacturerDeviceInfo(b);
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%02x%02x%02x%02x"), b[0], b[1], b[2], b[3]);
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}

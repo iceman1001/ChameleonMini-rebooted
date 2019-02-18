@@ -23,6 +23,17 @@
 #define MEMORY_SIZE_PER_SETTING_4K	4096
 #define MEMORY_SIZE_PER_SETTING_1K	1024
 
+
+// extra config memory section
+// 8 slots possible, 
+// 2byte ataq
+// 1byte sak
+// 1 bit magic gen1a
+// 1 bit magic gen1b
+// 1 bit magic gen2
+
+void FlashReadManufacturerDeviceInfo(void* Buffer);
+
 void MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount);

@@ -50,7 +50,9 @@ void SettingsCycle(void) {
 		Setting = (Setting + 1) % SETTINGS_COUNT;
 
 		if (GlobalSettings.Settings[Setting].Configuration != CONFIG_NONE) {
-			SettingsSetActiveById(Setting);
+			if (SettingsSetActiveById(Setting)) {
+				SettingsSave();
+			}
 			break;
 		}
 	}
