@@ -909,3 +909,23 @@ void MifareClassicSetUid(ConfigurationUidType Uid)
         MemoryWriteBlock(&BCC, MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }
+
+void MifareClassicGetAtqa(uint8_t * Atqa)
+{
+	*Atqa = CardATQAValue;	
+}
+
+void MifareClassicSetAtqa(uint8_t Atqa)
+{
+	CardATQAValue = Atqa;
+}
+
+void MifareClassicGetSak(uint8_t * Sak)
+{
+	*Sak = CardSAKValue;
+}
+
+void MifareClassicSetSak(uint8_t Sak)
+{
+	CardSAKValue = Sak;
+}
