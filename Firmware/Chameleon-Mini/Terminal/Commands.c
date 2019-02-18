@@ -95,6 +95,50 @@ CommandStatusIdType CommandExecConfig(char* OutMessage) {
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
+#if defined(CONFIG_MF_CLASSIC_1K_SUPPORT) || defined(CONFIG_MF_CLASSIC_4K_SUPPORT)
+CommandStatusIdType CommandGetAtqa(char* OutParam) {
+	uint8_t Atqa;
+	
+	MifareClassicGetAtqa(&Atqa);
+
+	BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &Atqa, sizeof(uint8_t));
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam) {
+	uint8_t Atqa;
+	
+	if (HexStringToBuffer(&Atqa, sizeof(uint8_t), InParam) != sizeof(uint8_t)) {
+		/* Malformed input. Abort */
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+
+	MifareClassicSetAtqa(Atqa);
+	return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandGetSak(char* OutParam) {
+	uint8_t Sak;
+	
+	MifareClassicGetSak(&Sak);
+
+	BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &Sak, sizeof(uint8_t));
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam) {
+	uint8_t Sak;
+	
+	if (HexStringToBuffer(&Sak, sizeof(uint8_t), InParam) != sizeof(uint8_t)) {
+		/* Malformed input. Abort */
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+
+	MifareClassicSetSak(Sak);
+	return COMMAND_INFO_OK_ID;
+}
+#endif
+
 CommandStatusIdType CommandGetUid(char* OutParam) {
   uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
   uint16_t UidSize = ActiveConfiguration.UidSize;
