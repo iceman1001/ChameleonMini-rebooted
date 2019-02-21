@@ -61,7 +61,6 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = CommandSetUid,
     .GetFunc    = CommandGetUid
   },
-#if defined(CONFIG_MF_CLASSIC_1K_SUPPORT) || defined(CONFIG_MF_CLASSIC_4K_SUPPORT)
   {
 	  .Command    = COMMAND_ATQA,
 	  .ExecFunc   = NO_FUNCTION,
@@ -76,7 +75,6 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	  .SetFunc    = CommandSetSak,
 	  .GetFunc    = CommandGetSak
   },
-#endif
   {
     .Command    = COMMAND_READONLY,
     .ExecFunc   = NO_FUNCTION,
