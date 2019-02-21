@@ -105,6 +105,26 @@ typedef struct {
      */
     void (*ApplicationSetUidFunc) (ConfigurationUidType Uid);
     /**
+     * Writes the SAK for the current configuration to the given buffer.
+     * \param Sak	The target buffer.
+     */
+    void (*ApplicationGetSakFunc) (uint8_t * Sak);
+    /**
+     * Writes a given SAK to the current configuration.
+     * \param Sak	The source buffer.
+     */
+    void (*ApplicationSetSakFunc) (uint8_t Sak);
+    /**
+     * Writes the ATQA for the current configuration to the given buffer.
+     * \param Atqa	The target buffer.
+     */
+    void (*ApplicationGetAtqaFunc) (uint16_t * Atqa);
+    /**
+     * Writes a given ATQA to the current configuration.
+     * \param Atqa	The source buffer.
+     */
+    void (*ApplicationSetAtqaFunc) (uint16_t Atqa);
+    /**
      * @}
      */
 
