@@ -101,6 +101,8 @@ static uint8_t CompatWritePageAddress;
 static bool Authenticated;
 static uint8_t FirstAuthenticatedPage;
 static bool ReadAccessProtected;
+static uint16_t CardATQAValue;
+static uint8_t CardSAKValue;
 
 static void AppInitCommon(void)
 {
@@ -108,6 +110,8 @@ static void AppInitCommon(void)
     FromHalt = false;
     Authenticated = false;
     ArmedForCompatWrite = false;
+    CardATQAValue = ATQA_VALUE;
+    CardSAKValue = SAK_CL1_VALUE;
 }
 
 void MifareUltralightAppInit(void)
@@ -434,7 +438,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
     case STATE_IDLE:
     case STATE_HALT:
         FromHalt = State == STATE_HALT;
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             /* We received a REQA or WUPA command, so wake up. */
             State = STATE_READY1;
             return BitCount;
@@ -442,7 +446,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY1:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
         } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
@@ -453,7 +457,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
             MemoryReadBlock(&UidCL1[1], UID_CL1_ADDRESS, UID_CL1_SIZE);
 
-            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
+            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
                 /* CL1 stage has ended successfully */
                 State = STATE_READY2;
             }
@@ -466,7 +470,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY2:
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
         } else if (Cmd == ISO14443A_CMD_SELECT_CL2) {
@@ -491,7 +495,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
     case STATE_ACTIVE:
         /* Preserve incoming data length */
         ByteCount = (BitCount + 7) >> 3;
-        if (ISO14443AWakeUp(Buffer, &BitCount, ATQA_VALUE, FromHalt)) {
+        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
         }
@@ -536,3 +540,22 @@ void MifareUltralightSetUid(ConfigurationUidType Uid)
     MemoryWriteBlock(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
 }
 
+void MifareUltralightGetAtqa(uint16_t * Atqa)
+{
+	*Atqa = CardATQAValue;
+}
+
+void MifareUltralightSetAtqa(uint16_t Atqa)
+{
+	CardATQAValue = Atqa;
+}
+
+void MifareUltralightGetSak(uint8_t * Sak)
+{
+	*Sak = CardSAKValue;
+}
+
+void MifareUltralightSetSak(uint8_t Sak)
+{
+	CardSAKValue = Sak;
+}
