@@ -26,8 +26,8 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount);
 void MifareClassicGetUid(ConfigurationUidType Uid);
 void MifareClassicSetUid(ConfigurationUidType Uid);
 
-void MifareClassicGetAtqa(uint8_t * Atqa);
-void MifareClassicSetAtqa(uint8_t Atqa);
+void MifareClassicGetAtqa(uint16_t * Atqa);
+void MifareClassicSetAtqa(uint16_t Atqa);
 
 void MifareClassicGetSak(uint8_t * Sak);
 void MifareClassicSetSak(uint8_t Sak);
