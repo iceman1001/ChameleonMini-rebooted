@@ -95,6 +95,63 @@ CommandStatusIdType CommandExecConfig(char* OutMessage) {
   return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
+CommandStatusIdType CommandGetAtqa(char* OutParam) {
+	uint16_t Atqa;
+	
+	ApplicationGetAtqa(&Atqa);
+	
+	// Convert uint16 to uint8 buffer[]
+	uint8_t atqaBuffer[2] = { 0,0 };
+	atqaBuffer[1] = (uint8_t)Atqa;
+	atqaBuffer[0] = Atqa >> 8;
+	
+	BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &atqaBuffer, sizeof(uint16_t));
+	
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam) {
+	uint8_t AtqaBuffer[2] = { 0, 0 };
+	uint16_t Atqa = 0;
+	
+	if (HexStringToBuffer(&AtqaBuffer, sizeof(AtqaBuffer), InParam) != sizeof(uint16_t)) {
+		// This has to be 4 digits (2 bytes), e.g.: 0004
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+
+	// Convert uint8 buffer[] to uint16
+	if (strlen(InParam) > 2) {
+		Atqa = ((uint16_t)AtqaBuffer[0] << 8) | AtqaBuffer[1];
+	}
+	else {
+		Atqa = AtqaBuffer[0];
+	}
+
+	ApplicationSetAtqa(Atqa);
+	return COMMAND_INFO_OK_ID;
+}
+
+CommandStatusIdType CommandGetSak(char* OutParam) {
+	uint8_t Sak;
+	
+	ApplicationGetSak(&Sak);
+
+	BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &Sak, sizeof(uint8_t));
+	return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam) {
+	uint8_t Sak;
+	
+	if (HexStringToBuffer(&Sak, sizeof(uint8_t), InParam) != sizeof(uint8_t)) {
+		// This has to be 2 digits (1 byte), e.g.: 04
+		return COMMAND_ERR_INVALID_PARAM_ID;
+	}
+
+	ApplicationSetSak(Sak);
+	return COMMAND_INFO_OK_ID;
+}
+
 CommandStatusIdType CommandGetUid(char* OutParam) {
   uint8_t UidBuffer[COMMAND_UID_BUFSIZE];
   uint16_t UidSize = ActiveConfiguration.UidSize;

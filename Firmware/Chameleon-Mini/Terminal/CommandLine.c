@@ -62,12 +62,25 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = CommandGetUid
   },
   {
+	  .Command    = COMMAND_ATQA,
+	  .ExecFunc   = NO_FUNCTION,
+	  .ExecParamFunc = NO_FUNCTION,
+	  .SetFunc    = CommandSetAtqa,
+	  .GetFunc    = CommandGetAtqa
+  },
+  {
+	  .Command    = COMMAND_SAK,
+	  .ExecFunc   = NO_FUNCTION,
+	  .ExecParamFunc = NO_FUNCTION,
+	  .SetFunc    = CommandSetSak,
+	  .GetFunc    = CommandGetSak
+  },
+  {
     .Command    = COMMAND_READONLY,
     .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
     .GetFunc    = CommandGetReadOnly,
     .SetFunc    = CommandSetReadOnly
-
   },
   {
     .Command    = COMMAND_UPLOAD,
@@ -128,20 +141,6 @@ const PROGMEM CommandEntryType CommandTable[] = {
 	.GetFunc    = CommandGetButtonLong
   },
   /*
-  {
-    .Command    = COMMAND_LEDGREEN,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetLedGreen,
-    .GetFunc    = CommandGetLedGreen
-  },
-  {
-    .Command    = COMMAND_LEDRED,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetLedRed,
-    .GetFunc    = CommandGetLedRed
-  },
   {
     .Command    = COMMAND_LOGMODE,
     .ExecFunc   = NO_FUNCTION,
@@ -206,13 +205,6 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .ExecParamFunc = NO_FUNCTION,
     .SetFunc	= NO_FUNCTION,
     .GetFunc	= NO_FUNCTION
-  },
-  {
-    .Command    = COMMAND_CHARGING,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = NO_FUNCTION,
-    .GetFunc    = CommandGetCharging
   },
 */
   {

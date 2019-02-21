@@ -58,7 +58,7 @@
 
 #include "../Common.h"
 
-#define MAX_COMMAND_LENGTH          16 // If this is more than 16 bytes, my unit becomes unresponvise with 8th entry.
+#define MAX_COMMAND_LENGTH          16 // If this is more than 16 bytes, my unit becomes unresponsive with 8th entry.
 #define MAX_STATUS_LENGTH           32
 
 // Firmware version details.
@@ -117,6 +117,14 @@ CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam);
 #define COMMAND_UID_RANDOM  "RANDOMMY"
 CommandStatusIdType CommandGetUid(char* OutParam);
 CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam);
+
+#define COMMAND_ATQA		"ATQAMY"
+CommandStatusIdType CommandGetAtqa(char* OutParam);
+CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam);
+
+#define COMMAND_SAK		"SAKMY"
+CommandStatusIdType CommandGetSak(char* OutParam);
+CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam);
 
 #define COMMAND_READONLY    "READONLYMY"
 CommandStatusIdType CommandGetReadOnly(char* OutParam);

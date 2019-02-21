@@ -44,15 +44,6 @@ CONFIG_MF_DETECTION,
 #ifdef CONFIG_ISO15693_GEN_SUPPORT
     CONFIG_ISO15693_GEN,
 #endif
-#ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
-    CONFIG_ISO14443A_SNIFF,
-#endif
-#ifdef CONFIG_ISO14443A_READER_SUPPORT
-    CONFIG_ISO14443A_READER,
-#endif
-#ifdef CONFIG_ISO15693_SNIFF_SUPPORT
-    CONFIG_ISO15693_SNIFF,
-#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;
@@ -114,20 +105,36 @@ typedef struct {
      */
     void (*ApplicationSetUidFunc) (ConfigurationUidType Uid);
     /**
+     * Writes the SAK for the current configuration to the given buffer.
+     * \param Sak	The target buffer.
+     */
+    void (*ApplicationGetSakFunc) (uint8_t * Sak);
+    /**
+     * Writes a given SAK to the current configuration.
+     * \param Sak	The source buffer.
+     */
+    void (*ApplicationSetSakFunc) (uint8_t Sak);
+    /**
+     * Writes the ATQA for the current configuration to the given buffer.
+     * \param Atqa	The target buffer.
+     */
+    void (*ApplicationGetAtqaFunc) (uint16_t * Atqa);
+    /**
+     * Writes a given ATQA to the current configuration.
+     * \param Atqa	The source buffer.
+     */
+    void (*ApplicationSetAtqaFunc) (uint16_t Atqa);
+    /**
      * @}
      */
 
     /**
      * Defines how many space the configuration needs. For emulating configurations this is the memory space of
      * the emulated card.
-     *
-     * \note For reader or sniff configurations this is set to zero.
      */
     uint16_t MemorySize;
     /**
      * Defines the size of the UID for emulating configurations.
-     *
-     * \note For reader or sniff configurations this is set to zero.
      */
     uint8_t UidSize;
     /**

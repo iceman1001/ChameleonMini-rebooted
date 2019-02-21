@@ -34,12 +34,6 @@ static const MapEntryType PROGMEM ConfigurationMap[] = {
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 	{ .Id = CONFIG_MF_DETECTION, 	.Text = "MF_DETECTION" },
 #endif
-#ifdef CONFIG_ISO14443A_SNIFF_SUPPORT
-    { .Id = CONFIG_ISO14443A_SNIFF,	.Text = "ISO14443A_SNIFF" },
-#endif
-#ifdef CONFIG_ISO14443A_READER_SUPPORT
-    { .Id = CONFIG_ISO14443A_READER,	.Text = "ISO14443A_READER" },
-#endif
 };
 
 /* Include all Codecs and Applications */
@@ -55,6 +49,10 @@ static void ApplicationTickDummy(void) {}
 static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return 0; }
 static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
+static void ApplicationGetAtqaDummy(uint16_t * Atqa) { }
+static void ApplicationSetAtqaDummy(uint16_t Atqa) { }
+static void ApplicationGetSakDummy(uint8_t * Atqa) { }
+static void ApplicationSetSakDummy(uint8_t Atqa) { }
 
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
     [CONFIG_NONE] = {
@@ -67,6 +65,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationProcessFunc = ApplicationProcessDummy,
         .ApplicationGetUidFunc = ApplicationGetUidDummy,
         .ApplicationSetUidFunc = ApplicationSetUidDummy,
+        .ApplicationGetSakFunc = ApplicationGetSakDummy,
+        .ApplicationSetSakFunc = ApplicationSetSakDummy,
+        .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+        .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
         .ReadOnly = true
@@ -78,10 +80,14 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationInitFunc = MifareUltralightAppInit,
 	.ApplicationResetFunc = MifareUltralightAppReset,
 	.ApplicationTaskFunc = MifareUltralightAppTask,
-        .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationTickFunc = ApplicationTickDummy,
 	.ApplicationProcessFunc = MifareUltralightAppProcess,
 	.ApplicationGetUidFunc = MifareUltralightGetUid,
 	.ApplicationSetUidFunc = MifareUltralightSetUid,
+    .ApplicationGetSakFunc = MifareUltralightGetSak,
+    .ApplicationSetSakFunc = MifareUltralightSetSak,
+    .ApplicationGetAtqaFunc = MifareUltralightGetAtqa,
+    .ApplicationSetAtqaFunc = MifareUltralightSetAtqa,
 	.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
 	.MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
 	.ReadOnly = false
@@ -96,6 +102,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationProcessFunc = MifareUltralightAppProcess,
 	.ApplicationGetUidFunc = MifareUltralightGetUid,
 	.ApplicationSetUidFunc = MifareUltralightSetUid,
+    .ApplicationGetSakFunc = MifareUltralightGetSak,
+    .ApplicationSetSakFunc = MifareUltralightSetSak,
+    .ApplicationGetAtqaFunc = MifareUltralightGetAtqa,
+    .ApplicationSetAtqaFunc = MifareUltralightSetAtqa,
 	.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
 	.MemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
 	.ReadOnly = false
@@ -110,6 +120,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationProcessFunc = MifareUltralightAppProcess,
 	.ApplicationGetUidFunc = MifareUltralightGetUid,
 	.ApplicationSetUidFunc = MifareUltralightSetUid,
+    .ApplicationGetSakFunc = MifareUltralightGetSak,
+    .ApplicationSetSakFunc = MifareUltralightSetSak,
+    .ApplicationGetAtqaFunc = MifareUltralightGetAtqa,
+    .ApplicationSetAtqaFunc = MifareUltralightSetAtqa,
 	.UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
 	.MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
 	.ReadOnly = false
@@ -126,6 +140,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationProcessFunc = MifareClassicAppProcess,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = MifareClassicSetUid,
+        .ApplicationGetSakFunc = MifareClassicGetSak,
+        .ApplicationSetSakFunc = MifareClassicSetSak,
+        .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+        .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
         .ReadOnly = false
@@ -142,6 +160,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationProcessFunc = MifareClassicAppProcess,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = MifareClassicSetUid,
+        .ApplicationGetSakFunc = MifareClassicGetSak,
+        .ApplicationSetSakFunc = MifareClassicSetSak,
+        .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+        .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
         .UidSize = ISO14443A_UID_SIZE_DOUBLE,
         .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
         .ReadOnly = false
@@ -158,6 +180,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
         .ApplicationProcessFunc = MifareClassicAppProcess,
         .ApplicationGetUidFunc = MifareClassicGetUid,
         .ApplicationSetUidFunc = MifareClassicSetUid,
+        .ApplicationGetSakFunc = MifareClassicGetSak,
+        .ApplicationSetSakFunc = MifareClassicSetSak,
+        .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+        .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
         .UidSize = MIFARE_CLASSIC_UID_SIZE,
         .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
         .ReadOnly = false
@@ -174,6 +200,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationProcessFunc = MifareClassicAppProcess,
 	.ApplicationGetUidFunc = MifareClassicGetUid,
 	.ApplicationSetUidFunc = MifareClassicSetUid,
+    .ApplicationGetSakFunc = MifareClassicGetSak,
+    .ApplicationSetSakFunc = MifareClassicSetSak,
+    .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+    .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
 	.UidSize = ISO14443A_UID_SIZE_DOUBLE,
 	.MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
 	.ReadOnly = false
@@ -190,6 +220,10 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 	.ApplicationProcessFunc = MifareDetectionAppProcess,
 	.ApplicationGetUidFunc = MifareClassicGetUid,
 	.ApplicationSetUidFunc = MifareClassicSetUid,
+    .ApplicationGetSakFunc = MifareClassicGetSak,
+    .ApplicationSetSakFunc = MifareClassicSetSak,
+    .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+    .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
 	.UidSize = MIFARE_CLASSIC_UID_SIZE,
 	.MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
 	.ReadOnly = false
