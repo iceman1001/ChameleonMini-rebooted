@@ -12,16 +12,16 @@
 #define MFCLASSIC_4K_ATQA_VALUE     0x0002
 #define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
 #define MFCLASSIC_4K_SAK_CL1_VALUE  0x18
- 
+
 #define MEM_UID_CL1_ADDRESS         0x00
 #define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
 #define MEM_KEY_A_OFFSET            48        /* Bytes */
 #define MEM_KEY_B_OFFSET            58        /* Bytes */
-#define MEM_KEY_SIZE                6        /* Bytes */
+#define MEM_KEY_SIZE                6         /* Bytes */
 #define MEM_SECTOR_ADDR_MASK        0x3C
 #define MEM_BYTES_PER_BLOCK         16        /* Bytes */
-#define MEM_VALUE_SIZE              4       /* Bytes */
+#define MEM_VALUE_SIZE              4         /* Bytes */
 
 #define ACK_NAK_FRAME_SIZE          4         /* Bits */
 #define ACK_VALUE                   0x0A
@@ -34,118 +34,139 @@
 #define CMD_AUTH_A                  0x60
 #define CMD_AUTH_B                  0x61
 #define CMD_AUTH_FRAME_SIZE         2         /* Bytes without CRCA */
-#define CMD_AUTH_RB_FRAME_SIZE      4        /* Bytes */
-#define CMD_AUTH_AB_FRAME_SIZE      8        /* Bytes */
-#define CMD_AUTH_BA_FRAME_SIZE      4        /* Bytes */
+#define CMD_AUTH_RB_FRAME_SIZE      4         /* Bytes */
+#define CMD_AUTH_AB_FRAME_SIZE      8         /* Bytes */
+#define CMD_AUTH_BA_FRAME_SIZE      4         /* Bytes */
 
- static enum {
-	 STATE_HALT,
-	 STATE_IDLE,
-	 STATE_READY,
-	 STATE_ACTIVE,
-	 STATE_AUTHING,
-	 STATE_AUTHED_IDLE,
-	 STATE_WRITE,
-	 STATE_INCREMENT,
-	 STATE_DECREMENT,
-	 STATE_RESTORE
- } State;
+static enum {
+	STATE_HALT,
+	STATE_IDLE,
+	STATE_READY,
+	STATE_ACTIVE,
+	STATE_AUTHING,
+	STATE_AUTHED_IDLE,
+	STATE_WRITE,
+	STATE_INCREMENT,
+	STATE_DECREMENT,
+	STATE_RESTORE
+} State;
 
 static uint16_t CardATQAValue;
 static uint8_t CardSAKValue;
-uint8_t data_svae[16] = {0};
-static uint8_t turn_falga = 0;
-static uint8_t turn_falgb = 0;
-static uint8_t keyb_falg = 0;
+uint8_t data_save[16] = {0};
+static uint8_t turn_flaga = 0;
+static uint8_t turn_flagb = 0;
+static uint8_t keyb_flag = 0;
 
 uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
-	/* 0x26 / 0x52 Wakeup */
-    if ( (BitCount == 7) &&
-    /* precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount */
-    ((Buffer[0] == ISO14443A_CMD_REQA) || (Buffer[0] == ISO14443A_CMD_WUPA)) ) {
+	/* Wakeup and Request may occur in all states */
+	if ( (BitCount == 7) &&
+	/* precheck of WUP/REQ because ISO14443AWakeUp destroys BitCount */
+	(((State != STATE_HALT) && (Buffer[0] == ISO14443A_CMD_REQA)) ||
+	(Buffer[0] == ISO14443A_CMD_WUPA) )){
 
-		State = STATE_HALT;
-		if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false))
-		{
+		if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
 			State = STATE_READY;
 			return BitCount;
 		}
 	}
 
-	//0x93 0x20 & 0x93 0x70  (select anticol)
-	if (BitCount==16 || BitCount==72) {
-		if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
-			uint8_t UidCL1[4];
-			MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-			if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue))
-			return BitCount;
-		}
-	}
+	switch(State) {
+		case STATE_IDLE:
+		case STATE_HALT:
+			if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, true)) {
+				State = STATE_READY;
+				return BitCount;
+			}		
+		break;
 
-	if (State != STATE_AUTHED_IDLE) {
-		if (BitCount==32) {
-			if ((Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
+		case STATE_READY:
+			if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
+				State = STATE_READY;
+				return BitCount;
+			} else if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
+				/* Load UID CL1 and perform anti-collision */
+				uint8_t UidCL1[4];
+				MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+				if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
+					State = STATE_ACTIVE;
+				}
+				return BitCount;
+			} else {
+				/* Unknown command. Enter HALT state. */
+				State = STATE_HALT;
+			}	
+		break;
+
+		case STATE_ACTIVE:
+			if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
+				State = STATE_READY;
+				return BitCount;
+			} else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
 				if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
-
 					uint8_t CardNonce[4] = {0};
 
 					/* Generate a random nonce and read UID and key from memory */
 					RandomGetBuffer(CardNonce, sizeof(CardNonce));
-					
-					memcpy(data_svae, Buffer, 4);
-					memcpy(data_svae+4, CardNonce, 4);
+				
+					memcpy(data_save, Buffer, 4);
+					memcpy(data_save+4, CardNonce, 4);
 
-					if (Buffer[0] == CMD_AUTH_B) 
-						keyb_falg = 1;
+					if (Buffer[0] == CMD_AUTH_B)
+					keyb_flag = 1;
 					else
-						keyb_falg = 0;
+					keyb_flag = 0;
 
 					State = STATE_AUTHING;
 
 					for (uint8_t i=0; i<sizeof(CardNonce); i++)
-						Buffer[i] = CardNonce[i];
+					Buffer[i] = CardNonce[i];
 
 					return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
 				}
 			}
-		}
-		////返回8位加密
-		if (BitCount==64 && State == STATE_AUTHING) {
-		//储存信息
-			memcpy(data_svae + 8, Buffer, 8);
+		break;
 
-			if (!keyb_falg) {
-				
-				// MEM_OFFSET_DETECTION_DATA				
+		case STATE_AUTHING:
+			State = STATE_IDLE;
+		
+			// Save information
+			memcpy(data_save + 8, Buffer, 8);
+
+			if (!keyb_flag) {
+				// MEM_OFFSET_DETECTION_DATA
 				//#define MEM_OFFSET_DETECTION_DATA  4096 + 16
 				// Since there is lots more of space in flashmemory,  it should be able to save many more nonces.
 				// also, current implementation overwrites memory space for next slot.
 				//
-				// KEY A) 0,1,2,3,4,5  *  16 + 4096 
-				// KEY B) 0,1,2,3,4,5  *  16 + +112 + 4096 
-				// 5*16 ? 
-				MemoryWriteBlock(data_svae, (turn_falga * MEM_BYTES_PER_BLOCK) + 4096, MEM_BYTES_PER_BLOCK);
-				turn_falga++;
-				turn_falga = turn_falga % 6;
+				// KEY A) 0,1,2,3,4,5  *  16 + 4096
+				// KEY B) 0,1,2,3,4,5  *  16 + +112 + 4096
+				// 5*16 ?
+				MemoryWriteBlock(data_save, (turn_flaga * MEM_BYTES_PER_BLOCK) + 4096, MEM_BYTES_PER_BLOCK);
+				turn_flaga++;
+				turn_flaga = turn_flaga % 6;
 			} else {
-				MemoryWriteBlock(data_svae, (turn_falgb * MEM_BYTES_PER_BLOCK) + 112 + 4096, MEM_BYTES_PER_BLOCK);
-				turn_falgb++;
-				turn_falgb = turn_falgb % 6;
+				MemoryWriteBlock(data_save, (turn_flagb * MEM_BYTES_PER_BLOCK) + 112 + 4096, MEM_BYTES_PER_BLOCK);
+				turn_flagb++;
+				turn_flagb = turn_flagb % 6;
 			}
-				
-		}
+		break;
+		
+		default:
+		break;
 	}
 
 	/* No response has been sent, when we reach here */
-    return ISO14443A_APP_NO_RESPONSE;
- }
+	return ISO14443A_APP_NO_RESPONSE;
+}
 
- void MifareDetectionInit(void) {
-	 State = STATE_IDLE;
-	 CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
-	 CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
- }
+void MifareDetectionInit(void) {
+	State = STATE_IDLE;
+	CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
+	CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
+}
 
- void MifareDetectionReset(void) {
- }
+void MifareDetectionReset(void) {
+	State = STATE_IDLE;
+}
