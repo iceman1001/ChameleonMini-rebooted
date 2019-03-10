@@ -63,7 +63,7 @@
 
 // Firmware version details.
 #define FIRMWARE_VERSION_MAJOR			1
-#define FIRMWARE_VERSION_MINOR 			2
+#define FIRMWARE_VERSION_MINOR 			3
 #define FIRMWARE_NAME					"Rebooted"
 #define FIRMWARE_FORK_AUTHOR			"Iceman"
 
@@ -105,82 +105,82 @@ typedef struct {
   CommandGetFuncType GetFunc;
 } CommandEntryType;
 
-#define COMMAND_VERSION     "VERSIONMY"
+#define COMMAND_VERSION     "VERSION"
 CommandStatusIdType CommandGetVersion(char* OutParam);
 
-#define COMMAND_CONFIG      "CONFIGMY"
+#define COMMAND_CONFIG      "CONFIG"
 CommandStatusIdType CommandExecConfig(char* OutMessage);
 CommandStatusIdType CommandGetConfig(char* OutParam);
 CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam);
 
-#define COMMAND_UID         "UIDMY"
-#define COMMAND_UID_RANDOM  "RANDOMMY"
+#define COMMAND_UID         "UID"
+#define COMMAND_UID_RANDOM  "RANDOM"
 CommandStatusIdType CommandGetUid(char* OutParam);
 CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam);
 
-#define COMMAND_ATQA		"ATQAMY"
+#define COMMAND_ATQA		"ATQA"
 CommandStatusIdType CommandGetAtqa(char* OutParam);
 CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam);
 
-#define COMMAND_SAK		"SAKMY"
+#define COMMAND_SAK		"SAK"
 CommandStatusIdType CommandGetSak(char* OutParam);
 CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam);
 
-#define COMMAND_READONLY    "READONLYMY"
+#define COMMAND_READONLY    "READONLY"
 CommandStatusIdType CommandGetReadOnly(char* OutParam);
 CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam);
 
-#define COMMAND_UPLOAD      "UPLOADMY"
+#define COMMAND_UPLOAD      "UPLOAD"
 CommandStatusIdType CommandExecUpload(char* OutMessage);
 
-#define COMMAND_DOWNLOAD    "DOWNLOADMY"
+#define COMMAND_DOWNLOAD    "DOWNLOAD"
 CommandStatusIdType CommandExecDownload(char* OutMessage);
 
-#define COMMAND_RESET       "RESETMY"
+#define COMMAND_RESET       "RESET"
 CommandStatusIdType CommandExecReset(char* OutMessage);
 
-#define COMMAND_UPGRADE     "UPGRADEMY"
+#define COMMAND_UPGRADE     "UPGRADE"
 CommandStatusIdType CommandExecUpgrade(char* OutMessage);
 
-#define COMMAND_MEMSIZE     "MEMSIZEMY"
+#define COMMAND_MEMSIZE     "MEMSIZE"
 CommandStatusIdType CommandGetMemSize(char* OutParam);
 
-#define COMMAND_UIDSIZE     "UIDSIZEMY"
+#define COMMAND_UIDSIZE     "UIDSIZE"
 CommandStatusIdType CommandGetUidSize(char* OutParam);
 
-#define COMMAND_BUTTON      "BUTTONMY"
+#define COMMAND_BUTTON      "BUTTON"
 CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);
 CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam);
 
-#define COMMAND_BUTTON_LONG "BUTTON_LONGMY"
+#define COMMAND_BUTTON_LONG "BUTTON_LONG"
 CommandStatusIdType CommandExecButtonLong(char* OutMessage);
 CommandStatusIdType CommandGetButtonLong(char* OutParam);
 CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam);
 
-#define COMMAND_SETTING		"SETTINGMY"
+#define COMMAND_SETTING		"SETTING"
 CommandStatusIdType CommandGetSetting(char* OutParam);
 CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam);
 
-#define COMMAND_CLEAR		"CLEARMY"
+#define COMMAND_CLEAR		"CLEAR"
 CommandStatusIdType CommandExecClear(char* OutParam);
 
-#define COMMAND_HELP        "HELPMY"
+#define COMMAND_HELP        "HELP"
 CommandStatusIdType CommandExecHelp(char* OutMessage);
 
-#define COMMAND_RSSI		"RSSIMY"
+#define COMMAND_RSSI		"RSSI"
 CommandStatusIdType CommandGetRssi(char* OutParam);
 
-#define COMMAND_PWD			"PWDMY"
+#define COMMAND_PWD			"PWD"
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
-#define COMMAND_DETECTION	"DETECTIONMY"
+#define COMMAND_DETECTION	"DETECTION"
 CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
 
-#define COMMAND_SPI_FLASH_INFO  "SPI_FLASHINFOMY"
+#define COMMAND_SPI_FLASH_INFO  "SPI_FLASHINFO"
 CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage);
 CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam);
 
