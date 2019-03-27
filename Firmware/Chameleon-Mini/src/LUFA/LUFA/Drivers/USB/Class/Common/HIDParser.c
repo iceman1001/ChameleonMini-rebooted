@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2017.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2017  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -90,7 +90,7 @@ uint8_t USB_ProcessHIDReport(const uint8_t* ReportData,
 				if (CurrStateTable == &StateTable[HID_STATETABLE_STACK_DEPTH - 1])
 				  return HID_PARSE_HIDStackOverflow;
 
-				memcpy((CurrStateTable + 1),
+				memmove(CurrStateTable + 1,
 				       CurrStateTable,
 				       sizeof(HID_ReportItem_t));
 
@@ -364,8 +364,8 @@ void USB_SetHIDReportItemInfo(uint8_t* ReportData,
 
 	while (DataBitsRem--)
 	{
-		if (ReportItem->Value & (1 << (CurrentBit % 8)))
-		  ReportData[CurrentBit / 8] |= BitMask;
+		if (ReportItem->Value & BitMask)
+		  ReportData[CurrentBit / 8] |= (1 << (CurrentBit % 8));
 
 		CurrentBit++;
 		BitMask <<= 1;

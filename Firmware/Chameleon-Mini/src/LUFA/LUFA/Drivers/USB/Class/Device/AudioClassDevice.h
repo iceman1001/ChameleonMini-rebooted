@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2017.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2017  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -377,7 +377,7 @@
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */
 			#if defined(__INCLUDE_FROM_AUDIO_DEVICE_C)
-				void Audio_Device_Event_Stub(void) ATTR_CONST;
+				void Audio_Device_Event_Stub(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo);
 
 				void EVENT_Audio_Device_StreamStartStop(USB_ClassInfo_Audio_Device_t* const AudioInterfaceInfo)
 				                                        ATTR_WEAK ATTR_NON_NULL_PTR_ARG(1) ATTR_ALIAS(Audio_Device_Event_Stub);

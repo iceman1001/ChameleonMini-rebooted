@@ -1,13 +1,13 @@
 /*
              LUFA Library
-     Copyright (C) Dean Camera, 2013.
+     Copyright (C) Dean Camera, 2017.
 
   dean [at] fourwalledcubicle [dot] com
            www.lufa-lib.org
 */
 
 /*
-  Copyright 2013  Dean Camera (dean [at] fourwalledcubicle [dot] com)
+  Copyright 2017  Dean Camera (dean [at] fourwalledcubicle [dot] com)
 
   Permission to use, copy, modify, distribute, and sell this
   software and its documentation for any purpose is hereby granted
@@ -331,20 +331,22 @@
 	#if !defined(__DOXYGEN__)
 		/* Function Prototypes: */
 			#if defined(__INCLUDE_FROM_EVENTS_C)
-				void USB_Event_Stub(void) ATTR_CONST;
+				void USB_Event_Stub(void);
+				void USB_Event_Stub_2(const uint8_t _1);
+				void USB_Event_Stub_3(const uint8_t _1, const uint8_t _2);
 
 				#if defined(USB_CAN_BE_BOTH)
 					void EVENT_USB_UIDChange(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 				#endif
 
 				#if defined(USB_CAN_BE_HOST)
-					void EVENT_USB_Host_HostError(const uint8_t ErrorCode) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
+					void EVENT_USB_Host_HostError(const uint8_t ErrorCode) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub_2);
 					void EVENT_USB_Host_DeviceAttached(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 					void EVENT_USB_Host_DeviceUnattached(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 					void EVENT_USB_Host_DeviceEnumerationComplete(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 					void EVENT_USB_Host_DeviceEnumerationFailed(const uint8_t ErrorCode,
                                                                 const uint8_t SubErrorCode)
-					                                            ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
+					                                            ATTR_WEAK ATTR_ALIAS(USB_Event_Stub_3);
 					void EVENT_USB_Host_StartOfFrame(void) ATTR_WEAK ATTR_ALIAS(USB_Event_Stub);
 				#endif
 
