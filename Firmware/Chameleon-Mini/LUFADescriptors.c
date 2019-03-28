@@ -37,12 +37,12 @@
 
 #include "LUFADescriptors.h"
 
-/** Device descriptor structure. This descriptor, located in SRAM memory, describes the overall
+/** Device descriptor structure. This descriptor, located in FLASH memory, describes the overall
  *  device characteristics, including the supported USB version, control endpoint size and the
  *  number of device configurations. The descriptor is read out by the USB host when the enumeration
  *  process begins.
  */
-const USB_Descriptor_Device_t DeviceDescriptor =
+const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
 	.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
@@ -54,22 +54,22 @@ const USB_Descriptor_Device_t DeviceDescriptor =
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
 	.VendorID               = 0x03EB,
-	.ProductID              = 0x204A,
-	.ReleaseNumber          = VERSION_BCD(1,0,0),
+	.ProductID              = 0x2044,
+	.ReleaseNumber          = VERSION_BCD(0,0,1),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	.ProductStrIndex        = STRING_ID_Product,
-	.SerialNumStrIndex      = NO_DESCRIPTOR,
+	.SerialNumStrIndex      = USE_INTERNAL_SERIAL,
 
 	.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
 
-/** Configuration descriptor structure. This descriptor, located in SRAM memory, describes the usage
+/** Configuration descriptor structure. This descriptor, located in FLASH memory, describes the usage
  *  of the device in one of its supported configurations, including information about any device interfaces
  *  and endpoints. The descriptor is read out by the USB host during the enumeration process when selecting
  *  a configuration so that the host may correctly communicate with the USB device.
  */
-const USB_Descriptor_Configuration_t ConfigurationDescriptor =
+const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
 {
 	.Config =
 		{
@@ -81,7 +81,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor =
 			.ConfigurationNumber    = 1,
 			.ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-			.ConfigAttributes       = USB_CONFIG_ATTR_RESERVED,
+			.ConfigAttributes       = (USB_CONFIG_ATTR_RESERVED | USB_CONFIG_ATTR_SELFPOWERED),
 
 			.MaxPowerConsumption    = USB_CONFIG_POWER_MA(100)
 		},
@@ -105,7 +105,7 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor =
 	.CDC_Functional_Header =
 		{
 			.Header                 = {.Size = sizeof(USB_CDC_Descriptor_FunctionalHeader_t), .Type = DTYPE_CSInterface},
-			.Subtype                = 0x00,
+			.Subtype                = CDC_DSUBTYPE_CSInterface_Header,
 
 			.CDCSpecification       = VERSION_BCD(1,1,0),
 		},
@@ -113,15 +113,15 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor =
 	.CDC_Functional_ACM =
 		{
 			.Header                 = {.Size = sizeof(USB_CDC_Descriptor_FunctionalACM_t), .Type = DTYPE_CSInterface},
-			.Subtype                = 0x02,
+			.Subtype                = CDC_DSUBTYPE_CSInterface_ACM,
 
-			.Capabilities           = 0x02,
+			.Capabilities           = 0x06,
 		},
 
 	.CDC_Functional_Union =
 		{
 			.Header                 = {.Size = sizeof(USB_CDC_Descriptor_FunctionalUnion_t), .Type = DTYPE_CSInterface},
-			.Subtype                = 0x06,
+			.Subtype                = CDC_DSUBTYPE_CSInterface_Union,
 
 			.MasterInterfaceNumber  = INTERFACE_ID_CDC_CCI,
 			.SlaveInterfaceNumber   = INTERFACE_ID_CDC_DCI,
@@ -174,23 +174,23 @@ const USB_Descriptor_Configuration_t ConfigurationDescriptor =
 		}
 };
 
-/** Language descriptor structure. This descriptor, located in SRAM memory, is returned when the host requests
+/** Language descriptor structure. This descriptor, located in FLASH memory, is returned when the host requests
  *  the string descriptor with index 0 (the first index). It is actually an array of 16-bit integers, which indicate
  *  via the language ID table available at USB.org what languages the device supports for its string descriptors.
  */
-const USB_Descriptor_String_t LanguageString = USB_STRING_DESCRIPTOR_ARRAY(LANGUAGE_ID_ENG);
+const USB_Descriptor_String_t PROGMEM LanguageString = USB_STRING_DESCRIPTOR_ARRAY(LANGUAGE_ID_ENG);
 
 /** Manufacturer descriptor string. This is a Unicode string containing the manufacturer's details in human readable
  *  form, and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
-const USB_Descriptor_String_t ManufacturerString = USB_STRING_DESCRIPTOR(L"Dean Camera");
+const USB_Descriptor_String_t PROGMEM ManufacturerString = USB_STRING_DESCRIPTOR(L"Chameleon Mini");
 
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
  *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
-const USB_Descriptor_String_t ProductString = USB_STRING_DESCRIPTOR(L"LUFA CDC");
+const USB_Descriptor_String_t PROGMEM ProductString = USB_STRING_DESCRIPTOR(L"RevE Rebooted (iceman1001)");
 
 /** This function is called by the library when in device mode, and must be overridden (see LUFA library "USB Descriptors"
  *  documentation) by the application code so that the address and size of a requested descriptor can be given
