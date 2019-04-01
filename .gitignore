@@ -13,3 +13,6 @@
 *.bin
 *.hex
 *.dll
+*.sym
+*.lss
+*.DS_Store

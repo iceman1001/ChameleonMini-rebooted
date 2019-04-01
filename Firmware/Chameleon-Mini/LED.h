@@ -26,6 +26,7 @@
 #define LED_EIGHT		PIN0_bm
 #define LED_LOW_MASK	(LED_FIVE | LED_SIX | LED_SEVEN| LED_EIGHT)
 			
+void LEDMode(void);
 void LEDInit(void);
 void LEDTick(void);
 void CARDInit(void);

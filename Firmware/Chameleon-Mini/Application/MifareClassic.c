@@ -13,6 +13,7 @@
 #include "Crypto1.h"
 #include "../Random.h"
 #include "../LED.h"
+
 #define MFCLASSIC_1K_ATQA_VALUE     0x0004
 #define MFPlus_ATQA_VALUE           0x0044
 #define MFCLASSIC_4K_ATQA_VALUE     0x0002
@@ -78,16 +79,16 @@ Access conditions for the sector trailer
 
 Access bits     Access condition for                   Remark
             KEYA         Access bits  KEYB
-C1 C2 C3        read  write  read  write  read  write 
+C1 C2 C3        read  write  read  write  read  write
 0  0  0         never key A  key A never  key A key A  Key B may be read[1]
 0  1  0         never never  key A never  key A never  Key B may be read[1]
-1  0  0         never key B  keyA|B never never key B 
-1  1  0         never never  keyA|B never never never 
+1  0  0         never key B  keyA|B never never key B
+1  1  0         never never  keyA|B never never never
 0  0  1         never key A  key A  key A key A key A  Key B may be read,
                                                        transport configuration[1]
-0  1  1         never key B  keyA|B key B never key B 
-1  0  1         never never  keyA|B key B never never 
-1  1  1         never never  keyA|B never never never 
+0  1  1         never key B  keyA|B key B never key B
+1  0  1         never never  keyA|B key B never never
+1  1  1         never never  keyA|B never never never
 
 [1] For this access condition key B is readable and may be used for data
 */
@@ -103,9 +104,9 @@ C1 C2 C3        read  write  read  write  read  write
 /*
 Access conditions for data blocks
 Access bits Access condition for 				Application
-C1 C2 C3 	read 	write 	increment 	decrement, 
-                                                transfer, 
-                                                restore 
+C1 C2 C3 	read 	write 	increment 	decrement,
+                                                transfer,
+                                                restore
 
 0 0 0 		key A|B key A|B key A|B 	key A|B 	transport configuration
 0 1 0 		key A|B never 	never 		never 		read/write block
@@ -125,128 +126,130 @@ C1 C2 C3 	read 	write 	increment 	decrement,
 #define KEY_A 0
 #define KEY_B 1
 
-/* Decoding table for Access conditions of a data block */
+/*
+// Decoding table for Access conditions of a data block
 static const uint8_t abBlockAccessConditions[8][2] =
 {
-    /*C1C2C3 */
-    /* 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B 	transport configuration */
+    //C1C2C3
+    // 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B 	transport configuration
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT,
-        /* Access with Key B */
+        // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
     },
-    /* 1 0 0 R:key A|B W:key B I:never D:never 	read/write block */
+    // 1 0 0 R:key A|B W:key B I:never D:never 	read/write block
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_BLOCK_READ,
-        /* Access with Key B */
+        // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE
     },
-    /* 0 1 0 R:key A|B W:never I:never D:never 	read/write block */
+    // 0 1 0 R:key A|B W:never I:never D:never 	read/write block
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_BLOCK_READ,
-        /* Access with Key B */
+        // Access with Key B
         ACC_BLOCK_READ
     },
-    /* 1 1 0 R:key A|B W:key B I:key B D:key A|B 	value block */
+    // 1 1 0 R:key A|B W:key B I:key B D:key A|B 	value block
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
-        /* Access with Key B */
+        // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
     },
-    /* 0 0 1 R:key A|B W:never I:never D:key A|B 	value block */
+    // 0 0 1 R:key A|B W:never I:never D:key A|B 	value block
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
-        /* Access with Key B */
+        // Access with Key B
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT
     },
-    /* 1 0 1 R:key B W:never I:never D:never 	read/write block */
+    // 1 0 1 R:key B W:never I:never D:never 	read/write block
     {
-        /* Access with Key A */
+        // Access with Key A
         0,
-        /* Access with Key B */
-        ACC_BLOCK_READ  
+        // Access with Key B
+        ACC_BLOCK_READ
     },
-    /* 0 1 1 R:key B W:key B I:never D:never	read/write block */
+    // 0 1 1 R:key B W:key B I:never D:never	read/write block
     {
-        /* Access with Key A */
+        // Access with Key A
         0,
-        /* Access with Key B */
-        ACC_BLOCK_READ | ACC_BLOCK_WRITE 
+        // Access with Key B
+        ACC_BLOCK_READ | ACC_BLOCK_WRITE
     },
-    /* 1 1 1 R:never W:never I:never D:never	read/write block */
+    // 1 1 1 R:never W:never I:never D:never	read/write block
     {
-        /* Access with Key A */
+        // Access with Key A
         0,
-        /* Access with Key B */
+        // Access with Key B
         0
     }
 
 };
-/* Decoding table for Access conditions of the sector trailor */
+// Decoding table for Access conditions of the sector trailor
 static const uint8_t abTrailorAccessConditions[8][2] =
 {
-    /* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A  	Key B may be read[1] */
+    // 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A  	Key B may be read[1]
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
-        /* Access with Key B */
+        // Access with Key B
         0
     },
-    /* 1  0  0 RdKA:never WrKA:key B  RdAcc:keyA|B WrAcc:never RdKB:never WrKB:key B */
+    // 1  0  0 RdKA:never WrKA:key B  RdAcc:keyA|B WrAcc:never RdKB:never WrKB:key B
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_READ_ACC,
-        /* Access with Key B */
+        // Access with Key B
         ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC |  ACC_TRAILOR_WRITE_KEYB
     },
-    /* 0  1  0 RdKA:never WrKA:never  RdAcc:key A WrAcc:never  RdKB:key A WrKB:never  Key B may be read[1] */
+    // 0  1  0 RdKA:never WrKA:never  RdAcc:key A WrAcc:never  RdKB:key A WrKB:never  Key B may be read[1]
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_READ_ACC | ACC_TRAILOR_READ_KEYB,
-        /* Access with Key B */
+        // Access with Key B
         0
     },
-    /* 1  1  0         never never  keyA|B never never never */
+    // 1  1  0         never never  keyA|B never never never
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_READ_ACC,
-        /* Access with Key B */
+        // Access with Key B
         ACC_TRAILOR_READ_ACC
     },
-    /* 0  0  1         never key A  key A  key A key A key A  Key B may be read,transport configuration[1] */
+    // 0  0  1         never key A  key A  key A key A key A  Key B may be read,transport configuration[1]
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
-        /* Access with Key B */
+        // Access with Key B
         0
     },
-    /* 0  1  1         never key B  keyA|B key B never key B */
+    // 0  1  1         never key B  keyA|B key B never key B
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_READ_ACC,
-        /* Access with Key B */
+        // Access with Key B
         ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_WRITE_KEYB
     },
-    /* 1  0  1         never never  keyA|B key B never never */
+    // 1  0  1         never never  keyA|B key B never never
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_READ_ACC,
-        /* Access with Key B */
+        // Access with Key B
         ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC
     },
-    /* 1  1  1         never never  keyA|B never never never */
+    // 1  1  1         never never  keyA|B never never never
     {
-        /* Access with Key A */
+        // Access with Key A
         ACC_TRAILOR_READ_ACC,
-        /* Access with Key B */
+        // Access with Key B
         ACC_TRAILOR_READ_ACC
     },
 };
+*/
 
 static enum {
     STATE_HALT,
@@ -288,7 +291,7 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
     uint8_t  Acc1 = AccessConditions[1];
     uint8_t  Acc2 = AccessConditions[2];
     uint8_t  ResultForBlock = 0;
-    
+
     InvSAcc0 = ~BYTE_SWAP(Acc0);
     InvSAcc1 = ~BYTE_SWAP(Acc1);
 
@@ -522,7 +525,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
             /* Load UID CL1 and perform anticollision */
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
-			
+
             if (_7BUID) {
 	            MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
 	            UidCL1[0] = ISO14443A_UID0_CT;
@@ -628,11 +631,11 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 Buffer[0] = NAK_CRC_ERROR;
                 return ACK_NAK_FRAME_SIZE;
             }
-        } else if ( (Buffer[0] == CMD_READ) || 
+        } else if ( (Buffer[0] == CMD_READ) ||
 		            (Buffer[0] == CMD_WRITE) ||
-					(Buffer[0] == CMD_DECREMENT) || 
-					(Buffer[0] == CMD_INCREMENT) || 
-					(Buffer[0] == CMD_RESTORE) || 
+					(Buffer[0] == CMD_DECREMENT) ||
+					(Buffer[0] == CMD_INCREMENT) ||
+					(Buffer[0] == CMD_RESTORE) ||
 					(Buffer[0] == CMD_TRANSFER) ) {
             State = STATE_IDLE;
             Buffer[0] = NAK_NOT_AUTHED;
@@ -912,7 +915,7 @@ void MifareClassicSetUid(ConfigurationUidType Uid)
 
 void MifareClassicGetAtqa(uint16_t * Atqa)
 {
-	*Atqa = CardATQAValue;	
+	*Atqa = CardATQAValue;
 }
 
 void MifareClassicSetAtqa(uint16_t Atqa)
