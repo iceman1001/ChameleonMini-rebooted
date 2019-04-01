@@ -75,8 +75,8 @@ The code repository contains
 | Shop | URL | Device |
 | ------ | ------ | ------ |
 | Kaos | [https://shop.kasper.it/][store1] | Rev G |
-| Lab401 | [https://lab401.com/][store2] | Rev E Rebooted |
-| rfxsecure | [https://www.rfxsecure.com/][store3] | Rev E Rebooted |
+| sneaktech | [https://sneaktechnology.com/][store2] | Rev E Rebooted |
+| Lab401 | [https://lab401.com/][store3] | Rev E Rebooted |
 
 
 ## Perpetual glory!
@@ -85,7 +85,9 @@ A list of those who contributed to this repo in order to make it work. The commu
 -  @doegox
 -  @ceres-c
 -  @iskuri
+-  @shinhub
 
    [store1]: <https://shop.kasper.it/>
-   [store2]: <https://lab401.com/>
-   [store3]: <https://www.rfxsecure.com/>
+   [store2]: <https://sneaktechnology.com/>
+   [store3]: <https://lab401.com/>
+
