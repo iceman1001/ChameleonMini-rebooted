@@ -13,7 +13,8 @@ static const char PROGMEM ButtonActionTable[][32] =
     [BUTTON_ACTION_UID_RIGHT_INCREMENT] = "UID_RIGHT_INCREMENT",
     [BUTTON_ACTION_UID_LEFT_DECREMENT] = "UID_LEFT_DECREMENT",
     [BUTTON_ACTION_UID_RIGHT_DECREMENT] = "UID_RIGHT_DECREMENT",
-    [BUTTON_ACTION_CYCLE_SETTINGS] = "SWITCHCARD"
+    [BUTTON_ACTION_CYCLE_SETTINGS] = "SWITCHCARD",
+    [BUTTON_ACTION_TOGGLE_READONLY] = "READONLY",
 };
 
 void ButtonInit(void)
@@ -114,6 +115,8 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 		ApplicationSetUid(UidBuffer);
 	} else if (ButtonAction == BUTTON_ACTION_CYCLE_SETTINGS) {
 		SettingsCycle();
+	} else if (ButtonAction == BUTTON_ACTION_TOGGLE_READONLY) {
+		ActiveConfiguration.ReadOnly = !ActiveConfiguration.ReadOnly;
 	}
 }
 
