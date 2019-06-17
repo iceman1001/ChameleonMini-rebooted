@@ -19,14 +19,8 @@ The chinese manufacturer had its firmware changes to themself which was limiting
 After talks with manufacturer, they also came to the conclusion that it should be open-sourced.  I managed to get source from them and agreed to make a public repository on GitHub.
 Since this firmware isn't in the official Chameleon mini repo,  I decided to make a 'iceman fork' of it.*
 
-## Donate
-https://www.patreon.com/iceman1001  Feel free to donate. All support is welcome.
-
-monereo:  43mNJLpgBVaTvyZmX9ajcohpvVkaRy1kbZPm8tqAb7itZgfuYecgkRF36rXrKFUkwEGeZedPsASRxgv4HPBHvJwyJdyvQuP
-
-
 ## Notice      
-Let us make this fork awesume to play with. Do please play with it. Get excited and experiment with your enhanced Chameleon Mini device!
+Let us make this fork awesome to play with. Do please play with it. Get excited and experiment with your enhanced Chameleon Mini device!
 
 ## First Steps
 This repo is focused on RevE Rebooted,    you can find useful information on [our wiki here](https://github.com/iceman1001/ChameleonMini-rebooted/wiki)
@@ -77,6 +71,12 @@ The code repository contains
 | Kaos | [https://shop.kasper.it/][store1] | Rev G |
 | sneaktech | [https://sneaktechnology.com/][store2] | Rev E Rebooted |
 | Lab401 | [https://lab401.com/][store3] | Rev E Rebooted |
+
+## Donate
+If you feel the love,  do feel free to become a iceman patron. For some tiers it comes with rewards
+https://www.patreon.com/iceman1001 
+
+All support is welcome.
 
 
 ## Perpetual glory!
