@@ -34,7 +34,7 @@ This repo is focused on RevE Rebooted,    you can find useful information on [ou
 ### To upgrade the firmware of your ChameleonMini
 
 For RevG owners,  
-please visit the [Getting Started page](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/Page_GettingStarted.html) from the [doxygen documentation](http://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
+please visit the [Getting Started page](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
 For RevE Rebooted owners,  
 please visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Flashing---windows)
