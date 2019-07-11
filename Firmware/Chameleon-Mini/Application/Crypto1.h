@@ -2,15 +2,13 @@
 #define CRYPTO1_H
 
 #include <stdint.h>
-#include "Crypto1_asm.h"
 #include <avr/pgmspace.h>
 
-/* Gets the current keystream-bit, without shifting the internal LFSR */
-uint8_t Crypto1FilterOutput(void);
-
 /* Set up Crypto1 cipher using the given Key, Uid and CardNonce. Also encrypts
- * the CardNonce in-place while in non-linear mode. */
-void Crypto1Setup(uint8_t Key[6], uint8_t Uid[4], uint8_t CardNonce[4]);
+ * the CardNonce in-place while in non-linear mode.
+ * If CardNonceParity is not null, saves parity for nested authentication */
+void Crypto1Setup(uint8_t Key[6], uint8_t Uid[4], uint8_t CardNonce[4], uint8_t CardNonceParity[4]);
+
 
 /* Load the decrypted ReaderNonce into the Crypto1 state LFSR */
 void Crypto1Auth(uint8_t EncryptedReaderNonce[4]);
@@ -21,10 +19,9 @@ uint8_t Crypto1Byte(void);
 /* Generate 4 Bits of key stream */
 uint8_t Crypto1Nibble(void);
 
-/* Generate 1 Bit of key stream */
-uint8_t Crypto1Bit(uint8_t In, uint8_t AuthFilter);
-
 /* Execute 'ClockCount' cycles on the PRNG state 'State' */
 void Crypto1PRNG(uint8_t State[4], uint16_t ClockCount);
+
+uint8_t Crypto1FilterOutput(void);
 
 #endif //CRYPTO1_H
