@@ -93,33 +93,25 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
         }
     default:
     {
-        uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
         uint8_t CollisionBitCount  = (NVB >> 0) & 0x0f;
-        uint8_t mask = 0xFF >> (8 - CollisionBitCount);
-        // Since the UidCL does not contain the BCC, we have to distinguish here
-        if (
-                ((CollisionByteCount == 5 || (CollisionByteCount == 4 && CollisionBitCount > 0)) && memcmp(UidCL, &DataPtr[2], 4) == 0 && (ISO14443A_CALC_BCC(UidCL) & mask) == (DataPtr[6] & mask))
-                ||
-                (CollisionByteCount == 4 && CollisionBitCount == 0 && memcmp(UidCL, &DataPtr[2], 4) == 0)
-                ||
-                (CollisionByteCount < 4 && memcmp(UidCL, &DataPtr[2], CollisionByteCount) == 0 && (UidCL[CollisionByteCount] & mask) == (DataPtr[CollisionByteCount + 2] & mask))
-        )
-        {
-            DataPtr[0] = UidCL[0];
-            DataPtr[1] = UidCL[1];
-            DataPtr[2] = UidCL[2];
-            DataPtr[3] = UidCL[3];
-            DataPtr[4] = ISO14443A_CALC_BCC(DataPtr);
-
-            *BitCount = ISO14443A_CL_FRAME_SIZE;
+        if (CollisionBitCount == 0) {
+            /* Full-frame anticollision supports */
+            uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
+            /* Check for our UID is selecting */
+            if (memcmp(UidCL, &DataPtr[2], CollisionByteCount) != 0) {
+                *BitCount = 0;
+                return false;
+            }
+            memcpy(DataPtr, &UidCL[CollisionByteCount], 4 - CollisionByteCount);
+            /* Calc original BCC */
+            DataPtr[4 - CollisionByteCount] = ISO14443A_CALC_BCC(UidCL);
+            *BitCount = (5 - CollisionByteCount) * BITS_PER_BYTE;
         } else {
+            /* Partial-frame anticollision not supported */
             *BitCount = 0;
         }
         return false;
     }
-        /* TODO: No anticollision supported */
-        *BitCount = 0;
-        return false;
     }
 }
 
