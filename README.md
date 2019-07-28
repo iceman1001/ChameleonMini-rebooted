@@ -86,6 +86,7 @@ A list of those who contributed to this repo in order to make it work. The commu
 -  @ceres-c
 -  @iskuri
 -  @shinhub
+-  @McEloff
 
    [store1]: <https://shop.kasper.it/>
    [store2]: <https://sneaktechnology.com/>
