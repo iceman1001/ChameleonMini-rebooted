@@ -1,8 +1,8 @@
 ChameleonMini RevE - Rebooted
 =============================
-
-[![Build Status](https://travis-ci.org/iceman1001/ChameleonMini-rebooted.svg?branch=master)](https://travis-ci.org/iceman1001/ChameleonMini-rebooted)
-[![Latest release](https://img.shields.io/github/release/iceman1001/ChameleonMini-rebooted.svg)](https://github.com/iceman1001/ChameleonMini-rebooted/releases/latest)
+| Linux & OSX CI     | Releases       |
+| ------------------- |:-------------------:|
+| [![Build Status](https://travis-ci.org/iceman1001/ChameleonMini-rebooted.svg?branch=master)](https://travis-ci.org/iceman1001/ChameleonMini-rebooted) | [![Latest release](https://img.shields.io/github/release/iceman1001/ChameleonMini-rebooted.svg)](https://github.com/iceman1001/ChameleonMini-rebooted/releases/latest) |
 
 ![Image chameleon mini revE - rebooted](http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg)
 
