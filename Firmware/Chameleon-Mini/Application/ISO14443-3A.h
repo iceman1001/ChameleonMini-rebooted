@@ -93,9 +93,9 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
         }
     default:
     {
-        uint8_t CollisionBitCount  = (NVB >> 0) & 0x0f;
+        uint8_t CollisionBitCount  = NVB & 0x0f;
         if (CollisionBitCount == 0) {
-            /* Full-frame anticollision supports */
+            /* Full-byte anticollision frame supports */
             uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
             /* Check for our UID is selecting */
             if (memcmp(UidCL, &DataPtr[2], CollisionByteCount) != 0) {
@@ -107,7 +107,7 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
             DataPtr[4 - CollisionByteCount] = ISO14443A_CALC_BCC(UidCL);
             *BitCount = (5 - CollisionByteCount) * BITS_PER_BYTE;
         } else {
-            /* Partial-frame anticollision not supported */
+            /* Partial-byte anticollision frame not supported */
             *BitCount = 0;
         }
         return false;
