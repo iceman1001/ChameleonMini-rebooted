@@ -592,8 +592,15 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             }
         } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
             if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
-                uint8_t SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
+                uint8_t SectorAddress;
                 uint8_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
+                /* Fix for MFClassic 4k cards */
+                if(Buffer[1] >= 128) {
+                    SectorAddress = Buffer[1] & MEM_BIGSECTOR_ADDR_MASK;
+                    KeyOffset += MEM_KEY_BIGSECTOR_OFFSET;
+                } else {
+                    SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
+                }
                 uint16_t KeyAddress = (uint16_t) SectorAddress * MEM_BYTES_PER_BLOCK + KeyOffset;
                 uint8_t Key[6];
                 uint8_t Uid[4];
@@ -757,8 +764,15 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
             if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
                 /* Nested authentication. */
-                uint8_t SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
+                uint8_t SectorAddress;
                 uint8_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
+                /* Fix for MFClassic 4k cards */
+                if(Buffer[1] >= 128) {
+                    SectorAddress = Buffer[1] & MEM_BIGSECTOR_ADDR_MASK;
+                    KeyOffset += MEM_KEY_BIGSECTOR_OFFSET;
+                } else {
+                    SectorAddress = Buffer[1] & MEM_SECTOR_ADDR_MASK;
+                }
                 uint16_t KeyAddress = (uint16_t) SectorAddress * MEM_BYTES_PER_BLOCK + KeyOffset;
                 uint8_t Key[6];
                 uint8_t Uid[4];
