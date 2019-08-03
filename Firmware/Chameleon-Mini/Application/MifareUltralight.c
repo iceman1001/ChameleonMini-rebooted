@@ -300,15 +300,19 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
         switch (Cmd) {
 
             case CMD_GET_VERSION: {
-                /* Provide hardcoded version response */
-                Buffer[0] = 0x00;
-                Buffer[1] = 0x04;
-                Buffer[2] = 0x03;
-                Buffer[3] = 0x01; /**/
-                Buffer[4] = 0x01;
-                Buffer[5] = 0x00;
-                Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
-                Buffer[7] = 0x03;
+                /* Check new dump format and get version from out of pages area (skip 3 pages of counters) */
+                MemoryReadBlock(Buffer, (PageCount + 3) * MIFARE_ULTRALIGHT_PAGE_SIZE, VERSION_INFO_LENGTH);
+                if (Buffer[6] != 0x0B && Buffer[6] != 0x0E) {
+                    /* Provide hardcoded version response */
+                    Buffer[0] = 0x00;
+                    Buffer[1] = 0x04;
+                    Buffer[2] = 0x03;
+                    Buffer[3] = 0x01; /**/
+                    Buffer[4] = 0x01;
+                    Buffer[5] = 0x00;
+                    Buffer[6] = PageCount == MIFARE_ULTRALIGHT_EV11_PAGES ? 0x0B : 0x0E;
+                    Buffer[7] = 0x03;
+                }
                 ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
                 return (VERSION_INFO_LENGTH + ISO14443A_CRCA_SIZE) * 8;
             }
@@ -379,14 +383,14 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             case CMD_INCREMENT_CNT: {
                 uint8_t CounterId = Buffer[1];
                 uint32_t Addend = (Buffer[0]) | (Buffer[1] << 8) | ((uint32_t)Buffer[2] << 16);
-                uint32_t Counter;
+                uint32_t Counter = 0;
                 /* Validation */
                 if (CounterId > CNT_MAX) {
                     Buffer[0] = NAK_INVALID_ARG;
                     return NAK_FRAME_SIZE;
                 }
                 /* Read the value out */
-                MemoryReadBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
+                MemoryReadBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
                 /* Add and check for overflow */
                 Counter += Addend;
                 if (Counter > CNT_MAX_VALUE) {
@@ -394,22 +398,33 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Update memory */
-                MemoryWriteBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
+                MemoryWriteBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
                 Buffer[0] = ACK_VALUE;
                 return ACK_FRAME_SIZE;
             }
 
-            case CMD_READ_SIG:
-                /* Hardcoded response */
-                memset(Buffer, 0xCA, SIGNATURE_LENGTH);
+            case CMD_READ_SIG: {
+                /* Check new dump format and get signature from out of pages area (skip 3 pages of counters, 2 pages VERSION) */
+                MemoryReadBlock(Buffer, (PageCount + 5) * MIFARE_ULTRALIGHT_PAGE_SIZE, SIGNATURE_LENGTH);
+                if (*(uint32_t*)Buffer == 0) {
+                    /* Hardcoded response */
+                    memset(Buffer, 0xCA, SIGNATURE_LENGTH);
+                }
                 ISO14443AAppendCRCA(Buffer, SIGNATURE_LENGTH);
                 return (SIGNATURE_LENGTH + ISO14443A_CRCA_SIZE) * 8;
+            }
 
-            case CMD_CHECK_TEARING_EVENT:
+            case CMD_CHECK_TEARING_EVENT: {
+                uint8_t CounterId = Buffer[1];
+                /* Read tearing flag from counter pages of new dump format */
+                MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE + 3, 1);
                 /* Hardcoded response */
-                Buffer[0] = 0xBD;
+                if (Buffer[0] == 0) {
+                    Buffer[0] = 0xBD;
+                }
                 ISO14443AAppendCRCA(Buffer, 1);
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
+            }
 
             case CMD_VCSL: {
                 uint8_t ConfigAreaAddress = PageCount * MIFARE_ULTRALIGHT_PAGE_SIZE - CONFIG_AREA_SIZE;
