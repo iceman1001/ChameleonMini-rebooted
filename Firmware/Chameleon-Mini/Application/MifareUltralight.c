@@ -66,8 +66,9 @@
 #define CONF_ACCESS_CNFLCK      0x40
 
 #define CNT_MAX                 2
-#define CNT_SIZE                4
+#define CNT_SIZE                3
 #define CNT_MAX_VALUE           0x00FFFFFF
+#define TEARING_SIZE            1
 
 #define BYTES_PER_READ          16
 #define PAGE_READ_MIN           0x00
@@ -78,7 +79,10 @@
 #define BYTES_PER_COMPAT_WRITE  16
 
 #define VERSION_INFO_LENGTH     8
+#define VERSION_OFFSET_PAGES    3
+
 #define SIGNATURE_LENGTH        32
+#define SIGNATURE_OFFSET_PAGES  5
 
 static enum {
     UL_EV0,
@@ -301,7 +305,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 
             case CMD_GET_VERSION: {
                 /* Check new dump format and get version from out of pages area (skip 3 pages of counters) */
-                MemoryReadBlock(Buffer, (PageCount + 3) * MIFARE_ULTRALIGHT_PAGE_SIZE, VERSION_INFO_LENGTH);
+                MemoryReadBlock(Buffer, (PageCount + VERSION_OFFSET_PAGES) * MIFARE_ULTRALIGHT_PAGE_SIZE, VERSION_INFO_LENGTH);
                 if (Buffer[6] != 0x0B && Buffer[6] != 0x0E) {
                     /* Provide hardcoded version response */
                     Buffer[0] = 0x00;
@@ -375,8 +379,8 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Returned counter length is 3 bytes */
-                MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
-                ISO14443AAppendCRCA(Buffer, 3);
+                MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, CNT_SIZE);
+                ISO14443AAppendCRCA(Buffer, CNT_SIZE);
                 return (3 + ISO14443A_CRCA_SIZE) * 8;
             }
 
@@ -390,7 +394,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Read the value out */
-                MemoryReadBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
+                MemoryReadBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, CNT_SIZE);
                 /* Add and check for overflow */
                 Counter += Addend;
                 if (Counter > CNT_MAX_VALUE) {
@@ -398,15 +402,17 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                     return NAK_FRAME_SIZE;
                 }
                 /* Update memory */
-                MemoryWriteBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, 3);
+                MemoryWriteBlock(&Counter, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE, CNT_SIZE);
                 Buffer[0] = ACK_VALUE;
                 return ACK_FRAME_SIZE;
             }
 
             case CMD_READ_SIG: {
                 /* Check new dump format and get signature from out of pages area (skip 3 pages of counters, 2 pages VERSION) */
-                MemoryReadBlock(Buffer, (PageCount + 5) * MIFARE_ULTRALIGHT_PAGE_SIZE, SIGNATURE_LENGTH);
-                if (*(uint32_t*)Buffer == 0) {
+                MemoryReadBlock(Buffer, (PageCount + SIGNATURE_OFFSET_PAGES) * MIFARE_ULTRALIGHT_PAGE_SIZE, SIGNATURE_LENGTH);
+                uint8_t zeros[SIGNATURE_LENGTH];
+                memset(zeros, 0, SIGNATURE_LENGTH);
+                if (memcmp(Buffer, zeros, SIGNATURE_LENGTH) == 0) {
                     /* Hardcoded response */
                     memset(Buffer, 0xCA, SIGNATURE_LENGTH);
                 }
@@ -417,12 +423,12 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
             case CMD_CHECK_TEARING_EVENT: {
                 uint8_t CounterId = Buffer[1];
                 /* Read tearing flag from counter pages of new dump format */
-                MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE + 3, 1);
+                MemoryReadBlock(Buffer, (PageCount + CounterId) * MIFARE_ULTRALIGHT_PAGE_SIZE + CNT_SIZE, TEARING_SIZE);
                 /* Hardcoded response */
                 if (Buffer[0] == 0) {
                     Buffer[0] = 0xBD;
                 }
-                ISO14443AAppendCRCA(Buffer, 1);
+                ISO14443AAppendCRCA(Buffer, TEARING_SIZE);
                 return (1 + ISO14443A_CRCA_SIZE) * 8;
             }
 
