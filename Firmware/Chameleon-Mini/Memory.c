@@ -168,22 +168,39 @@ INLINE void FlashClearPage(uint16_t PageAddress) {
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
 }
 
-void FlashReadManufacturerDeviceInfo(void* Buffer) {
+flashManufacturerInfo_t GetFlashManufacturerInfo(void) {
+	flashManufacturerInfo_t ret;
+
 	while(FlashIsBusy());
 
 	MEMORY_FLASH_PORT.OUTCLR = MEMORY_FLASH_CS;
 	SPITransferByte(FLASH_CMD_READMANUFDEVICEINFO);
-	SPIReadBlock(Buffer, 4);
+	SPIReadBlock(ret.data, 4);
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
+
+	ret.manufacturerId = ret.data[0];
+	ret.familyCode = ret.data[1] >> 5;
+	ret.densityCode = ret.data[1] & 0x1F;
+	ret.MLCCode = ret.data[2] >> 5;
+	ret.productVersionCode = ret.data[2] & 0x1F;
+	ret.sizeMbits = 0;
+	// Minimum: AT45DB011D Density Code : 00010 = 1-Mbit
+	// Maximum: AT45DB642D Density Code : 01000 = 64-Mbit
+	if ((ret.densityCode >= 2) && (ret.densityCode <= 8) && (ret.familyCode == 1))
+		ret.sizeMbits = 1 << (ret.densityCode - 2);
+	// Precalculated 1024 / 8 = 128, to prevent uint16_t overflow for possible 64-Mbit flash
+	ret.sizeKbytes = ret.sizeMbits * 128;
+
+	return ret;
 }
 
 void MemoryInit(void) {
 	/* Configure MEMORY_FLASH_USART for SPI master mode 0 with maximum clock frequency */
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_CS;
-	
+
 	MEMORY_FLASH_PORT.OUTCLR = MEMORY_FLASH_SCK;
 	MEMORY_FLASH_PORT.OUTSET = MEMORY_FLASH_MOSI;
-	
+
 	MEMORY_FLASH_PORT.DIRSET = MEMORY_FLASH_SCK | MEMORY_FLASH_MOSI | MEMORY_FLASH_CS;
 
     MEMORY_FLASH_USART.BAUDCTRLA = 0;
@@ -196,42 +213,38 @@ void MemoryInit(void) {
 		/* Configure for 256 byte Dataflash if not already done. */
 		FlashConfigurePageSize();
 	}
+
+	FlashManufacturerInfo = GetFlashManufacturerInfo();
+}
+
+uint32_t GetFlashAddressForSetting(uint32_t Setting, uint32_t Address) {
+	uint32_t FlashAddress = Address;
+	if ( Setting > 0 )
+		FlashAddress = Address + MEMORY_SIZE_PER_SETTING_4K + ((uint16_t) Setting - 1) * MEMORY_SIZE_PER_SETTING_1K;
+	return FlashAddress;
 }
 
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount) {
 	if (ByteCount == 0)
 		return;
-
-	uint32_t FlashAddress;
-	if ( GlobalSettings.ActiveSetting == 0 )
-		FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_4K;
-	else
-		FlashAddress = (uint32_t) Address + (uint32_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_1K;
-
-	FlashRead(Buffer, FlashAddress, ByteCount);
+	FlashRead(Buffer, GetFlashAddressForSetting(GlobalSettings.ActiveSetting, Address), ByteCount);
 }
 
 void MemoryWriteBlock(const void* Buffer, uint16_t Address, uint16_t ByteCount) {
 	if (ByteCount == 0)
 		return;
-	uint16_t FlashAddress;
-	if ( GlobalSettings.ActiveSetting == 0 )
-		FlashAddress = Address + (uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_4K;
-	else
-		FlashAddress = Address + (uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_1K;
-	FlashWrite(Buffer, FlashAddress, ByteCount);
+	FlashWrite(Buffer, GetFlashAddressForSetting(GlobalSettings.ActiveSetting, Address), ByteCount);
 }
 
 void MemoryClear(void) {
 	uint16_t PageAddress;
 	uint16_t PageCount;
-	if ( GlobalSettings.ActiveSetting == 0 ) {
-		PageAddress = ((uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_4K) / MEMORY_PAGE_SIZE;
+
+	PageAddress = ((uint16_t)GetFlashAddressForSetting(GlobalSettings.ActiveSetting, (uint32_t)0)) / MEMORY_PAGE_SIZE;
+	if ( GlobalSettings.ActiveSetting == 0 )
 		PageCount = MEMORY_SIZE_PER_SETTING_4K / MEMORY_PAGE_SIZE;
-	} else {
-		PageAddress = ((uint16_t) GlobalSettings.ActiveSetting * MEMORY_SIZE_PER_SETTING_1K) / MEMORY_PAGE_SIZE;
+	else
 		PageCount = MEMORY_SIZE_PER_SETTING_1K / MEMORY_PAGE_SIZE;
-	}
 
 	while(PageCount > 0) {
 		FlashClearPage(PageAddress);
@@ -239,6 +252,7 @@ void MemoryClear(void) {
 		PageAddress++;
 	}
 }
+
 void MemoryRecall(void) {
 	/* Recall memory from permanent flash */
 	//FlashRead(Memory, (uint16_t) GlobalSettings.ActiveSettingIdx * MEMORY_SIZE_PER_SETTING, MEMORY_SIZE_PER_SETTING);
@@ -305,9 +319,9 @@ bool MemoryDownloadBlock(void* Buffer, uint16_t BlockAddress, uint16_t ByteCount
 }
 
 // EEPROM functions
-    
+
 static inline void NVM_EXEC(void)
-{   
+{
     void *z = (void *)&NVM_CTRLA;
 
     __asm__ volatile("out %[ccp], %[ioreg]"  "\n\t"
@@ -319,14 +333,14 @@ static inline void NVM_EXEC(void)
                  [z] "z" (z)
                  );
 }
-                 
+
 void WaitForNVM(void)
-{                
+{
         while (NVM.STATUS & NVM_NVMBUSY_bm) { };
 }
-        
+
 void FlushNVMBuffer(void)
-{       
+{
     WaitForNVM();
 
     if ((NVM.STATUS & NVM_EELOAD_bm) != 0) {

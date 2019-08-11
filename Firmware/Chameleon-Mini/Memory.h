@@ -19,20 +19,32 @@
 #define MEMORY_FLASH_MISO	PIN2_bm
 #define MEMORY_FLASH_SCK	PIN1_bm
 
-#define MEMORY_PAGE_SIZE		256
+#define MEMORY_PAGE_SIZE			256
 #define MEMORY_SIZE_PER_SETTING_4K	4096
 #define MEMORY_SIZE_PER_SETTING_1K	1024
 
 
 // extra config memory section
-// 8 slots possible, 
+// 8 slots possible,
 // 2byte ataq
 // 1byte sak
 // 1 bit magic gen1a
 // 1 bit magic gen1b
 // 1 bit magic gen2
 
-void FlashReadManufacturerDeviceInfo(void* Buffer);
+// Flash manufacturer info
+typedef struct {
+	uint8_t data[4];
+	uint8_t manufacturerId;
+	uint8_t familyCode;
+	uint8_t densityCode;
+	uint8_t MLCCode;
+	uint8_t productVersionCode;
+	uint16_t sizeMbits;
+	uint32_t sizeKbytes;
+} flashManufacturerInfo_t;
+flashManufacturerInfo_t FlashManufacturerInfo;
+flashManufacturerInfo_t GetFlashManufacturerInfo(void);
 
 void MemoryInit(void);
 void MemoryReadBlock(void* Buffer, uint16_t Address, uint16_t ByteCount);
