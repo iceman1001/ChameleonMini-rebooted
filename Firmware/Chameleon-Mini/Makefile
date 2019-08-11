@@ -1,7 +1,7 @@
 # This makefile uses sh in order to build the project.
-# Note when using AVR-Toolchain, you have to install cygwin and 
-# append cygwin's bin directory to the PATH environment variable 
-# because Atmel does not ship sh.exe anymore with the toolchain. 
+# Note when using AVR-Toolchain, you have to install cygwin and
+# append cygwin's bin directory to the PATH environment variable
+# because Atmel does not ship sh.exe anymore with the toolchain.
 SHELL = /bin/sh
 
 #Supported configurations
@@ -42,7 +42,7 @@ SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #Default long button action
 SETTINGS	+= -DDEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 
-#Define if button action setting should be independent of active setting 
+#Define if button action setting should be independent of active setting
 #SETTINGS	+= -DBUTTON_SETTING_GLOBAL
 
 #Default LED functions
@@ -99,20 +99,21 @@ LUFA_PATH    = src/LUFA/LUFA
 CC_FLAGS     = -Werror -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-OBJECT_FILES = 
+OBJECT_FILES =
+CRYPTO_TOOL  = ../../Software/Tools/crypt_operations.py
 
 
 #AVRDUDE settings
-AVRDUDE_PROGRAMMER = flip2
-AVRDUDE_MCU = atxmega32a4
-AVRDUDE_PORT = usb
-AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
-AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
-AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
+#AVRDUDE_PROGRAMMER = flip2
+#AVRDUDE_MCU = $(MCU)
+#AVRDUDE_PORT = usb
+#AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
+#AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
+#AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
 #AVRDUDE settings to program the precompiled firmware
-AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
-AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
+#AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
+#AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
 
 
 # Default target
@@ -142,25 +143,27 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 spmhelper: $(TARGET).elf
 	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
-		
-# Program the device using avrdude  
-program: $(TARGET).hex $(TARGET).eep
-	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
+
+# Program the device using avrdude
+#program: $(TARGET).hex $(TARGET).eep
+#	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
 
 # Program the device using avrdude with the latest official firmware
-program-latest:
-	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
+#program-latest:
+#	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP_LATEST) $(AVRDUDE_WRITE_EEPROM_LATEST)
 
 # Program the device using batchisp and the DFU bootloader
 # Note that the device has to be in bootloader mode already
-dfu-flip: $(TARGET).hex $(TARGET).eep
-	cp $(TARGET).eep EEPROM.hex
-	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
-	rm EEPROM.hex
+#dfu-flip: $(TARGET).hex $(TARGET).eep
+#	cp $(TARGET).eep EEPROM.hex
+#	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
+#	rm EEPROM.hex
 
 # Program the device using dfu-programmer
 dfu-prog: $(TARGET).hex $(TARGET).eep
-	dfu-programmer $(MCU) erase
-	dfu-programmer $(MCU) flash-eeprom $(TARGET).eep
-	dfu-programmer $(MCU) flash $(TARGET).hex
-	dfu-programmer $(MCU) reset
+	python3 $(CRYPTO_TOOL) scramblehex $(TARGET).eep $(TARGET).eep.scramble
+	python3 $(CRYPTO_TOOL) scramblehex $(TARGET).hex $(TARGET).hex.scramble
+	-dfu-programmer $(MCU) erase --force
+	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep.scramble
+	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex.scramble
+	rm $(TARGET).eep.scramble $(TARGET).hex.scramble
