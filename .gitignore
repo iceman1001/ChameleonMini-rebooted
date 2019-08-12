@@ -11,7 +11,7 @@
 *.s19
 *.map
 *.bin
-*.hex
+Firmware/Chameleon-Mini/*.hex
 *.dll
 *.sym
 *.lss

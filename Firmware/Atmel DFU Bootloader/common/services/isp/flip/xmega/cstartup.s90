@@ -1,0 +1,232 @@
+/**
+ * \file
+ *
+ * \brief AVR XMEGA boot process for bootloaders compiled with IAR.
+ *
+ * Copyright (C) 2011 - 2012 Atmel Corporation. All rights reserved.
+ *
+ * \asf_license_start
+ *
+ * \page License
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. The name of Atmel may not be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * 4. This software may only be redistributed and used in connection with an
+ *    Atmel microcontroller product.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+ * EXPRESSLY AND SPECIFICALLY DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * \asf_license_stop
+ *
+ */
+
+#include <assembler.h>
+#include "conf_isp.h"
+
+#if (((__TID__ >> 8) & 0x7F) != 90)
+#error This file should only be assembled by aa90 or aavr
+#endif
+
+#define A90_PROC_OPTION  ((__TID__ >> 4) & 0x0F)
+
+#ifndef Z0
+# define Z0 R30
+#endif
+
+
+/* Length of pointer registers (X/Y/Z) */
+#if (A90_PROC_OPTION == 0) || (A90_PROC_OPTION == 2)
+#define A90_POINTER_REG_SIZE   1
+#define A90_TINY_INDEX
+#else /*!(A90_PROC_OPTION == 0) || (A90_PROC_OPTION == 2)*/
+#if (A90_PROC_OPTION == 1) || (A90_PROC_OPTION == 3) || (A90_PROC_OPTION ==5)
+#define A90_POINTER_REG_SIZE   2
+#else /*!(A90_PROC_OPTION == 1) || (A90_PROC_OPTION == 3) || (A90_PROC_OPTION ==5)*/
+#if (A90_PROC_OPTION == 4) || (A90_PROC_OPTION == 6)
+#define A90_POINTER_REG_SIZE   3
+#define A90_EXTENDED_DATA
+#else /*!(A90_PROC_OPTION == 4) || (A90_PROC_OPTION == 6)*/
+#error Unknown processor option!!
+#endif /*!(A90_PROC_OPTION == 4) || (A90_PROC_OPTION == 6)*/
+#endif /*!(A90_PROC_OPTION == 1) || (A90_PROC_OPTION == 3) || (A90_PROC_OPTION ==5)*/
+#endif /*!(A90_PROC_OPTION == 0) || (A90_PROC_OPTION == 2)*/
+
+
+;----------------------------------------------------------------------------
+; Set up the RESET segment with a reset vector
+;----------------------------------------------------------------------------
+	MODULE  ?RESET
+	EXTERN  ?C_STARTUP
+	PUBLIC  __program_start
+	PUBLIC  ?RESET
+
+	ASEG    BOOT_SECTION_START
+__program_start:
+?RESET:
+	RJMP    ?C_STARTUP
+
+	ENDMOD
+
+;----------------------------------------------------------------------------
+; Set up the INTVEC segment with a reset vector
+;----------------------------------------------------------------------------
+	MODULE  ?VECT
+	COMMON  INTVEC:CODE:ROOT(1) ; Align at an even address
+	EXTERN  ?C_STARTUP
+	ENDMOD
+
+;----------------------------------------------------------------------------
+; Forward declarations of segments used in initialization
+;----------------------------------------------------------------------------
+	RSEG    CSTACK:DATA:NOROOT(0)
+	RSEG    RSTACK:DATA:NOROOT(0)
+
+;----------------------------------------------------------------------------
+; Perform C initialization
+;----------------------------------------------------------------------------
+
+// IAR forgets about include files after each module, so need to include again
+#include <ioavr.h>
+
+	MODULE  ?C_STARTUP
+	EXTERN  main
+	EXTERN  exit
+	EXTERN  _exit
+
+	RSEG    BOOT:CODE:NOROOT(1)
+	PUBLIC  ?C_STARTUP
+	PUBLIC  __RESTART
+	EXTERN ?RESET
+
+__RESTART:
+?C_STARTUP:
+
+#if A90_POINTER_REG_SIZE > 2
+	PUBLIC  ?zero_reg_initialization
+?zero_reg_initialization:
+	CLR   R15
+	OUT   RAMPD,R15
+#endif
+
+
+;----------------------------------------------------------------------------
+;   Boot Process
+;----------------------------------------------------------------------------
+
+boot_process:
+	// Test Software reset
+	LDS   R16,RST_STATUS
+	SBRC  R16,RST_SRF_bp         // Test Software Reset Flag
+	RJMP  start_app
+	
+	// Test ISP pin
+	STS   ISP_PORT_DIR, R15
+	LDI   R16,0x18
+	STS   ISP_PORT_PINCTRL, R16
+	LDI   R16,0xFF
+tempo:
+	DEC   R16
+	TST   R16
+	BRNE  tempo
+	LDS   R16,ISP_PORT_IN
+	SBRS  R16,ISP_PORT_PIN       // test ISP pin active
+	RJMP  start_boot             // pin  activated
+	
+	// Test beginning of flash blank
+	LDI   R30, 0
+	LDI   R31, 0
+	ELPM  R16, Z+
+	ELPM  R17, Z
+	CPI   R16, 255
+	BRNE  start_app_jmp
+	CPI   R17, 255
+	BRNE  start_app_jmp
+	
+	RJMP  start_boot
+start_app_jmp:
+	RJMP  start_app
+
+;----------------------------------------------------------------------------
+;   Call Bootloader
+;----------------------------------------------------------------------------
+	RSEG    STARTBOOT:CODE:NOROOT(1), BOOT_SECTION_START+0x1FC
+	PUBLIC  start_boot
+start_boot:
+	RJMP    ?SETUP_STACK
+
+;----------------------------------------------------------------------------
+; Set up the CSTACK and RSTACK pointers.
+;----------------------------------------------------------------------------
+	RSEG    CODE:CODE:NOROOT(1)
+	EXTERN  __segment_init
+	PUBLIC  ?need_segment_init
+
+?SETUP_STACK:
+	;; Return address stack (RSTACK)
+	LDI   R16,LOW(SFE(RSTACK)-1)
+	OUT   0x3D,R16
+#if A90_POINTER_REG_SIZE > 1
+	LDI   R16,HIGH(SFE(RSTACK)-1)
+	OUT   0x3E,R16
+#endif
+
+	;; Data stack (CSTACK)
+	LDI   R28,LOW(SFE(CSTACK))
+#if A90_POINTER_REG_SIZE > 1
+	LDI   R29,HIGH(SFE(CSTACK))
+#if A90_POINTER_REG_SIZE > 2
+	LDI   Z0,HWRD(SFB(CSTACK))
+	OUT   RAMPY,Z0
+#endif
+#endif
+?need_segment_init:
+	CALL __segment_init
+	CALL main
+
+;----------------------------------------------------------------------------
+;   Call Application
+;----------------------------------------------------------------------------
+	EXTERN start_app_key
+	
+start_app:
+	STS   ISP_PORT_PINCTRL, R15
+	LDS   R16, start_app_key
+	LDS   R17, (start_app_key + 1)
+	CPI   R16, 0xAA
+	SBCI  R17, 0x55
+	BREQ  clear_rst_flags
+jump_0:
+	JMP   0
+
+// It is a start application launched by a batchisp start command
+// then clear reset flagS
+clear_rst_flags:
+	STS   start_app_key, R15
+	STS   (start_app_key + 1), R15
+	LDI   R16,RST_SRF_bm
+	STS   RST_STATUS,R16   // Clear Software Reset Flag
+	RJMP  jump_0
+	END
+
+;----------------------------------------------------------------------------
