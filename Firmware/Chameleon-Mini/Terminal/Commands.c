@@ -97,23 +97,23 @@ CommandStatusIdType CommandExecConfig(char* OutMessage) {
 
 CommandStatusIdType CommandGetAtqa(char* OutParam) {
 	uint16_t Atqa;
-	
+
 	ApplicationGetAtqa(&Atqa);
-	
+
 	// Convert uint16 to uint8 buffer[]
 	uint8_t atqaBuffer[2] = { 0,0 };
 	atqaBuffer[1] = (uint8_t)Atqa;
 	atqaBuffer[0] = Atqa >> 8;
-	
+
 	BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &atqaBuffer, sizeof(uint16_t));
-	
+
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam) {
 	uint8_t AtqaBuffer[2] = { 0, 0 };
 	uint16_t Atqa = 0;
-	
+
 	if (HexStringToBuffer(&AtqaBuffer, sizeof(AtqaBuffer), InParam) != sizeof(uint16_t)) {
 		// This has to be 4 digits (2 bytes), e.g.: 0004
 		return COMMAND_ERR_INVALID_PARAM_ID;
@@ -133,7 +133,7 @@ CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam) {
 
 CommandStatusIdType CommandGetSak(char* OutParam) {
 	uint8_t Sak;
-	
+
 	ApplicationGetSak(&Sak);
 
 	BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &Sak, sizeof(uint8_t));
@@ -142,7 +142,7 @@ CommandStatusIdType CommandGetSak(char* OutParam) {
 
 CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam) {
 	uint8_t Sak;
-	
+
 	if (HexStringToBuffer(&Sak, sizeof(uint8_t), InParam) != sizeof(uint8_t)) {
 		// This has to be 2 digits (1 byte), e.g.: 04
 		return COMMAND_ERR_INVALID_PARAM_ID;
@@ -347,7 +347,7 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT 
+#ifdef CONFIG_MF_DETECTION_SUPPORT
  #define MEM_OFFSET_DETECTION_DATA  4096 + 16
  #define MEM_LEN_DETECTION_DATA 192
 
@@ -375,7 +375,7 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 
 	 /* add file integrity to byte !! 209, 210 !! */
 	 ISO14443AAppendCRCA(OutParam, 208);
-	 
+
 	 /* encrypt data , but not CRC*/
 	 ComPass(OutParam, (int)123321, 208);
 
@@ -399,29 +399,16 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 
 CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage)
 {
-	uint8_t b[4];
-	FlashReadManufacturerDeviceInfo(b);
-	uint8_t ManufacturerId = b[0];
-	uint8_t FamilyCode = b[1] >> 5;
-	uint8_t DensityCode = b[1] & 0x1F;
-	uint8_t MLC_Code = b[2] >> 5;
-	uint8_t ProductVersionCode = b[2] & 0x1F;
-	uint16_t Mbits = 0;
-	if ((DensityCode >= 2) && (DensityCode <= 8) && (FamilyCode == 1))
-		Mbits = 1 << (DensityCode - 2); 
-	// Minimum: AT45DB011D Density Code : 00010 = 1-Mbit 
-	// Maximum: AT45DB642D Density Code : 01000 = 64-Mbit
-	snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE, 
-		PSTR("Manufacturer ID: %02xh\r\nFamily code: %d\r\nDensity code: %d\r\nMLC Code: %d\r\nProduct version: %d\r\nFlash memory size: %d-Mbit (%d-KByte)"), 
-		ManufacturerId, FamilyCode, DensityCode, MLC_Code, ProductVersionCode, Mbits, Mbits * 128); 
-		// Precalculated 1024 / 8 = 128, to prevent uint16_t overflow for possible 64-Mbit flash
+	snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE,
+		PSTR("Manufacturer ID: %02x\r\nFamily code: %d\r\nDensity code: %d\r\nMLC Code: %d\r\nProduct version: %d\r\nFlash memory size: %dMbits (%dKBytes)"),
+		FlashManufacturerInfo.manufacturerId, FlashManufacturerInfo.familyCode, FlashManufacturerInfo.densityCode, FlashManufacturerInfo.MLCCode, FlashManufacturerInfo.productVersionCode, FlashManufacturerInfo.sizeMbits, FlashManufacturerInfo.sizeKbytes);
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
 CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam)
 {
-	uint8_t b[4];
-	FlashReadManufacturerDeviceInfo(b);
-	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%02x%02x%02x%02x"), b[0], b[1], b[2], b[3]);
+	snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
+		PSTR("%02x%02x%02x%02x"),
+		FlashManufacturerInfo.data[0], FlashManufacturerInfo.data[1], FlashManufacturerInfo.data[2], FlashManufacturerInfo.data[3]);
 	return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
