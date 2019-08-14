@@ -631,7 +631,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     Buffer[i] = CardNonce[i];
 
                 /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
-                Crypto1Setup(Key, Uid, CardNonce);
+                Crypto1Setup(Key, Uid, CardNonce, NULL);
 
                 return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
             } else {
@@ -777,6 +777,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 uint8_t Key[6];
                 uint8_t Uid[4];
 				uint8_t CardNonce[4] = {0x01};
+				uint8_t CardNonceParity[4];
 
                 /* Generate a random nonce and read UID and key from memory */
                 //RandomGetBuffer(CardNonce, sizeof(CardNonce));
@@ -799,17 +800,19 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
                 Crypto1PRNG(CardResponse, 32);
 
-                /* Setup crypto1 cipher. */
-                Crypto1Setup(Key, Uid, CardNonce);
+                /* Setup crypto1 cipher for nested authentication. */
+                Crypto1Setup(Key, Uid, CardNonce, CardNonceParity);
 
-                for (uint8_t i=0; i<sizeof(CardNonce); i++)
+                for (uint8_t i=0; i<sizeof(CardNonce); i++) {
                     Buffer[i] = CardNonce[i];
+                    Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = CardNonceParity[i];
+                }
 
                 /* Respond with the encrypted random card nonce and expect further authentication
                 * form the reader in the next frame. */
                 State = STATE_AUTHING;
 
-                return CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
+                return (CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
             } else {
                 Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
                 return ACK_NAK_FRAME_SIZE;

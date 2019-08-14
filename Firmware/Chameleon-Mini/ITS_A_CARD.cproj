@@ -367,9 +367,6 @@
     <Compile Include="Application\Crypto1.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Application\Crypto1_asm.S">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="Application\Detection.c">
       <SubType>compile</SubType>
     </Compile>
