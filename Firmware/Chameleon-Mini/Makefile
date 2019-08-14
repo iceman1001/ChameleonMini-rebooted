@@ -1,8 +1,17 @@
 # This makefile uses sh in order to build the project.
-# Note when using AVR-Toolchain, you have to install cygwin and 
-# append cygwin's bin directory to the PATH environment variable 
-# because Atmel does not ship sh.exe anymore with the toolchain. 
+# Note when using AVR-Toolchain, you have to install cygwin and
+# append cygwin's bin directory to the PATH environment variable
+# because Atmel does not ship sh.exe anymore with the toolchain.
 SHELL = /bin/sh
+
+# Switch to 'True' to tell if you work with an unlocked flashing setup (AVRISP mkII, or
+# original Atmel bootloader), or 'False' else (original RevE rebooted and USB flashing).
+# Original RevE rebooted needs specific scrambling to be flashed.
+# If you don't know, do not touch!
+UNLOCKED_F   = False
+# Python binary, needed to run scrambling operations to flash.
+# Change it according to your system.
+PYTHON_BIN   = /usr/bin/env python3
 
 #Supported configurations
 SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
@@ -42,7 +51,7 @@ SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #Default long button action
 SETTINGS	+= -DDEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 
-#Define if button action setting should be independent of active setting 
+#Define if button action setting should be independent of active setting
 #SETTINGS	+= -DBUTTON_SETTING_GLOBAL
 
 #Default LED functions
@@ -99,12 +108,13 @@ LUFA_PATH    = src/LUFA/LUFA
 CC_FLAGS     = -Werror -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
 OBJDIR       = Bin
-OBJECT_FILES = 
+OBJECT_FILES =
+CRYPTO_TOOL  = ../../Software/Tools/crypt_operations.py
 
-
+ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings
 AVRDUDE_PROGRAMMER = flip2
-AVRDUDE_MCU = atxmega32a4
+AVRDUDE_MCU = $(MCU)
 AVRDUDE_PORT = usb
 AVRDUDE_WRITE_APP = -U application:w:$(TARGET).hex
 AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
@@ -113,7 +123,7 @@ AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 #AVRDUDE settings to program the precompiled firmware
 AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
 AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
-
+endif
 
 # Default target
 all:
@@ -142,8 +152,9 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 spmhelper: $(TARGET).elf
 	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
 	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
-		
-# Program the device using avrdude  
+
+ifeq ($(UNLOCKED_F),True)
+# Program the device using avrdude
 program: $(TARGET).hex $(TARGET).eep
 	avrdude $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_APP) $(AVRDUDE_WRITE_EEPROM)
 
@@ -158,9 +169,23 @@ dfu-flip: $(TARGET).hex $(TARGET).eep
 	batchisp -hardware usb -device $(MCU) -operation erase f memory FLASH loadbuffer $(TARGET).hex program verify memory EEPROM loadbuffer EEPROM.hex program verify start reset 0
 	rm EEPROM.hex
 
-# Program the device using dfu-programmer
+# Program the device using dfu-programmer in unlocked flashing conditions
+# Note that the device has to be in bootloader mode already
+# dfu-programmer >= 0.7.2 required
 dfu-prog: $(TARGET).hex $(TARGET).eep
-	dfu-programmer $(MCU) erase
-	dfu-programmer $(MCU) flash-eeprom $(TARGET).eep
-	dfu-programmer $(MCU) flash $(TARGET).hex
-	dfu-programmer $(MCU) reset
+	-dfu-programmer $(MCU) erase --force
+	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep
+	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex
+
+else
+# Program the device using dfu-programmer for unlocked RevE rebooted USB DFU scenario
+# Note that the device has to be in bootloader mode already
+# dfu-programmer >= 0.7.2 required
+dfu-prog: $(TARGET).hex $(TARGET).eep
+	$(PYTHON_BIN) $(CRYPTO_TOOL) scramblehex $(TARGET).eep $(TARGET).eep.scramble
+	$(PYTHON_BIN) $(CRYPTO_TOOL) scramblehex $(TARGET).hex $(TARGET).hex.scramble
+	-dfu-programmer $(MCU) erase --force
+	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep.scramble
+	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex.scramble
+	rm $(TARGET).eep.scramble $(TARGET).hex.scramble
+endif

@@ -19,31 +19,31 @@ The chinese manufacturer had its firmware changes to themself which was limiting
 After talks with manufacturer, they also came to the conclusion that it should be open-sourced.  I managed to get source from them and agreed to make a public repository on GitHub.
 Since this firmware isn't in the official Chameleon mini repo,  I decided to make a 'iceman fork' of it.*
 
-## Notice      
+## Notice
 Let us make this fork awesome to play with. Do please play with it. Get excited and experiment with your enhanced Chameleon Mini device!
 
 ## First Steps
-This repo is focused on RevE Rebooted,    you can find useful information on [our wiki here](https://github.com/iceman1001/ChameleonMini-rebooted/wiki)
+This repo is focused on RevE Rebooted, you can find useful information on [our wiki here](https://github.com/iceman1001/ChameleonMini-rebooted/wiki)
 
 ### To upgrade the firmware of your ChameleonMini
 
-For RevG owners,  
+For RevG owners,
 please visit the [Getting Started page](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
 
-For RevE Rebooted owners,  
-please visit the [Flashing Windows](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Flashing---windows)
+For RevE Rebooted owners,
+please start with the [Windows walkthrough](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Getting-started)
 
 
 ## Supported Cards and Codecs
 See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
 
 
-## GUI 
+## GUI
 Based on the partial source code release for the GUI we created a new GUI.
-[iceman Chameleon Mini GUI](https://github.com/iceman1001/ChameleonMini-rebootedGUI) 
+[iceman Chameleon Mini GUI](https://github.com/iceman1001/ChameleonMini-rebootedGUI)
 It is a windows .net based software and it is really nice to work with.
 Has support for Chameleon Mini revE / revG commands
-and dump management,  
+and dump management,
 and color templates for dumps,
 and multilanguage
 
@@ -52,10 +52,10 @@ Built by @bogition and @iceman1001
 ## Questions
 If you have any questions, please visit the issues page to the related hardware device you own and ask your questions there so everyone benefits from the answer.
 
-For RevG owners,  
-please visit the [REV_G Issues page](https://github.com/emsec/ChameleonMini/issues) 
+For RevG owners,
+please visit the [REV_G Issues page](https://github.com/emsec/ChameleonMini/issues)
 
-For RevE Rebooted owners,  
+For RevE Rebooted owners,
 please visit the [REV_E Rebooted Issues page](https://github.com/iceman1001/ChameleonMini-rebooted/issues)
 
 
@@ -74,7 +74,7 @@ The code repository contains
 
 ## Donate
 If you feel the love,  do feel free to become a iceman patron. For some tiers it comes with rewards
-https://www.patreon.com/iceman1001 
+https://www.patreon.com/iceman1001
 
 All support is welcome.
 
