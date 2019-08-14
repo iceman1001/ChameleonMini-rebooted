@@ -2,6 +2,7 @@
 # don't push these files to the repository
 
 .history
+*.DS_Store
 *.log
 *.eml
 *.o
@@ -11,8 +12,18 @@
 *.s19
 *.map
 *.bin
-*.hex
 *.dll
 *.sym
 *.lss
-*.DS_Store
+*.wsdt
+*.cspy*
+*.xcl*
+*.pbd*
+*.pbi*
+Firmware/Chameleon-Mini/*.hex
+Firmware/Chameleon-Mini/*.eep
+Firmware/Atmel-DFU-Bootloader/common/*.hex
+Firmware/Atmel-DFU-Bootloader/common/*.eep
+Firmware/Atmel-DFU-Bootloader/common/*.dbg
+*/iar/Debug/*
+*/iar/Release/*

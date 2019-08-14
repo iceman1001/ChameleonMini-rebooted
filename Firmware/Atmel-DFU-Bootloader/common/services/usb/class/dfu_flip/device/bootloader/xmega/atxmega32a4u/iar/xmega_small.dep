@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <fileVersion>2</fileVersion>
+    <fileChecksum>2474351840</fileChecksum>
+    <configuration>
+        <name>Debug</name>
+        <outputs>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\sysclk.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\cstartup.s90</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\stringz.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\ccp.s</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm.c</file>
+            <file>$PROJ_DIR$\Debug\Obj\sysclk_opt.r90</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\bit_handling\clz_ctz.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\udi_dfu_atmel.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\usb_device.pbi</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\osc.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\cstartup.r90</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
+            <file>$PROJ_DIR$\..\..\main.c</file>
+            <file>$PROJ_DIR$\Debug\Obj\udi_dfu_atmel_desc.pbi</file>
+            <file>$PROJ_DIR$\..\..\conf\conf_isp.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel_conf.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\utils\interrupt.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\isp.c</file>
+            <file>$PROJ_DIR$\Debug\Obj\nvm.r90</file>
+            <file>$PROJ_DIR$\..\..\sysclk_opt.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\usb\usb_device.c</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdlib.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\string.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc_dfu_small.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc_desc.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel_desc.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm_asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\usb_atmel.h</file>
+            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
+            <file>$PROJ_DIR$\..\..\conf\conf_clock.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\udi_dfu_atmel_desc.r90</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\isp.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\flip_protocol.h</file>
+            <file>$PROJ_DIR$\..\..\conf\conf_usb.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\xmega_small.pbd</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\tpaste.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stddef.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\progmem.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\boards\board.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdio.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\pgmspace.h</file>
+            <file>$TOOLKIT_DIR$\inc\Atmel\iomacro_xmega.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\sysclk.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.r90</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel.h</file>
+            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\pll.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\sysclk.pbi</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\boards\dummy\dummy_board.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\nvm_asm.r90</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ystdio.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\nvm.pbi</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\utils\parts.h</file>
+            <file>$TOOLKIT_DIR$\inc\ioxm32a4u.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdarg.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\compiler.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\usb\usb_device.h</file>
+            <file>$PROJ_DIR$\asf.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\pll.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
+            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\mrepeat.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\ccp.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\usb_device.r90</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\usb_protocol_dfu.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\status_codes.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\isp.r90</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-xmega-sf-n.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\usb_protocol.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udi.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\osc.h</file>
+            <file>$TOOLKIT_DIR$\inc\Atmel\ATxmega32A4U.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\sysclk_opt.pbi</file>
+            <file>$PROJ_DIR$\Debug\Exe\xmega_small.dbg</file>
+            <file>$PROJ_DIR$\Debug\Obj\udc_dfu_small.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\udi_dfu_atmel.pbi</file>
+            <file>$PROJ_DIR$\Debug\Obj\udc_dfu_small.pbi</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\preprocessor.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udd.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.pbi</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\utils\interrupt\interrupt_avr8.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\ccp.r90</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\sysclk.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ycheck.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\xmega_reset_cause.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\isp.pbi</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\sysclk.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
+        </outputs>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 79</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\sysclk.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 44</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 49</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 59 65 30 37 42 60 22 64 89 31 76 95 39 58 26 55 57 40 88 63 73 47 11 38 6 83 16 77 43 52 72 66 23 86 51 48 50 54 92 2 41 94 67 9</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\cstartup.s90</name>
+            <outputs>
+                <tool>
+                    <name>AAVR</name>
+                    <file> 10</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\ccp.s</name>
+            <outputs>
+                <tool>
+                    <name>AAVR</name>
+                    <file> 87</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 18</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 56</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 26 89 55 22 52 65 30 72 73 95 39 58 64 2 60 67 23 47 11 38 57 6 83 16 77 43 50 54 92 41 86 37 66 42 59</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\main.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 45</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 85</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 65 52 57 30 83 26 48 60 76 31 74 91 22 89 66 67 14 16 90 95 39 58 72 23 86 40 25 75 35 73 88 84 70 47 11 38 6 77 43 64 37 42 59 55 62 50 54 92 2 41 51 94 63 9 15 34 29</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\isp.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 71</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 93</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 26 83 89 58 95 39 64 66 57 33 60 65 22 30 52 72 23 73 47 11 38 6 16 77 43 50 54 92 37 42 59 67 14 2 41 55 86</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\sysclk_opt.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 5</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 78</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 65 59 30 37 42 60 22 64 89 31 76 95 39 58 26 55 57 40 88 63 73 47 11 38 6 83 16 77 43 52 72 66 23 86 51 48 50 54 92 2 41 94 67 9</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 7</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 81</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 11 77 89 75 34 6 83 26 66 57 74 90 60 43 52 73 69 14 47 38 16 72 23 35 84 46 33 15 65 95 22 39 58 30 64 37 42 59 92 67 25 50 54 2 41 55 86 29</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\usb\usb_device.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 68</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 8</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 72 89 26 63 23 65 30 52 60 35 22 31 48 84 73 15 95 39 58 66 83 57 74 88 61 14 47 11 38 6 16 77 43 64 37 42 59 92 67 94 51 40 29 50 54 2 41 55 86 34 76 9 25 75</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc_dfu_small.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 80</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 82</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 92 89 47 26 74 25 75 14 38 16 35 84 46 60 11 57 6 83 77 43 2 73 90 15 65 95 22 39 58 30 50 54 41 67 52 72 64 37 66 42 23 59 55 86 34 29 69</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel_desc.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 32</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 13</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 23 73 58 86 34 35 46 15 95 39 72 26 89 52 84 75 65 22 30 66 83 60 74 25 14 47 11 38 57 6 16 77 43 50 64 37 42 59 55 29 54 92 2 41 67 69</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm_asm.s</name>
+            <outputs>
+                <tool>
+                    <name>AAVR</name>
+                    <file> 53</file>
+                </tool>
+            </outputs>
+        </file>
+    </configuration>
+    <configuration>
+        <name>Release</name>
+        <outputs>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\sysclk.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\cstartup.s90</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\stringz.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\ccp.s</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\bit_handling\clz_ctz.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\osc.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
+            <file>$PROJ_DIR$\..\..\main.c</file>
+            <file>$PROJ_DIR$\..\..\conf\conf_isp.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel_conf.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\utils\interrupt.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\isp.c</file>
+            <file>$PROJ_DIR$\..\..\sysclk_opt.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\usb\usb_device.c</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdlib.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\string.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc_dfu_small.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc_desc.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel_desc.c</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm_asm.s</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\usb_atmel.h</file>
+            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
+            <file>$PROJ_DIR$\..\..\conf\conf_clock.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\isp.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\flip_protocol.h</file>
+            <file>$PROJ_DIR$\..\..\conf\conf_usb.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\tpaste.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stddef.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\progmem.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\boards\board.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdio.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\pgmspace.h</file>
+            <file>$TOOLKIT_DIR$\inc\Atmel\iomacro_xmega.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel.h</file>
+            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\pll.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\boards\dummy\dummy_board.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ystdio.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\utils\parts.h</file>
+            <file>$TOOLKIT_DIR$\inc\ioxm32a4u.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdarg.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\compiler.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\usb\usb_device.h</file>
+            <file>$PROJ_DIR$\asf.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\pll.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
+            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\mrepeat.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\ccp.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\usb_protocol_dfu.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\status_codes.h</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-xmega-sf-n.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\usb_protocol.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udi.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\osc.h</file>
+            <file>$TOOLKIT_DIR$\inc\Atmel\ATxmega32A4U.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\utils\preprocessor\preprocessor.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udd.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\utils\interrupt\interrupt_avr8.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\sysclk.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ycheck.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\xmega_reset_cause.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
+            <file>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\sysclk.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
+            <file>$PROJ_DIR$\Release\Obj\main.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\sysclk.r90</file>
+            <file>$PROJ_DIR$\Release\Exe\xmega_small.dbg</file>
+            <file>$PROJ_DIR$\Release\Obj\nvm.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\usb_device.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\sysclk.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\udi_dfu_atmel.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\isp.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\sysclk_opt.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\isp.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\udi_dfu_atmel_desc.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\main.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\udi_dfu_atmel_desc.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\nvm_asm.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\sysclk_opt.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\udc_dfu_small.pbi</file>
+            <file>$PROJ_DIR$\Release\Obj\udc_dfu_small.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\cstartup.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\nvm.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\usb_device.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\ccp.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\udi_dfu_atmel.pbi</file>
+        </outputs>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 75</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\clock\xmega\sysclk.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 74</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 78</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 46 52 24 29 34 47 16 51 67 25 61 72 31 45 20 43 44 32 66 50 58 37 7 30 5 63 11 62 35 41 57 53 17 65 40 38 39 42 70 2 33 71 54 6</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\cstartup.s90</name>
+            <outputs>
+                <tool>
+                    <name>AAVR</name>
+                    <file> 90</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\cpu\ccp.s</name>
+            <outputs>
+                <tool>
+                    <name>AAVR</name>
+                    <file> 93</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 91</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 76</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 20 67 43 16 41 52 24 57 58 72 31 45 51 2 47 54 17 37 7 30 44 5 63 11 62 35 39 42 70 33 65 29 53 34 46</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\main.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 73</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 84</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 52 41 44 24 63 20 38 47 61 25 59 69 16 67 53 54 9 11 68 72 31 45 57 17 65 32 19 60 28 58 66 64 56 37 7 30 5 62 35 51 29 34 46 43 49 39 42 70 2 33 40 71 50 6 10 27 23</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\isp\flip\xmega\isp.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 80</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 82</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 20 63 67 45 72 31 51 53 44 26 47 52 16 24 41 57 17 58 37 7 30 5 11 62 35 39 42 70 29 34 46 54 9 2 33 43 65</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\sysclk_opt.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 81</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 87</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 52 46 24 29 34 47 16 51 67 25 61 72 31 45 20 43 44 32 66 50 58 37 7 30 5 63 11 62 35 41 57 53 17 65 40 38 39 42 70 2 33 71 54 6</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 79</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 94</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 7 62 67 60 27 5 63 20 53 44 59 68 47 35 41 58 55 9 37 30 11 57 17 28 64 36 26 10 52 72 16 31 45 24 51 29 34 46 70 54 19 39 42 2 33 43 65 23</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\usb\usb_device.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 92</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 77</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 57 67 20 50 17 52 24 41 47 28 16 25 38 64 58 10 72 31 45 53 63 44 59 66 48 9 37 7 30 5 11 62 35 51 29 34 46 70 54 71 40 32 23 39 42 2 33 43 65 27 61 6 19 60</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\udc\udc_dfu_small.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 89</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 88</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 70 67 37 20 59 19 60 9 30 11 28 64 36 47 7 44 5 63 62 35 2 58 68 10 52 72 16 31 45 24 39 42 33 54 41 57 51 29 53 34 17 46 43 65 27 23 55</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\udi_dfu_atmel_desc.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 83</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 85</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 17 58 45 65 27 28 36 10 72 31 57 20 67 41 64 60 52 16 24 53 63 47 59 19 9 37 7 30 44 5 11 62 35 39 51 29 34 46 43 23 42 70 2 33 54 55</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\..\..\..\..\..\..\..\..\xmega\drivers\nvm\nvm_asm.s</name>
+            <outputs>
+                <tool>
+                    <name>AAVR</name>
+                    <file> 86</file>
+                </tool>
+            </outputs>
+        </file>
+    </configuration>
+</project>
