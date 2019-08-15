@@ -8,20 +8,20 @@ SHELL = /bin/sh
 # original Atmel bootloader), or 'False' else (original RevE rebooted and USB flashing).
 # Original RevE rebooted needs specific scrambling to be flashed.
 # If you don't know, do not touch!
-UNLOCKED_F   = False
+UNLOCKED_F	 = False
 # Python binary, needed to run scrambling operations to flash.
 # Change it according to your system.
-PYTHON_BIN   = /usr/bin/env python3
+PYTHON_BIN	 = /usr/bin/env python3
 
 #Supported configurations
-SETTINGS    += -DCONFIG_MF_CLASSIC_1K_SUPPORT
-#SETTINGS    += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_CLASSIC_4K_SUPPORT
-#SETTINGS    += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
-SETTINGS    += -DCONFIG_MF_ULTRALIGHT_SUPPORT
+SETTINGS	+= -DCONFIG_MF_CLASSIC_1K_SUPPORT
+#SETTINGS	 += -DCONFIG_MF_CLASSIC_1K_7B_SUPPORT
+SETTINGS	+= -DCONFIG_MF_CLASSIC_4K_SUPPORT
+#SETTINGS	 += -DCONFIG_MF_CLASSIC_4K_7B_SUPPORT
+SETTINGS	+= -DCONFIG_MF_ULTRALIGHT_SUPPORT
 #SETTINGS	+= -DCONFIG_ISO14443A_SNIFF_SUPPORT
 #SETTINGS	+= -DCONFIG_ISO14443A_READER_SUPPORT
-SETTINGS    += -DCONFIG_MF_DETECTION_SUPPORT
+SETTINGS	+= -DCONFIG_MF_DETECTION_SUPPORT
 
 #Support magic mode on mifare classic configuration
 #SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
@@ -87,29 +87,29 @@ SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
 
 #Build configuration
 ifeq ($(OS),Windows_NT)
-BUILD_DATE   = "\"$(shell date /t)\""
+BUILD_DATE	 = "\"$(shell date /t)\""
 else
-BUILD_DATE   = $(shell date +'\"%y%m%d\"')
+BUILD_DATE	 = $(shell date +'\"%y%m%d\"')
 endif
 COMMIT_ID	 = $(shell git rev-parse --short HEAD)
-MCU          = atxmega32a4u
-ARCH         = XMEGA
-BOARD        = NONE
-F_CPU        = 32000000
-F_USB        = 48000000
-TARGET       = Chameleon-Mini
+MCU			 = atxmega32a4u
+ARCH		 = XMEGA
+BOARD		 = NONE
+F_CPU		 = 32000000
+F_USB		 = 48000000
+TARGET		 = Chameleon-Mini
 OPTIMIZATION = s
-SRC         += $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c Map.c AntennaLevel.c Uart.c
-SRC         += Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
-SRC         += Codec/Codec.c Codec/ISO14443-2A.c
-SRC         += Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
-SRC         += $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
-LUFA_PATH    = src/LUFA/LUFA
-CC_FLAGS     = -Werror -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
-LD_FLAGS     = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
-OBJDIR       = Bin
+SRC			+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c Map.c AntennaLevel.c Uart.c
+SRC			+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
+SRC			+= Codec/Codec.c Codec/ISO14443-2A.c
+SRC			+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
+SRC			+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
+LUFA_PATH	 = src/LUFA/LUFA
+CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+LD_FLAGS	 = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
+OBJDIR		 = Bin
 OBJECT_FILES =
-CRYPTO_TOOL  = ../../Software/Tools/crypt_operations.py
+CRYPTO_TOOL	 = ../../Software/Tools/crypt_operations.py
 
 ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings
@@ -176,6 +176,7 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	-dfu-programmer $(MCU) erase --force
 	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep
 	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex
+	dfu-programmer $(MCU) launch
 
 else
 # Program the device using dfu-programmer for unlocked RevE rebooted USB DFU scenario
@@ -187,5 +188,6 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	-dfu-programmer $(MCU) erase --force
 	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep.scramble
 	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex.scramble
+	dfu-programmer $(MCU) launch
 	rm $(TARGET).eep.scramble $(TARGET).hex.scramble
 endif
