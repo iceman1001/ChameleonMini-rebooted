@@ -13,19 +13,19 @@
 #include <avr/io.h>
 
 #define LED_HIGH_PORT  PORTA
-#define LED_ONE	        PIN5_bm
-#define LED_TWO		    PIN4_bm
-#define LED_THREE		PIN3_bm
-#define LED_FOUR		PIN2_bm
-#define LED_HIGH_MASK	(LED_ONE | LED_TWO | LED_THREE| LED_FOUR)
+#define LED_ONE         PIN5_bm
+#define LED_TWO         PIN4_bm
+#define LED_THREE       PIN3_bm
+#define LED_FOUR        PIN2_bm
+#define LED_HIGH_MASK   (LED_ONE | LED_TWO | LED_THREE| LED_FOUR)
 
 #define LED_LOW_PORT    PORTE
-#define LED_FIVE	    PIN3_bm
-#define LED_SIX		    PIN2_bm
-#define LED_SEVEN		PIN1_bm
-#define LED_EIGHT		PIN0_bm
-#define LED_LOW_MASK	(LED_FIVE | LED_SIX | LED_SEVEN| LED_EIGHT)
-			
+#define LED_FIVE        PIN3_bm
+#define LED_SIX         PIN2_bm
+#define LED_SEVEN       PIN1_bm
+#define LED_EIGHT       PIN0_bm
+#define LED_LOW_MASK    (LED_FIVE | LED_SIX | LED_SEVEN| LED_EIGHT)
+
 void LEDMode(void);
 void LEDInit(void);
 void LEDTick(void);

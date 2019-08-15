@@ -48,6 +48,7 @@
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
+/* Coded here to allow exportable inlining */
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
 
