@@ -1,8 +1,16 @@
-# .gitignore
-# don't push these files to the repository
+# Chameleon specific
+*.sym
+*.lss
+*.s19
+*.bin
 
-.history
-*.DS_Store
+# Generic
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
+*.history
 *.log
 *.eml
 *.o
@@ -13,17 +21,106 @@
 *.map
 *.bin
 *.dll
-*.sym
-*.lss
-*.wsdt
-*.cspy*
-*.xcl*
-*.pbd*
-*.pbi*
-Firmware/Chameleon-Mini/*.hex
-Firmware/Chameleon-Mini/*.eep
-Firmware/Atmel-DFU-Bootloader/common/*.hex
-Firmware/Atmel-DFU-Bootloader/common/*.eep
-Firmware/Atmel-DFU-Bootloader/common/*.dbg
-*/iar/Debug/*
-*/iar/Release/*
+*.dbg
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+tags
+[._]*.un~
+
+# Emacs
+\#*\#
+.emacs.desktop
+.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+.org-id-locations
+*_archive
+*_flymake.*
+**/eshell/history
+**/eshell/lastdir
+**/elpa/
+*.rel
+.cask/
+flycheck_*.el
+.projectile
+.dir-locals.el
+**/network-security.data
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+*.pydevproject
+.cproject
+.autotools
+.factorypath
+.buildpath
+.target
+.tern-project
+.texlipse
+.springBeans
+.recommenders/
+.apt_generated/
+.cache-main
+.scala_dependencies
+.worksheet
+
+# Linux
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+*~
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
