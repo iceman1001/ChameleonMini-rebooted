@@ -40,11 +40,17 @@
 
 #define ACK_NAK_FRAME_SIZE          4         /* Bits */
 #define ACK_VALUE                   0x0A
-/* Here are values from NXP MF1S50YYX_V1 datasheet, 9.3 */
+/* NAK values from NXP MF1S50YYX_V1 datasheet, 9.3 */
 #define NAK_S50_BUFFEROK_OPKO       0x00
 #define NAK_S50_BUFFEROK_PARITYCRC  0x01
-#define NAK_S50_BUFFERKO_OPKO       0x02
-#define NAK_S50_BUFFERKO_PARITYCRC  0X03
+#define NAK_S50_BUFFERKO_OPKO       0x04
+#define NAK_S50_BUFFERKO_PARITYCRC  0x05
+/* NAK values in original RevG source code */
+#define NAK_INVALID_ARG             0x00
+#define NAK_CRC_ERROR               0x01
+#define NAK_NOT_AUTHED              0x04
+#define NAK_EEPROM_ERROR            0x05
+#define NAK_OTHER_ERROR             0x06
 
 #define CMD_AUTH_A                  0x60
 #define CMD_AUTH_B                  0x61
