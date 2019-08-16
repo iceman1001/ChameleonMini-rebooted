@@ -289,6 +289,10 @@ static uint8_t AccessAddress;
 static uint16_t CardATQAValue;
 static uint8_t CardSAKValue;
 static bool is7BitsUID = false;
+ /* To differentiate between IDLE and HALT during WUPA or REQA */
+static bool isFromHaltState = false;
+ /* Size of data (byte) we will send back to reader. Is main process return value */
+static uint16_t retSize = ISO14443A_APP_NO_RESPONSE;
 
 /*
 // Decode Access conditions for a block
@@ -423,7 +427,7 @@ void MifareClassicAppTask(void)
 
 
 /* Handle a CMD_HALT during main process, as can be raised in many states.
-* Sets State, response buffer and returns response size */
+* Sets State, isFromHaltState, response buffer and returns response size */
 INLINE uint16_t mfcHandleHaltCommand(uint8_t* Buffer) {
     uint16_t ret = ACK_NAK_FRAME_SIZE;
     /* Halts the tag. According to the ISO14443, the second byte is supposed to be 0 */
@@ -431,6 +435,7 @@ INLINE uint16_t mfcHandleHaltCommand(uint8_t* Buffer) {
         if (ISO14443ACheckCRCA(Buffer, CMD_HALT_FRAME_SIZE)) {
             /* According to ISO14443, we must not send anything to ACK */
             State = STATE_HALT;
+            isFromHaltState = true;
             ret = ISO14443A_APP_NO_RESPONSE;
         } else {
             Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC;
@@ -441,31 +446,46 @@ INLINE uint16_t mfcHandleHaltCommand(uint8_t* Buffer) {
     return ret;
 }
 
+/* Handle a WUPA or REQA during main process, as can be raised in all states.
+* Sets State, response buffer and returns response size */
+INLINE uint16_t mfcHandleWUPCommand(uint8_t* Buffer, uint16_t BitCount, uint16_t ATQAValue) {
+    uint16_t ret = ISO14443A_APP_NO_RESPONSE;
+    /* If we have been awoken */
+    if ( (BitCount == CMD_WUPA_BITCOUNT) && ISO14443AIsWakeUp(Buffer, isFromHaltState) ) {
+        /* Set response buffer */
+        ISO14443ASetWakeUpResponse(Buffer, ATQAValue);
+        /* We should go to HALT or IDLE depending on previous state if we are
+        * in a ACTIVE, READY1 or READY2 */
+        if ( (State == STATE_READY1) || (State == STATE_READY2) || (State == STATE_ACTIVE) ) {
+            State = isFromHaltState ? STATE_HALT : STATE_IDLE;
+            ret = ISO14443A_APP_NO_RESPONSE;
+        } else {
+            /* Not implemented yet. AccessAddress = MEM_INVALID_ADDRESS; */
+            State = STATE_READY1;
+            ret = ISO14443A_ATQA_FRAME_SIZE;
+        }
+    }
+    return ret;
+}
+
 uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
-    /* What will we respond at the end of this buffer handling. Default to nothing. */
-    uint16_t ret = ISO14443A_APP_NO_RESPONSE;
-
-    /* Do we come from HALT state ? */
-    bool isFromHaltState = (State == STATE_HALT);
-
-    /* Wakeup and Request may occure in all states. The ISO14443 function alters Buffer
-    * if correct case, but alters BitCount in any case, hence the dummy copy we pass. */
-    uint16_t dummyBitCount = BitCount;
-    if ( (BitCount == CMD_WUPA_BITCOUNT)
-         && ISO14443AWakeUp(Buffer, &dummyBitCount, CardATQAValue, isFromHaltState) ) {
-            /* Not implemented yet. AccessAddress = MEM_INVALID_ADDRESS; */
-            State = isFromHaltState ? STATE_HALT : STATE_IDLE;
-            ret = ISO14443A_ATQA_FRAME_SIZE;
-    } else {
+    /* Reset Halt state */
+    isFromHaltState = (State == STATE_HALT);
+    /* Wakeup and Request may occure in all states. We handle is first, so we can skip
+    * states cases if we get valid WUPA/REQA */
+    retSize = mfcHandleWUPCommand(Buffer, BitCount, CardATQAValue);
+    if ( retSize == ISO14443A_APP_NO_RESPONSE ) {
         switch(State) {
         case STATE_IDLE:
         case STATE_HALT:
+            /* We do nothing in HALT or IDLE, except for Chinese mode option */
+            isFromHaltState = (State == STATE_HALT);
 #ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
             if (Buffer[0] == CMD_CHINESE_UNLOCK) {
                 State = STATE_CHINESE_IDLE;
                 Buffer[0] = ACK_VALUE;
-                ret = ACK_NAK_FRAME_SIZE;
+                retSize = ACK_NAK_FRAME_SIZE;
             }
 #endif
             break;
@@ -476,20 +496,20 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             if (Buffer[0] == CMD_CHINESE_UNLOCK_RW) {
                 /* Unlock read and write commands */
                 Buffer[0] = ACK_VALUE;
-                ret = ACK_NAK_FRAME_SIZE;
+                retSize = ACK_NAK_FRAME_SIZE;
             } else if (Buffer[0] == CMD_CHINESE_WIPE) {
                 /* Wipe memory */
                 Buffer[0] = ACK_VALUE;
-                ret = ACK_NAK_FRAME_SIZE;
+                retSize = ACK_NAK_FRAME_SIZE;
             } else if (Buffer[0] == CMD_READ) {
                 if (ISO14443ACheckCRCA(Buffer, CMD_READ_FRAME_SIZE)) {
                     /* Read command. Read data from memory and append CRCA. */
                     MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
-                    ret = (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE;
+                    retSize = (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE;
                 } else {
                     Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC;
-                    ret = ACK_NAK_FRAME_SIZE;
+                    retSize = ACK_NAK_FRAME_SIZE;
                 }
             } else if (Buffer[0] == CMD_WRITE) {
                 if (ISO14443ACheckCRCA(Buffer, CMD_WRITE_FRAME_SIZE)) {
@@ -498,13 +518,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     CurrentAddress = Buffer[1];
                     State = STATE_CHINESE_WRITE;
                     Buffer[0] = ACK_VALUE;
-                    ret = ACK_NAK_FRAME_SIZE;
+                    retSize = ACK_NAK_FRAME_SIZE;
                 } else {
                     Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC;
-                    ret = ACK_NAK_FRAME_SIZE;
+                    retSize = ACK_NAK_FRAME_SIZE;
                 }
             } else if (Buffer[0] == CMD_HALT) {
-                ret = mfcHandleHaltCommand(Buffer);
+                retSize = mfcHandleHaltCommand(Buffer);
             }
             break;
 
@@ -520,7 +540,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC;
             }
             State = STATE_CHINESE_IDLE;
-            ret = ACK_NAK_FRAME_SIZE;
+            retSize = ACK_NAK_FRAME_SIZE;
             break;
 #endif
 
@@ -541,11 +561,11 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         State = STATE_ACTIVE;
                     }
                 }
-                ret = BitCount;
+                retSize = BitCount;
             } else {
                 /* Unknown command. Enter HALT state. */
                 State = STATE_HALT;
-                ret = ISO14443A_APP_NO_RESPONSE;
+                retSize = ISO14443A_APP_NO_RESPONSE;
             }
             break;
 
@@ -557,17 +577,17 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
                    State = STATE_ACTIVE;
                }
-               ret = BitCount;
+               retSize = BitCount;
             } else {
               /* Unknown command. Enter HALT state. */
               State = STATE_HALT;
-              ret = ISO14443A_APP_NO_RESPONSE;
+              retSize = ISO14443A_APP_NO_RESPONSE;
             }
             break;
 
         case STATE_ACTIVE:
             if (Buffer[0] == CMD_HALT) {
-                ret = mfcHandleHaltCommand(Buffer);
+                retSize = mfcHandleHaltCommand(Buffer);
             } else if ((Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
                 if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
                     uint8_t SectorAddress;
@@ -604,10 +624,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     /* Respond with the random card nonce and expect further authentication
                     * form the reader in the next frame. */
                     State = STATE_AUTHING;
-                    ret = CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
+                    retSize = CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
                 } else {
                     Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC;
-                    ret = ACK_NAK_FRAME_SIZE;
+                    retSize = ACK_NAK_FRAME_SIZE;
                 }
             /* TODO: ? RevG has a "READ_SIG" command for EV1, which is a "CMD_RESTORE"
             * without operand and with a special fixed key.
@@ -617,11 +637,11 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         || (Buffer[0] == CMD_RESTORE) || (Buffer[0] == CMD_TRANSFER) ) {
                 State = STATE_IDLE;
                 Buffer[0] = NAK_S50_BUFFEROK_OPKO;
-                ret = ACK_NAK_FRAME_SIZE;
+                retSize = ACK_NAK_FRAME_SIZE;
             } else {
                 /* Unknown command. Enter HALT state. */
                 State = STATE_HALT;
-                ret = ISO14443A_APP_NO_RESPONSE;
+                retSize = ISO14443A_APP_NO_RESPONSE;
             }
             break;
 
@@ -642,19 +662,19 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(CardResponse[i]) ^ Crypto1FilterOutput();
                 }
                 State = STATE_AUTHED_IDLE;
-                ret = (CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                retSize = (CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
             } else {
                 /* Just reset on authentication error. */
                 State = STATE_IDLE;
                 Buffer[0] = NAK_S50_BUFFERKO_OPKO;
-                ret = ACK_NAK_FRAME_SIZE;
+                retSize = ACK_NAK_FRAME_SIZE;
             }
             break;
 
         case STATE_AUTHED_IDLE:
             /* If something went wrong the reader might send an unencrypted halt */
             if (Buffer[0] == CMD_HALT) {
-                ret = mfcHandleHaltCommand(Buffer);
+                retSize = mfcHandleHaltCommand(Buffer);
             } else {
                 /* In this state, all communication is encrypted. Thus we first have to decrypt
                 * the incoming data */
@@ -665,7 +685,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 * CRC check first */
                 if ( !ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE) ) {
                     Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC ^ Crypto1Nibble();
-                    ret = ACK_NAK_FRAME_SIZE;
+                    retSize = ACK_NAK_FRAME_SIZE;
                 /* If CRC is valid we continue, with CRC passed */
                 } else {
                     /* Read operation */
@@ -679,7 +699,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                             Buffer[i] = Plain ^ Crypto1Byte();
                             Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(Plain) ^ Crypto1FilterOutput();
                         }
-                        ret = ((CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                        retSize = ((CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
                     /* Write-type operation request */
                     } else if ( (Buffer[0] == CMD_WRITE) || (Buffer[0] == CMD_TRANSFER) ) {
                         /* Get target address. Write-type ops have address as 1st argument */
@@ -702,19 +722,19 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                             }
                             Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
                         }
-                        ret = ACK_NAK_FRAME_SIZE;
+                        retSize = ACK_NAK_FRAME_SIZE;
                     } else if (Buffer[0] == CMD_DECREMENT) {
                         State = STATE_DECREMENT;
                         Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                        ret = ACK_NAK_FRAME_SIZE;
+                        retSize = ACK_NAK_FRAME_SIZE;
                     } else if (Buffer[0] == CMD_INCREMENT) {
                         State = STATE_INCREMENT;
                         Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                        ret = ACK_NAK_FRAME_SIZE;
+                        retSize = ACK_NAK_FRAME_SIZE;
                     } else if (Buffer[0] == CMD_RESTORE) {
                         State = STATE_RESTORE;
                         Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                        ret = ACK_NAK_FRAME_SIZE;
+                        retSize = ACK_NAK_FRAME_SIZE;
                     } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
                         /* Nested authentication. */
                         uint8_t SectorAddress;
@@ -757,13 +777,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         /* Respond with the encrypted random card nonce and expect further authentication
                         * form the reader in the next frame. */
                         State = STATE_AUTHING;
-                        ret = (CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                        retSize = (CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
                     } else {
                         /* Unknown command. Enter HALT state */
                         /* Just reset on authentication error. */
                         State = STATE_IDLE;
                         Buffer[0] = NAK_S50_BUFFERKO_OPKO;
-                        ret = ACK_NAK_FRAME_SIZE;
+                        retSize = ACK_NAK_FRAME_SIZE;
                     }
                 }
             }
@@ -790,7 +810,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC ^ Crypto1Nibble();
             }
             State = STATE_AUTHED_IDLE;
-            ret = ACK_NAK_FRAME_SIZE;
+            retSize = ACK_NAK_FRAME_SIZE;
             break;
 
         case STATE_DECREMENT:
@@ -820,7 +840,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     ValueToBlock(BlockBuffer, BlockValue);
                     State = STATE_AUTHED_IDLE;
                     /* No ACK response on value commands part 2 */
-                    ret = ISO14443A_APP_NO_RESPONSE;
+                    retSize = ISO14443A_APP_NO_RESPONSE;
                 } else {
                     Buffer[0] = NAK_S50_BUFFEROK_PARITYCRC ^ Crypto1Nibble();
                 }
@@ -828,15 +848,15 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 Buffer[0] = NAK_S50_BUFFERKO_PARITYCRC ^ Crypto1Nibble();
             }
             State = STATE_AUTHED_IDLE;
-            ret = ACK_NAK_FRAME_SIZE;
+            retSize = ACK_NAK_FRAME_SIZE;
             break;
 
         default:
             /* Unknown state should never happen. Fail. */
-            ret = ISO14443A_APP_NO_RESPONSE;
+            retSize = ISO14443A_APP_NO_RESPONSE;
         } /* END OF SWITCH CASE */
     } /* END OF ISO14443AWakeUp CONDITION */
-    return ret;
+    return retSize;
 }
 
 void MifareClassicGetUid(ConfigurationUidType Uid)

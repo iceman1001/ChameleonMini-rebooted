@@ -94,4 +94,6 @@ bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount)
 /* Coded in H to allow exportable inlining
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
+INLINE bool ISO14443AIsWakeUp(uint8_t* Buffer, bool FromHalt);
+INLINE void ISO14443ASetWakeUpResponse(uint8_t* Buffer, uint16_t ATQAValue);
 */
