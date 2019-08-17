@@ -15,8 +15,9 @@
 #include "../LED.h"
 
 #define MFCLASSIC_1K_ATQA_VALUE     0x0004
-#define MFPlus_ATQA_VALUE           0x0044
+#define MFCLASSIC_1K_7B_ATQA_VALUE  0x0044
 #define MFCLASSIC_4K_ATQA_VALUE     0x0002
+#define MFCLASSIC_4K_7B_ATQA_VALUE  0x0042
 #define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
 #define MFCLASSIC_4K_SAK_CL1_VALUE  0x18
 #define SAK_CL1_VALUE               ISO14443A_SAK_INCOMPLETE
@@ -384,10 +385,10 @@ void MifareClassicAppInit1K(void)
     _7BUID = 0x00;
 }
 
-void MifarePlus1kAppInit_7B(void)
+void MifareClassicAppInit1K_7B(void)
 {
     State = STATE_IDLE;
-    CardATQAValue = MFPlus_ATQA_VALUE;
+    CardATQAValue = MFCLASSIC_1K_7B_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
     uint8_t UidSize = ActiveConfiguration.UidSize;
     _7BUID = (UidSize == 7);
@@ -404,7 +405,7 @@ void MifareClassicAppInit4K(void)
 void MifareClassicAppInit4K_7B(void)
 {
     State = STATE_IDLE;
-    CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
+    CardATQAValue = MFCLASSIC_4K_7B_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
     uint8_t UidSize = ActiveConfiguration.UidSize;
     _7BUID = (UidSize == 7);
