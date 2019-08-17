@@ -514,29 +514,22 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 /* Wipe memory */
                 Buffer[0] = ACK_VALUE;
                 retSize = ACK_NAK_FRAME_SIZE;
-            } else if (Buffer[0] == CMD_READ) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_READ_FRAME_SIZE)) {
+            } else if ( (Buffer[0] == CMD_READ) || (Buffer[0] == CMD_WRITE) ) {
+                if ( !ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE) ) {
+                    Buffer[0] = NAK_TBOK_CRCKO;
+                    retSize = ACK_NAK_FRAME_SIZE;
+                } else if (Buffer[0] == CMD_READ) {
                     /* Read command. Read data from memory and append CRCA. */
                     MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
-
                     retSize = (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE )
                               * BITS_PER_BYTE;
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO;
-                    retSize = ACK_NAK_FRAME_SIZE;
-                }
-            } else if (Buffer[0] == CMD_WRITE) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_WRITE_FRAME_SIZE)) {
+                } else if (Buffer[0] == CMD_WRITE) {
                     /* Write command. Store the address and prepare for the upcoming data.
                     * Respond with ACK. */
                     CurrentAddress = Buffer[1];
                     State = STATE_CHINESE_WRITE;
-
                     Buffer[0] = ACK_VALUE;
-                    retSize = ACK_NAK_FRAME_SIZE;
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO;
                     retSize = ACK_NAK_FRAME_SIZE;
                 }
             } else if (Buffer[0] == CMD_HALT) {
