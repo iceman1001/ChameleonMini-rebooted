@@ -550,6 +550,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             }
             State = STATE_CHINESE_IDLE;
             retSize = ACK_NAK_FRAME_SIZE;
+            break;
 #endif
 
         case STATE_READY1:
