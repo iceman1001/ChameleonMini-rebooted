@@ -71,7 +71,7 @@
 extern const PROGMEM CommandEntryType CommandTable[];
 
 CommandStatusIdType CommandGetVersion(char* OutParam) {
-    snprintf_P( OutParam, TERMINAL_BUFFER_SIZE, PSTR("Chameleon-Mini %s v%d.%d (%s: %s)"),
+    snprintf_P( OutParam, TERMINAL_BUFFER_SIZE, PSTR("ChameleonMini-%s v%d.%d (%s: %s)"),
                 FIRMWARE_NAME, FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR,
                 FIRMWARE_FORK_AUTHOR, FIRMWARE_COMMIT_STRING );
     return COMMAND_INFO_OK_WITH_TEXT_ID;

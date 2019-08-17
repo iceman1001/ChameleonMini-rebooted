@@ -64,7 +64,7 @@
 // Firmware version details.
 #define FIRMWARE_VERSION_MAJOR          1
 #define FIRMWARE_VERSION_MINOR          3
-#define FIRMWARE_NAME                   "RevE"
+#define FIRMWARE_NAME                   "rebooted"
 #define FIRMWARE_FORK_AUTHOR            "Iceman"
 #ifdef  COMMIT_ID
 #define FIRMWARE_COMMIT_STRING          COMMIT_ID
