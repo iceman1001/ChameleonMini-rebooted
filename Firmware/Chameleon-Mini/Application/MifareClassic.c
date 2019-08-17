@@ -733,14 +733,25 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     }
 
                     retSize = ( (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE ) * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
-                } else if (Buffer[0] == CMD_WRITE) {
-                    /* Write command. Store the address and prepare for the upcoming data.
-                    * Respond with ACK. */
+                /* Write-type operation request */
+                } else if ( (Buffer[0] == CMD_WRITE) || (Buffer[0] == CMD_TRANSFER) ) {
+                    /* Get target address. Write-type ops have address as 1st argument */
                     CurrentAddress = Buffer[1];
+                    /* We deny any write-type operation to Block0 / Sector0 */
                     if (CurrentAddress == MEM_S0B0_ADDRESS) {
                         Buffer[0] = NAK_TBOK_OPKO ^ Crypto1Nibble();
-                    } else {
+                    } else if (Buffer[0] == CMD_WRITE) {
+                        /* Write command. Store the address and prepare for the upcoming data.
+                        * Respond with ACK. */
                         State = STATE_WRITE;
+                        Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+                    } else if (Buffer[0] == CMD_TRANSFER) {
+                        /* Write back the global block buffer to the desired block address */
+                        if (!ActiveConfiguration.ReadOnly) {
+                            MemoryWriteBlock(BlockBuffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
+                        } else {
+                            /* In read only mode, silently ignore the write */
+                        }
                         Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
                     }
                     retSize = ACK_NAK_FRAME_SIZE;
@@ -758,19 +769,6 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     CurrentAddress = Buffer[1];
                     State = STATE_RESTORE;
                     Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                    retSize = ACK_NAK_FRAME_SIZE;
-                }else if (Buffer[0] == CMD_TRANSFER) {
-                    /* Write back the global block buffer to the desired block address */
-                    if (CurrentAddress == MEM_S0B0_ADDRESS) {
-                        Buffer[0] = NAK_TBOK_OPKO ^ Crypto1Nibble();
-                    } else {
-                        if (!ActiveConfiguration.ReadOnly) {
-                            MemoryWriteBlock(BlockBuffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK );
-                        } else {
-                            /* In read only mode, silently ignore the write */
-                        }
-                        Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                    }
                     retSize = ACK_NAK_FRAME_SIZE;
                 } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
                     /* Nested authentication. */
