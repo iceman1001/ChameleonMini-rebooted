@@ -22,6 +22,7 @@
 #define SAK_CL2_VALUE               ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
 
 #define MEM_S0B0_ADDRESS            0x00
+#define MEM_INVALID_ADDRESS         0xFF
 #define MEM_UID_CL1_ADDRESS         0x00
 #define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
@@ -72,8 +73,11 @@
 #define CMD_CHINESE_WIPE            0x41
 #define CMD_CHINESE_UNLOCK_RW       0x43
 
-/*
+/* TODO: Access control not implemented yet
 Source: NXP: MF1S50YYX Product data sheet
+
+#define BYTE_SWAP(x)                (((uint8_t)(x)>>4)|((uint8_t)(x)<<4))
+#define ACC_NO_ACCESS               0x07
 
 Access conditions for the sector trailer
 
@@ -91,7 +95,6 @@ C1 C2 C3        read  write  read  write  read  write
 1  1  1         never never  keyA|B never never never
 
 [1] For this access condition key B is readable and may be used for data
-*/
 #define ACC_TRAILOR_READ_KEYA   0x01
 #define ACC_TRAILOR_WRITE_KEYA  0x02
 #define ACC_TRAILOR_READ_ACC    0x04
@@ -99,15 +102,11 @@ C1 C2 C3        read  write  read  write  read  write
 #define ACC_TRAILOR_READ_KEYB   0x10
 #define ACC_TRAILOR_WRITE_KEYB  0x20
 
-
-
-/*
 Access conditions for data blocks
 Access bits Access condition for                Application
 C1 C2 C3    read    write   increment   decrement,
                                                 transfer,
                                                 restore
-
 0 0 0       key A|B key A|B key A|B     key A|B     transport configuration
 0 1 0       key A|B never   never       never       read/write block
 1 0 0       key A|B key B   never       never       read/write block
@@ -116,17 +115,16 @@ C1 C2 C3    read    write   increment   decrement,
 0 1 1       key B   key B   never       never       read/write block
 1 0 1       key B   never   never       never       read/write block
 1 1 1       never   never   never       never       read/write block
-
-*/
 #define ACC_BLOCK_READ      0x01
 #define ACC_BLOCK_WRITE     0x02
 #define ACC_BLOCK_INCREMENT 0x04
 #define ACC_BLOCK_DECREMENT 0x08
+*/
 
 #define KEY_A 0
 #define KEY_B 1
 
-/*
+/* TODO: Access control not implemented yet
 // Decoding table for Access conditions of a data block
 static const uint8_t abBlockAccessConditions[8][2] =
 {
@@ -273,18 +271,19 @@ static uint8_t CardResponse[4];
 static uint8_t ReaderResponse[4];
 static uint8_t CurrentAddress;
 static uint8_t BlockBuffer[MEM_BYTES_PER_BLOCK];
-static uint8_t AccessConditions[MEM_ACC_GPB_SIZE]; /* Access Conditions + General purpose Byte */
+/* TODO: Access control not implemented yet
+static uint8_t AccessConditions[MEM_ACC_GPB_SIZE]; // Access Conditions + General purpose Byte
 static uint8_t AccessAddress;
+*/
 static uint16_t CardATQAValue;
 static uint8_t CardSAKValue;
 
 static bool is7BitsUID = false;
 static bool FromHalt = false;
 
-#define BYTE_SWAP(x) (((uint8_t)(x)>>4)|((uint8_t)(x)<<4))
-#define NO_ACCESS 0x07
 
-/* decode Access conditions for a block */
+/* TODO: Access control not implemented yet
+* Decode Access conditions for a block
 INLINE uint8_t GetAccessCondition(uint8_t Block)
 {
     uint8_t  InvSAcc0;
@@ -297,14 +296,14 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
     InvSAcc0 = ~BYTE_SWAP(Acc0);
     InvSAcc1 = ~BYTE_SWAP(Acc1);
 
-    /* Check */
-    if ( ((InvSAcc0 ^ Acc1) & 0xf0) ||   /* C1x */
-         ((InvSAcc0 ^ Acc2) & 0x0f) ||   /* C2x */
-         ((InvSAcc1 ^ Acc2) & 0xf0))     /* C3x */
+    // Check
+    if ( ((InvSAcc0 ^ Acc1) & 0xf0) ||   // C1x
+         ((InvSAcc0 ^ Acc2) & 0x0f) ||   // C2x
+         ((InvSAcc1 ^ Acc2) & 0xf0))     // C3x
     {
-      return(NO_ACCESS);
+      return(ACC_NO_ACCESS);
     }
-    /* Fix for MFClassic 4K cards */
+    // Fix for MFClassic 4K cards
     if(Block<128)
         Block &= 3;
     else {
@@ -319,9 +318,9 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
             Block=2;
     }
 
-    Acc0 = ~Acc0;       /* C1x Bits to bit 0..3 */
-    Acc1 =  Acc2;       /* C2x Bits to bit 0..3 */
-    Acc2 =  Acc2 >> 4;  /* C3x Bits to bit 0..3 */
+    Acc0 = ~Acc0;       // C1x Bits to bit 0..3
+    Acc1 =  Acc2;       // C2x Bits to bit 0..3
+    Acc2 =  Acc2 >> 4;  // C3x Bits to bit 0..3
 
     if(Block)
     {
@@ -329,17 +328,19 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
         Acc1 >>= Block;
         Acc2 >>= Block;
     }
-    /* combine the bits */
+    // Combine the bits
     ResultForBlock = ((Acc2 & 1) << 2) |
                      ((Acc1 & 1) << 1) |
                      (Acc0 & 1);
     return(ResultForBlock);
 }
+*/
+
 
 INLINE bool CheckValueIntegrity(uint8_t* Block)
 {
-    /* Value Blocks contain a value stored three times, with
-     * the middle portion inverted. */
+    // Value Blocks contain a value stored three times, with
+    // the middle portion inverted.
     if (    (Block[0] == (uint8_t) ~Block[4]) && (Block[0] == Block[8])
          && (Block[1] == (uint8_t) ~Block[5]) && (Block[1] == Block[9])
          && (Block[2] == (uint8_t) ~Block[6]) && (Block[2] == Block[10])
@@ -377,6 +378,7 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value)
     Block[10] = Block[2];
     Block[11] = Block[3];
 }
+
 
 void MifareClassicAppInit1K(void)
 {
@@ -432,7 +434,8 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
          (Buffer[0] == ISO14443A_CMD_WUPA) )){
 
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
-            AccessAddress = 0xff;
+            /* TODO: Access control not implemented yet
+            * AccessAddress = MEM_INVALID_ADDRESS; */
             State = STATE_READY1;
             return BitCount;
         }
@@ -547,7 +550,8 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             } else {
                 MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
                 if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
-                    AccessAddress = 0xff; /* invalid, force reload */
+                    /* TODO: Access control not implemented yet
+                    * AccessAddress = MEM_INVALID_ADDRESS; // invalid, force reload */
                     State = STATE_ACTIVE;
                 }
             }
@@ -569,7 +573,8 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
            MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
 
            if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
-               AccessAddress = 0xff; /* invalid, force reload */
+               /* TODO: Access control not implemented yet
+               AccessAddress = MEM_INVALID_ADDRESS; // invalid, force reload */
                State = STATE_ACTIVE;
            }
            return BitCount;
