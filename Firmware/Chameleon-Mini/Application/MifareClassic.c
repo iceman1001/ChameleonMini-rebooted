@@ -277,7 +277,7 @@ static uint8_t AccessAddress;
 static uint16_t CardATQAValue;
 static uint8_t CardSAKValue;
 
-static uint8_t _7BUID = 0x00;
+static bool is7BitsUID = false;
 static bool FromHalt = false;
 
 #define BYTE_SWAP(x) (((uint8_t)(x)>>4)|((uint8_t)(x)<<4))
@@ -382,7 +382,7 @@ void MifareClassicAppInit1K(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
-    _7BUID = 0x00;
+    is7BitsUID = false;
 }
 
 void MifareClassicAppInit1K_7B(void)
@@ -391,7 +391,7 @@ void MifareClassicAppInit1K_7B(void)
     CardATQAValue = MFCLASSIC_1K_7B_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
     uint8_t UidSize = ActiveConfiguration.UidSize;
-    _7BUID = (UidSize == 7);
+    is7BitsUID = (UidSize == 7);
 }
 
 void MifareClassicAppInit4K(void)
@@ -399,7 +399,7 @@ void MifareClassicAppInit4K(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
-    _7BUID = 0x00;
+    is7BitsUID = false;
 }
 
 void MifareClassicAppInit4K_7B(void)
@@ -408,7 +408,7 @@ void MifareClassicAppInit4K_7B(void)
     CardATQAValue = MFCLASSIC_4K_7B_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
     uint8_t UidSize = ActiveConfiguration.UidSize;
-    _7BUID = (UidSize == 7);
+    is7BitsUID = (UidSize == 7);
 }
 
 void MifareClassicAppReset(void)
@@ -536,7 +536,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             /* Load UID CL1 and perform anticollision */
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
 
-            if (_7BUID) {
+            if (is7BitsUID) {
                 MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
                 UidCL1[0] = ISO14443A_UID0_CT;
 
@@ -620,7 +620,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
                 /* Generate a random nonce and read UID and key from memory */
                 //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                if (_7BUID)
+                if (is7BitsUID)
                     MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
                 else
                     MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
@@ -799,7 +799,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
                 /* Generate a random nonce and read UID and key from memory */
                 //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                if (_7BUID)
+                if (is7BitsUID)
                     MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
                 else
                     MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
@@ -927,7 +927,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
 void MifareClassicGetUid(ConfigurationUidType Uid)
 {
-    if (_7BUID) {
+    if (is7BitsUID) {
         //Uid[0]=0x88;
         MemoryReadBlock(&Uid[0], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
         MemoryReadBlock(&Uid[3], MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
@@ -938,7 +938,7 @@ void MifareClassicGetUid(ConfigurationUidType Uid)
 
 void MifareClassicSetUid(ConfigurationUidType Uid)
 {
-    if (_7BUID) {
+    if (is7BitsUID) {
         //Uid[0]=0x88;
         MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     } else {
