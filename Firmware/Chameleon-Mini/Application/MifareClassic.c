@@ -23,6 +23,7 @@
 #define SAK_CL1_VALUE               ISO14443A_SAK_INCOMPLETE
 #define SAK_CL2_VALUE               ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
 
+#define MEM_S0B0_ADDRESS            0x00
 #define MEM_UID_CL1_ADDRESS         0x00
 #define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
@@ -723,8 +724,12 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 /* Write command. Store the address and prepare for the upcoming data.
                 * Respond with ACK. */
                 CurrentAddress = Buffer[1];
-                State = STATE_WRITE;
-                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+                if (CurrentAddress == MEM_S0B0_ADDRESS) {
+                    Buffer[0] = NAK_INVALID_ARG ^ Crypto1Nibble();
+                } else {
+                    State = STATE_WRITE;
+                    Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+                }
             } else {
                 Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
             }
@@ -759,13 +764,17 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
         }else if (Buffer[0] == CMD_TRANSFER) {
             /* Write back the global block buffer to the desired block address */
             if (ISO14443ACheckCRCA(Buffer, CMD_TRANSFER_FRAME_SIZE)) {
-                if (!ActiveConfiguration.ReadOnly) {
-                    MemoryWriteBlock(BlockBuffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK );
+                if (CurrentAddress == MEM_S0B0_ADDRESS) {
+                    Buffer[0] = NAK_INVALID_ARG ^ Crypto1Nibble();
                 } else {
-                    /* In read only mode, silently ignore the write */
-                }
+                    if (!ActiveConfiguration.ReadOnly) {
+                        MemoryWriteBlock(BlockBuffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK );
+                    } else {
+                        /* In read only mode, silently ignore the write */
+                    }
 
-                Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+                    Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
+                }
             } else {
                 Buffer[0] = NAK_CRC_ERROR ^ Crypto1Nibble();
             }
