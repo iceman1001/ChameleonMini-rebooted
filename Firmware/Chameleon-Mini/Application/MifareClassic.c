@@ -252,7 +252,7 @@ static const uint8_t abTrailorAccessConditions[8][2] =
 };
 */
 
-static enum {
+enum estate {
     STATE_HALT,
     STATE_IDLE,
     STATE_CHINESE_IDLE,
@@ -266,7 +266,9 @@ static enum {
     STATE_INCREMENT,
     STATE_DECREMENT,
     STATE_RESTORE
-} State;
+};
+/* Init to get sure we have a controlled value wherever we start */
+static enum estate State = STATE_IDLE;
 
 static uint8_t CardResponse[4];
 static uint8_t ReaderResponse[4];
