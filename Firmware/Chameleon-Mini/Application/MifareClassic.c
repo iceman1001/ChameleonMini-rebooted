@@ -12,7 +12,6 @@
 #include "../Memory.h"
 #include "Crypto1.h"
 #include "../Random.h"
-#include "../LED.h"
 
 #define MFCLASSIC_1K_ATQA_VALUE     0x0004
 #define MFCLASSIC_1K_7B_ATQA_VALUE  0x0044
