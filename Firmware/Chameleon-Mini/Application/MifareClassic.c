@@ -19,21 +19,21 @@
 #define MFCLASSIC_4K_ATQA_VALUE     0x0002
 #define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
 #define MFCLASSIC_4K_SAK_CL1_VALUE  0x18
-#define SAK_CL1_VALUE				ISO14443A_SAK_INCOMPLETE
-#define SAK_CL2_VALUE				ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
+#define SAK_CL1_VALUE               ISO14443A_SAK_INCOMPLETE
+#define SAK_CL2_VALUE               ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
 
 #define MEM_UID_CL1_ADDRESS         0x00
 #define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
-#define MEM_UID_CL2_ADDRESS        	0x03
+#define MEM_UID_CL2_ADDRESS         0x03
 #define MEM_UID_CL2_SIZE            4
 #define MEM_KEY_A_OFFSET            48        /* Bytes */
 #define MEM_KEY_B_OFFSET            58        /* Bytes */
-#define MEM_KEY_BIGSECTOR_OFFSET	192
+#define MEM_KEY_BIGSECTOR_OFFSET    192
 #define MEM_KEY_SIZE                6         /* Bytes */
 #define MEM_ACC_GPB_SIZE            4         /* Bytes */
 #define MEM_SECTOR_ADDR_MASK        0xFC
-#define MEM_BIGSECTOR_ADDR_MASK		0xF0
+#define MEM_BIGSECTOR_ADDR_MASK     0xF0
 #define MEM_BYTES_PER_BLOCK         16        /* Bytes */
 #define MEM_VALUE_SIZE              4         /* Bytes */
 
@@ -103,19 +103,19 @@ C1 C2 C3        read  write  read  write  read  write
 
 /*
 Access conditions for data blocks
-Access bits Access condition for 				Application
-C1 C2 C3 	read 	write 	increment 	decrement,
+Access bits Access condition for                Application
+C1 C2 C3    read    write   increment   decrement,
                                                 transfer,
                                                 restore
 
-0 0 0 		key A|B key A|B key A|B 	key A|B 	transport configuration
-0 1 0 		key A|B never 	never 		never 		read/write block
-1 0 0 		key A|B key B 	never 		never 		read/write block
-1 1 0 		key A|B key B 	key B 		key A|B 	value block
-0 0 1 		key A|B never 	never 		key A|B 	value block
-0 1 1 		key B 	key B 	never 		never 		read/write block
-1 0 1 		key B 	never 	never 		never 		read/write block
-1 1 1 		never 	never 	never 		never 		read/write block
+0 0 0       key A|B key A|B key A|B     key A|B     transport configuration
+0 1 0       key A|B never   never       never       read/write block
+1 0 0       key A|B key B   never       never       read/write block
+1 1 0       key A|B key B   key B       key A|B     value block
+0 0 1       key A|B never   never       key A|B     value block
+0 1 1       key B   key B   never       never       read/write block
+1 0 1       key B   never   never       never       read/write block
+1 1 1       never   never   never       never       read/write block
 
 */
 #define ACC_BLOCK_READ      0x01
@@ -131,56 +131,56 @@ C1 C2 C3 	read 	write 	increment 	decrement,
 static const uint8_t abBlockAccessConditions[8][2] =
 {
     //C1C2C3
-    // 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B 	transport configuration
+    // 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B   transport configuration
     {
         // Access with Key A
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT,
         // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
     },
-    // 1 0 0 R:key A|B W:key B I:never D:never 	read/write block
+    // 1 0 0 R:key A|B W:key B I:never D:never  read/write block
     {
         // Access with Key A
         ACC_BLOCK_READ,
         // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE
     },
-    // 0 1 0 R:key A|B W:never I:never D:never 	read/write block
+    // 0 1 0 R:key A|B W:never I:never D:never  read/write block
     {
         // Access with Key A
         ACC_BLOCK_READ,
         // Access with Key B
         ACC_BLOCK_READ
     },
-    // 1 1 0 R:key A|B W:key B I:key B D:key A|B 	value block
+    // 1 1 0 R:key A|B W:key B I:key B D:key A|B    value block
     {
         // Access with Key A
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
         // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE | ACC_BLOCK_INCREMENT | ACC_BLOCK_DECREMENT
     },
-    // 0 0 1 R:key A|B W:never I:never D:key A|B 	value block
+    // 0 0 1 R:key A|B W:never I:never D:key A|B    value block
     {
         // Access with Key A
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT,
         // Access with Key B
         ACC_BLOCK_READ  |  ACC_BLOCK_DECREMENT
     },
-    // 1 0 1 R:key B W:never I:never D:never 	read/write block
+    // 1 0 1 R:key B W:never I:never D:never    read/write block
     {
         // Access with Key A
         0,
         // Access with Key B
         ACC_BLOCK_READ
     },
-    // 0 1 1 R:key B W:key B I:never D:never	read/write block
+    // 0 1 1 R:key B W:key B I:never D:never    read/write block
     {
         // Access with Key A
         0,
         // Access with Key B
         ACC_BLOCK_READ | ACC_BLOCK_WRITE
     },
-    // 1 1 1 R:never W:never I:never D:never	read/write block
+    // 1 1 1 R:never W:never I:never D:never    read/write block
     {
         // Access with Key A
         0,
@@ -192,7 +192,7 @@ static const uint8_t abBlockAccessConditions[8][2] =
 // Decoding table for Access conditions of the sector trailor
 static const uint8_t abTrailorAccessConditions[8][2] =
 {
-    // 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A  	Key B may be read[1]
+    // 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A    Key B may be read[1]
     {
         // Access with Key A
         ACC_TRAILOR_WRITE_KEYA | ACC_TRAILOR_READ_ACC | ACC_TRAILOR_WRITE_ACC | ACC_TRAILOR_READ_KEYB | ACC_TRAILOR_WRITE_KEYB,
@@ -257,7 +257,7 @@ static enum {
     STATE_CHINESE_IDLE,
     STATE_CHINESE_WRITE,
     STATE_READY1,
-	STATE_READY2,
+    STATE_READY2,
     STATE_ACTIVE,
     STATE_AUTHING,
     STATE_AUTHED_IDLE,
@@ -381,16 +381,16 @@ void MifareClassicAppInit1K(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
-	_7BUID = 0x00;
+    _7BUID = 0x00;
 }
 
 void MifarePlus1kAppInit_7B(void)
 {
-	State = STATE_IDLE;
-	CardATQAValue = MFPlus_ATQA_VALUE;
-	CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
-	uint8_t UidSize = ActiveConfiguration.UidSize;
-	_7BUID = (UidSize == 7);
+    State = STATE_IDLE;
+    CardATQAValue = MFPlus_ATQA_VALUE;
+    CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
+    uint8_t UidSize = ActiveConfiguration.UidSize;
+    _7BUID = (UidSize == 7);
 }
 
 void MifareClassicAppInit4K(void)
@@ -398,7 +398,7 @@ void MifareClassicAppInit4K(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
-	_7BUID = 0x00;
+    _7BUID = 0x00;
 }
 
 void MifareClassicAppInit4K_7B(void)
@@ -406,8 +406,8 @@ void MifareClassicAppInit4K_7B(void)
     State = STATE_IDLE;
     CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
-	uint8_t UidSize = ActiveConfiguration.UidSize;
-	_7BUID = (UidSize == 7);
+    uint8_t UidSize = ActiveConfiguration.UidSize;
+    _7BUID = (UidSize == 7);
 }
 
 void MifareClassicAppReset(void)
@@ -536,13 +536,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
 
             if (_7BUID) {
-	            MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
-	            UidCL1[0] = ISO14443A_UID0_CT;
+                MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
+                UidCL1[0] = ISO14443A_UID0_CT;
 
-	            if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE))
-				    State = STATE_READY2;
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE))
+                    State = STATE_READY2;
 
-	        } else {
+            } else {
                 MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
                 if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
                     AccessAddress = 0xff; /* invalid, force reload */
@@ -558,20 +558,20 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
     case STATE_READY2:
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, false)) {
-	       State = STATE_READY1;
-	       return BitCount;
-	    } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
+           State = STATE_READY1;
+           return BitCount;
+        } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
 
-	       /* Load UID CL2 and perform anticollision */
-	       uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
-	       MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+           /* Load UID CL2 and perform anticollision */
+           uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
+           MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
 
-	       if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
+           if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
                AccessAddress = 0xff; /* invalid, force reload */
-		       State = STATE_ACTIVE;
-	       }
-		   return BitCount;
-	    } else {
+               State = STATE_ACTIVE;
+           }
+           return BitCount;
+        } else {
           /* Unknown command. Enter HALT state. */
           State = STATE_HALT;
         }
@@ -613,14 +613,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 uint16_t KeyAddress = (uint16_t) SectorAddress * MEM_BYTES_PER_BLOCK + KeyOffset;
                 uint8_t Key[6];
                 uint8_t Uid[4];
-			    uint8_t CardNonce[4] = {0x01,0x20,0x01,0x45};
+                uint8_t CardNonce[4] = {0x01,0x20,0x01,0x45};
                 uint8_t CardNonceSuccessor1[4] = {0x63, 0xe5, 0xbc, 0xa7};
                 uint8_t CardNonceSuccessor2[4] = {0x99, 0x37, 0x30, 0xbd};
 
                 /* Generate a random nonce and read UID and key from memory */
                 //RandomGetBuffer(CardNonce, sizeof(CardNonce));
                 if (_7BUID)
-					MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+                    MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
                 else
                     MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
 
@@ -648,11 +648,11 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 return ACK_NAK_FRAME_SIZE;
             }
         } else if ( (Buffer[0] == CMD_READ) ||
-		            (Buffer[0] == CMD_WRITE) ||
-					(Buffer[0] == CMD_DECREMENT) ||
-					(Buffer[0] == CMD_INCREMENT) ||
-					(Buffer[0] == CMD_RESTORE) ||
-					(Buffer[0] == CMD_TRANSFER) ) {
+                    (Buffer[0] == CMD_WRITE) ||
+                    (Buffer[0] == CMD_DECREMENT) ||
+                    (Buffer[0] == CMD_INCREMENT) ||
+                    (Buffer[0] == CMD_RESTORE) ||
+                    (Buffer[0] == CMD_TRANSFER) ) {
             State = STATE_IDLE;
             Buffer[0] = NAK_NOT_AUTHED;
             return ACK_NAK_FRAME_SIZE;
@@ -785,13 +785,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 uint16_t KeyAddress = (uint16_t) SectorAddress * MEM_BYTES_PER_BLOCK + KeyOffset;
                 uint8_t Key[6];
                 uint8_t Uid[4];
-				uint8_t CardNonce[4] = {0x01};
-				uint8_t CardNonceParity[4];
+                uint8_t CardNonce[4] = {0x01};
+                uint8_t CardNonceParity[4];
 
                 /* Generate a random nonce and read UID and key from memory */
                 //RandomGetBuffer(CardNonce, sizeof(CardNonce));
                 if (_7BUID)
-					MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+                    MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
                 else
                     MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
 
@@ -918,43 +918,43 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
 void MifareClassicGetUid(ConfigurationUidType Uid)
 {
-	if (_7BUID) {
-		//Uid[0]=0x88;
-		MemoryReadBlock(&Uid[0], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
-		MemoryReadBlock(&Uid[3], MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-	} else {
+    if (_7BUID) {
+        //Uid[0]=0x88;
+        MemoryReadBlock(&Uid[0], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
+        MemoryReadBlock(&Uid[3], MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
+    } else {
         MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-	}
+    }
 }
 
 void MifareClassicSetUid(ConfigurationUidType Uid)
 {
     if (_7BUID) {
-	    //Uid[0]=0x88;
-	    MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
+        //Uid[0]=0x88;
+        MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     } else {
         uint8_t BCC =  Uid[0] ^ Uid[1] ^ Uid[2] ^ Uid[3];
-		MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+        MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
         MemoryWriteBlock(&BCC, MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }
 
 void MifareClassicGetAtqa(uint16_t * Atqa)
 {
-	*Atqa = CardATQAValue;
+    *Atqa = CardATQAValue;
 }
 
 void MifareClassicSetAtqa(uint16_t Atqa)
 {
-	CardATQAValue = Atqa;
+    CardATQAValue = Atqa;
 }
 
 void MifareClassicGetSak(uint8_t * Sak)
 {
-	*Sak = CardSAKValue;
+    *Sak = CardSAKValue;
 }
 
 void MifareClassicSetSak(uint8_t Sak)
 {
-	CardSAKValue = Sak;
+    CardSAKValue = Sak;
 }
