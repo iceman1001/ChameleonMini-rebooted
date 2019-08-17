@@ -489,7 +489,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     /* Wakeup and Request may occure in all states. We handle is first, so we can skip
     * states cases if we get valid WUPA/REQA */
     retSize = mfcHandleWUPCommand(Buffer, BitCount, CardATQAValue);
-    if ( retSize == ISO14443A_APP_NO_RESPONSE ) {
+    if (retSize == ISO14443A_APP_NO_RESPONSE) {
         switch(State) {
         case STATE_IDLE:
         case STATE_HALT:
@@ -501,7 +501,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 retSize = ACK_NAK_FRAME_SIZE;
             }
 #endif
-            break;
+            break; /* End of states IDLE and HALT */
 
 #ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
         case STATE_CHINESE_IDLE:
@@ -515,14 +515,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 Buffer[0] = ACK_VALUE;
                 retSize = ACK_NAK_FRAME_SIZE;
             } else if ( (Buffer[0] == CMD_READ) || (Buffer[0] == CMD_WRITE) ) {
-                if ( !ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE) ) {
+                if (!ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE)) {
                     Buffer[0] = NAK_TBOK_CRCKO;
                     retSize = ACK_NAK_FRAME_SIZE;
                 } else if (Buffer[0] == CMD_READ) {
                     /* Read command. Read data from memory and append CRCA. */
                     MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
-                    retSize = (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE )
+                    retSize = (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE)
                               * BITS_PER_BYTE;
                 } else if (Buffer[0] == CMD_WRITE) {
                     /* Write command. Store the address and prepare for the upcoming data.
@@ -535,7 +535,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             } else if (Buffer[0] == CMD_HALT) {
                retSize = mfcHandleHaltCommand(Buffer);
             }
-            break;
+            break; /* End of state CHINESE_IDLE */
 
         case STATE_CHINESE_WRITE:
             if (ISO14443ACheckCRCA(Buffer, MEM_BYTES_PER_BLOCK)) {
@@ -543,15 +543,12 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 if (!ActiveConfiguration.ReadOnly) {
                     MemoryWriteBlock(Buffer, CurrentAddress * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                 }
-
                 Buffer[0] = ACK_VALUE;
             } else {
                 /* CRC Error. */
                 Buffer[0] = NAK_TBOK_CRCKO;
             }
-
             State = STATE_CHINESE_IDLE;
-
             retSize = ACK_NAK_FRAME_SIZE;
 #endif
 
@@ -559,14 +556,12 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
                 /* Load UID CL1 and perform anticollision */
                 uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
-
                 if (is7BitsUID) {
                     MemoryReadBlock(&UidCL1[1], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
                     UidCL1[0] = ISO14443A_UID0_CT;
-
-                    if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE))
+                    if (ISO14443ASelect(Buffer, &BitCount, UidCL1, SAK_CL1_VALUE)) {
                         State = STATE_READY2;
-
+                    }
                 } else {
                     MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
                     if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
@@ -575,36 +570,36 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         State = STATE_ACTIVE;
                     }
                 }
+                /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                 retSize = BitCount;
             } else {
                 /* Unknown command. Enter HALT state. */
                 State = STATE_HALT;
             }
-            break;
+            break; /* End of state READY1 */
 
         case STATE_READY2:
             if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
-
                /* Load UID CL2 and perform anticollision */
                uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
                MemoryReadBlock(UidCL2, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-
                if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
                    /* TODO: Access control not implemented yet
                    AccessAddress = MEM_INVALID_ADDRESS; // invalid, force reload */
                    State = STATE_ACTIVE;
                }
+               /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                retSize = BitCount;
             } else {
               /* Unknown command. Enter HALT state. */
               State = STATE_HALT;
             }
-        break;
+            break; /* End of state READY2 */
 
         case STATE_ACTIVE:
             if (Buffer[0] == CMD_HALT) {
                 retSize = mfcHandleHaltCommand(Buffer);
-            } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B)) {
+            } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
                 if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
                     uint8_t SectorAddress;
                     uint8_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
@@ -624,29 +619,24 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
                     /* Generate a random nonce and read UID and key from memory */
                     //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                    if (is7BitsUID)
+                    if (is7BitsUID) {
                         MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-                    else
+                    } else {
                         MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-
+                    }
                     MemoryReadBlock(Key, KeyAddress, MEM_KEY_SIZE);
-
                     /* Precalculate the reader response from card-nonce */
                     memcpy(ReaderResponse, CardNonceSuccessor1, 4);
-
                     /* Precalculate our response from the reader response */
                     memcpy(CardResponse, CardNonceSuccessor2, 4);
-
                     /* Respond with the random card nonce and expect further authentication
                     * form the reader in the next frame. */
                     State = STATE_AUTHING;
-
-                    for (uint8_t i=0; i<sizeof(CardNonce); i++)
+                    for (uint8_t i=0; i<sizeof(CardNonce); i++) {
                         Buffer[i] = CardNonce[i];
-
+                    }
                     /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
                     Crypto1Setup(Key, Uid, CardNonce, NULL);
-
                     retSize = CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
                 } else {
                     Buffer[0] = NAK_TBOK_CRCKO;
@@ -665,17 +655,16 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 /* Unknown command. Enter HALT state. */
                 State = STATE_IDLE;
             }
-            break;
+            break; /* End of state ACTIVE */
 
         case STATE_AUTHING:
             /* Reader delivers an encrypted nonce. We use it
             * to setup the crypto1 LFSR in nonlinear feedback mode.
             * Furthermore it delivers an encrypted answer. Decrypt and check it */
             Crypto1Auth(&Buffer[0]);
-
-            for (uint8_t i=0; i<4; i++)
+            for (uint8_t i=0; i<4; i++) {
                 Buffer[i+4] ^= Crypto1Byte();
-
+            }
             if ((Buffer[4] == ReaderResponse[0]) &&
                 (Buffer[5] == ReaderResponse[1]) &&
                 (Buffer[6] == ReaderResponse[2]) &&
@@ -686,16 +675,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     Buffer[i] = CardResponse[i] ^ Crypto1Byte();
                     Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(CardResponse[i]) ^ Crypto1FilterOutput();
                 }
-
                 State = STATE_AUTHED_IDLE;
-
                 retSize = (CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
             } else {
                 /* Just reset on authentication error. */
                 State = STATE_IDLE;
             }
-
-            break;
+            break; /* End of state AUTHING */
 
         case STATE_AUTHED_IDLE:
             /* If something went wrong the reader might send an unencrypted halt */
@@ -704,11 +690,12 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             } else {
                 /* In this state, all communication is encrypted. Thus we first have to encrypt
                 * the incoming data. */
-                for (uint8_t i=0; i<4; i++)
+                for (uint8_t i=0; i<4; i++) {
                     Buffer[i] ^= Crypto1Byte();
+                }
                 /* All possible operations at this state have all same frame size, so we do
                  * CRC check first */
-                if ( !ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE) ) {
+                if (!ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE)) {
                     Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
                     retSize = ACK_NAK_FRAME_SIZE;
                 /* If CRC is valid we continue, with CRC passed */
@@ -717,15 +704,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         /* Read command. Read data from memory and append CRCA. */
                         MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                         ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
-
                         /* Encrypt and calculate parity bits. */
                         for (uint8_t i=0; i<(ISO14443A_CRCA_SIZE + MEM_BYTES_PER_BLOCK); i++) {
                             uint8_t Plain = Buffer[i];
                             Buffer[i] = Plain ^ Crypto1Byte();
                             Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(Plain) ^ Crypto1FilterOutput();
                         }
-
-                        retSize = ( (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE ) * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                        retSize = ( (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE )
+                                  | ISO14443A_APP_CUSTOM_PARITY;
                     /* Write-type operation request */
                     } else if ( (Buffer[0] == CMD_WRITE) || (Buffer[0] == CMD_TRANSFER) ) {
                         /* Get target address. Write-type ops have address as 1st argument */
@@ -779,75 +765,65 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         uint8_t Uid[4];
                         uint8_t CardNonce[4] = {0x01};
                         uint8_t CardNonceParity[4];
-
                         /* Generate a random nonce and read UID and key from memory */
                         //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                        if (is7BitsUID)
+                        if (is7BitsUID) {
                             MemoryReadBlock(Uid, MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
-                        else
+                        } else {
                             MemoryReadBlock(Uid, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
-
+                        }
                         MemoryReadBlock(Key, KeyAddress, MEM_KEY_SIZE);
-
                         /* Precalculate the reader response from card-nonce */
-                        for (uint8_t i=0; i<sizeof(ReaderResponse); i++)
+                        for (uint8_t i=0; i<sizeof(ReaderResponse); i++) {
                             ReaderResponse[i] = CardNonce[i];
-
+                        }
                         Crypto1PRNG(ReaderResponse, 64);
-
                         /* Precalculate our response from the reader response */
-                        for (uint8_t i=0; i<sizeof(CardResponse); i++)
+                        for (uint8_t i=0; i<sizeof(CardResponse); i++) {
                             CardResponse[i] = ReaderResponse[i];
-
+                        }
                         Crypto1PRNG(CardResponse, 32);
-
                         /* Setup crypto1 cipher for nested authentication. */
                         Crypto1Setup(Key, Uid, CardNonce, CardNonceParity);
-
                         for (uint8_t i=0; i<sizeof(CardNonce); i++) {
                             Buffer[i] = CardNonce[i];
                             Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = CardNonceParity[i];
                         }
-
                         /* Respond with the encrypted random card nonce and expect further authentication
                         * form the reader in the next frame. */
                         State = STATE_AUTHING;
-
-                        retSize = (CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                        retSize = (CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE)
+                                  | ISO14443A_APP_CUSTOM_PARITY;
                     } else {
                         /* Unknown command. Enter HALT state */
                         State = STATE_IDLE;
                     }
                 } /* End of if/else CRC check condition */
             }
-
-            break;
+            break; /* End of state AUTHED_IDLE */
 
         case STATE_WRITE:
             /* The reader has issued a write command earlier and is now
              * sending the data to be written. Decrypt the data first and
              * check for CRC. Then write the data when ReadOnly mode is not
              * activated. */
-
             /* We receive 16 bytes of data to be written and 2 bytes CRCA. Decrypt */
-            for (uint8_t i=0; i<(MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE); i++)
+            for (uint8_t i=0; i<(MEM_BYTES_PER_BLOCK + ISO14443A_CRCA_SIZE); i++) {
                 Buffer[i] ^= Crypto1Byte();
-
+            }
             if (ISO14443ACheckCRCA(Buffer, MEM_BYTES_PER_BLOCK)) {
                 if (!ActiveConfiguration.ReadOnly) {
                     MemoryWriteBlock(Buffer, CurrentAddress * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                 } else {
                     /* Silently ignore in ReadOnly mode */
                 }
-
                 Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
             } else {
                 Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
             }
-
             State = STATE_AUTHED_IDLE;
             retSize = ACK_NAK_FRAME_SIZE;
-            break;
+            break; /* End of state WRITE */
 
         case STATE_DECREMENT:
         case STATE_INCREMENT:
@@ -858,29 +834,24 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
              * address into the global block buffer and check for integrity. Then
              * add or subtract according to issued command if necessary and store
              * the block back into the global block buffer. */
-            for (uint8_t i=0; i<(MEM_VALUE_SIZE  + ISO14443A_CRCA_SIZE); i++)
+            for (uint8_t i=0; i<(MEM_VALUE_SIZE  + ISO14443A_CRCA_SIZE); i++) {
                 Buffer[i] ^= Crypto1Byte();
-
+            }
             if (ISO14443ACheckCRCA(Buffer, MEM_VALUE_SIZE )) {
                 MemoryReadBlock(BlockBuffer, (uint16_t) CurrentAddress * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
-
                 if (CheckValueIntegrity(BlockBuffer)) {
                     uint32_t ParamValue;
                     uint32_t BlockValue;
-
                     ValueFromBlock(&ParamValue, Buffer);
                     ValueFromBlock(&BlockValue, BlockBuffer);
-
                     if (State == STATE_DECREMENT) {
                         BlockValue -= ParamValue;
                     } else if (State == STATE_INCREMENT) {
                         BlockValue += ParamValue;
                     } else if (State == STATE_RESTORE) {
-                        /* Do nothing */
+                        /* Do nothing as all is already done in AUTHED_IDLE */
                     }
-
                     ValueToBlock(BlockBuffer, BlockValue);
-
                     State = STATE_AUTHED_IDLE;
                     /* No ACK response on value commands part 2 */
                     retSize = ISO14443A_APP_NO_RESPONSE;
@@ -891,11 +862,9 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 /* CRC Error. */
                 Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
             }
-
             State = STATE_AUTHED_IDLE;
             retSize = ACK_NAK_FRAME_SIZE;
-            break;
-
+            break; /* End of states DECREMENT, INCREMENT and RESTORE */
 
         default:
             /* Unknown state should never happen */
@@ -909,7 +878,6 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 void MifareClassicGetUid(ConfigurationUidType Uid)
 {
     if (is7BitsUID) {
-        //Uid[0]=0x88;
         MemoryReadBlock(&Uid[0], MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE-1);
         MemoryReadBlock(&Uid[3], MEM_UID_CL2_ADDRESS, MEM_UID_CL2_SIZE);
     } else {
@@ -920,7 +888,6 @@ void MifareClassicGetUid(ConfigurationUidType Uid)
 void MifareClassicSetUid(ConfigurationUidType Uid)
 {
     if (is7BitsUID) {
-        //Uid[0]=0x88;
         MemoryWriteBlock(Uid, MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     } else {
         uint8_t BCC =  Uid[0] ^ Uid[1] ^ Uid[2] ^ Uid[3];
