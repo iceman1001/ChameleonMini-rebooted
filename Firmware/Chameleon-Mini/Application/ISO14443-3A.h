@@ -48,12 +48,16 @@
 void ISO14443AAppendCRCA(void* Buffer, uint16_t ByteCount);
 bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 
+/* Coded here to allow exportable inlining */
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
+INLINE bool ISO14443AIsWakeUp(uint8_t* Buffer, bool FromHalt);
+INLINE void ISO14443ASetWakeUpResponse(uint8_t* Buffer, uint16_t ATQAValue);
 
 INLINE
 bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue)
 {
+    bool ret = false;
     uint8_t* DataPtr = (uint8_t*) Buffer;
     uint8_t NVB = DataPtr[1];
     //uint8_t CollisionByteCount = (NVB >> 4) & 0x0F;
@@ -71,7 +75,7 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
 
         *BitCount = ISO14443A_CL_FRAME_SIZE;
 
-        return false;
+        break;
 
     case ISO14443A_NVB_AC_END:
         /* End of anticollision procedure.
@@ -85,12 +89,12 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
             ISO14443AAppendCRCA(Buffer, 1);
 
             *BitCount = ISO14443A_SAK_FRAME_SIZE;
-            return true;
+            ret = true;
         } else {
             /* We have not been selected. Don't send anything. */
             *BitCount = 0;
-            return false;
         }
+        break;
     default:
     {
         uint8_t CollisionBitCount  = NVB & 0x0f;
@@ -100,7 +104,6 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
             /* Check for our UID is selecting */
             if (memcmp(UidCL, &DataPtr[2], CollisionByteCount) != 0) {
                 *BitCount = 0;
-                return false;
             }
             memcpy(DataPtr, &UidCL[CollisionByteCount], 4 - CollisionByteCount);
             /* Calc original BCC */
@@ -110,29 +113,39 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
             /* Partial-byte anticollision frame not supported */
             *BitCount = 0;
         }
-        return false;
     }
     }
+    return ret;
+}
+
+INLINE
+bool ISO14443AIsWakeUp(uint8_t* Buffer, bool FromHalt) {
+    return ( ((!FromHalt) && (Buffer[0] == ISO14443A_CMD_REQA))
+             || (Buffer[0] == ISO14443A_CMD_WUPA) );
+}
+
+INLINE
+void ISO14443ASetWakeUpResponse(uint8_t* Buffer, uint16_t ATQAValue) {
+    Buffer[0] = (ATQAValue >> 0) & 0x00FF;
+    Buffer[1] = (ATQAValue >> 8) & 0x00FF;
 }
 
 INLINE
 bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt)
 {
+    bool ret = false;
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
-    if ( ((! FromHalt) && (DataPtr[0] == ISO14443A_CMD_REQA)) ||
-         (DataPtr[0] == ISO14443A_CMD_WUPA) ){
-        DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
-        DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
+    if ( ISO14443AIsWakeUp(DataPtr, FromHalt) ) {
+        ISO14443ASetWakeUpResponse(DataPtr, ATQAValue);
 
         *BitCount = ISO14443A_ATQA_FRAME_SIZE;
 
-        return true;
+        ret = true;
     } else {
         *BitCount = 0;
-
-        return false;
     }
+    return ret;
 }
 
 #endif
