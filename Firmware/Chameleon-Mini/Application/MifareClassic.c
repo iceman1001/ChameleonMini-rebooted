@@ -88,6 +88,8 @@ operation is invalid, and TBOK_CRCKO for CRC or parity error in received frame.
 #define CMD_RESTORE_FRAME_SIZE      2        /* Bytes without CRCA */
 #define CMD_TRANSFER                0xB0
 #define CMD_TRANSFER_FRAME_SIZE     2        /* Bytes without CRCA */
+/* AUTH, HALT, READ, WRITE, INC/DECREMENT, TRANSFER and RESTORE all have same size */
+#define CMD_COMMON_FRAME_SIZE       2
 
 /* Chinese magic backdoor commands (GEN 1A)*/
 #define CMD_CHINESE_UNLOCK          0x40
@@ -711,9 +713,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             * the incoming data. */
             for (uint8_t i=0; i<4; i++)
                 Buffer[i] ^= Crypto1Byte();
-
-            if (Buffer[0] == CMD_READ) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_READ_FRAME_SIZE)) {
+            /* All possible operations at this state have all same frame size, so we do
+             * CRC check first */
+            if ( !ISO14443ACheckCRCA(Buffer, CMD_COMMON_FRAME_SIZE) ) {
+                Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
+                retSize = ACK_NAK_FRAME_SIZE;
+            /* If CRC is valid we continue, with CRC passed */
+            } else {
+                if (Buffer[0] == CMD_READ) {
                     /* Read command. Read data from memory and append CRCA. */
                     MemoryReadBlock(Buffer, (uint16_t) Buffer[1] * MEM_BYTES_PER_BLOCK, MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MEM_BYTES_PER_BLOCK);
@@ -726,12 +733,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                     }
 
                     retSize = ( (CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE ) * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                    retSize = ACK_NAK_FRAME_SIZE;
-                }
-            } else if (Buffer[0] == CMD_WRITE) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_WRITE_FRAME_SIZE)) {
+                } else if (Buffer[0] == CMD_WRITE) {
                     /* Write command. Store the address and prepare for the upcoming data.
                     * Respond with ACK. */
                     CurrentAddress = Buffer[1];
@@ -741,40 +743,24 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         State = STATE_WRITE;
                         Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
                     }
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                }
-                retSize = ACK_NAK_FRAME_SIZE;
-            } else if (Buffer[0] == CMD_DECREMENT) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
+                    retSize = ACK_NAK_FRAME_SIZE;
+                } else if (Buffer[0] == CMD_DECREMENT) {
                     CurrentAddress = Buffer[1];
                     State = STATE_DECREMENT;
                     Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                }
-                retSize = ACK_NAK_FRAME_SIZE;
-            } else if (Buffer[0] == CMD_INCREMENT) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
+                    retSize = ACK_NAK_FRAME_SIZE;
+                } else if (Buffer[0] == CMD_INCREMENT) {
                     CurrentAddress = Buffer[1];
                     State = STATE_INCREMENT;
                     Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                }
-                retSize = ACK_NAK_FRAME_SIZE;
-            } else if (Buffer[0] == CMD_RESTORE) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_DECREMENT_FRAME_SIZE)) {
+                    retSize = ACK_NAK_FRAME_SIZE;
+                } else if (Buffer[0] == CMD_RESTORE) {
                     CurrentAddress = Buffer[1];
                     State = STATE_RESTORE;
                     Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                }
-                retSize = ACK_NAK_FRAME_SIZE;
-            }else if (Buffer[0] == CMD_TRANSFER) {
-                /* Write back the global block buffer to the desired block address */
-                if (ISO14443ACheckCRCA(Buffer, CMD_TRANSFER_FRAME_SIZE)) {
+                    retSize = ACK_NAK_FRAME_SIZE;
+                }else if (Buffer[0] == CMD_TRANSFER) {
+                    /* Write back the global block buffer to the desired block address */
                     if (CurrentAddress == MEM_S0B0_ADDRESS) {
                         Buffer[0] = NAK_TBOK_OPKO ^ Crypto1Nibble();
                     } else {
@@ -783,16 +769,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                         } else {
                             /* In read only mode, silently ignore the write */
                         }
-
                         Buffer[0] = ACK_VALUE ^ Crypto1Nibble();
                     }
-                } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                }
-
-                retSize = ACK_NAK_FRAME_SIZE;
-            } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
-                if (ISO14443ACheckCRCA(Buffer, CMD_AUTH_FRAME_SIZE)) {
+                    retSize = ACK_NAK_FRAME_SIZE;
+                } else if ( (Buffer[0] == CMD_AUTH_A) || (Buffer[0] == CMD_AUTH_B) ) {
                     /* Nested authentication. */
                     uint8_t SectorAddress;
                     uint8_t KeyOffset = (Buffer[0] == CMD_AUTH_A ? MEM_KEY_A_OFFSET : MEM_KEY_B_OFFSET);
@@ -844,13 +824,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
                     retSize = (CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
                 } else {
-                    Buffer[0] = NAK_TBOK_CRCKO ^ Crypto1Nibble();
-                    retSize = ACK_NAK_FRAME_SIZE;
+                    /* Unknown command. Enter HALT state */
+                    State = STATE_IDLE;
                 }
-            } else {
-                /* Unknown command. Enter HALT state */
-                State = STATE_IDLE;
-            }
+            } /* End of if/else CRC check condition */
         }
 
         break;
