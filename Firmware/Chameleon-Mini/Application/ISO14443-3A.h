@@ -51,6 +51,8 @@ bool ISO14443ACheckCRCA(const void* Buffer, uint16_t ByteCount);
 /* Coded here to allow exportable inlining */
 INLINE bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue);
 INLINE bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt);
+INLINE bool ISO14443AIsWakeUp(uint8_t* Buffer, bool FromHalt);
+INLINE void ISO14443ASetWakeUpResponse(uint8_t* Buffer, uint16_t ATQAValue);
 
 INLINE
 bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t SAKValue)
@@ -117,15 +119,25 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
 }
 
 INLINE
+bool ISO14443AIsWakeUp(uint8_t* Buffer, bool FromHalt) {
+    return ( ((!FromHalt) && (Buffer[0] == ISO14443A_CMD_REQA))
+             || (Buffer[0] == ISO14443A_CMD_WUPA) );
+}
+
+INLINE
+void ISO14443ASetWakeUpResponse(uint8_t* Buffer, uint16_t ATQAValue) {
+    Buffer[0] = (ATQAValue >> 0) & 0x00FF;
+    Buffer[1] = (ATQAValue >> 8) & 0x00FF;
+}
+
+INLINE
 bool ISO14443AWakeUp(void* Buffer, uint16_t* BitCount, uint16_t ATQAValue, bool FromHalt)
 {
     bool ret = false;
     uint8_t* DataPtr = (uint8_t*) Buffer;
 
-    if ( ((! FromHalt) && (DataPtr[0] == ISO14443A_CMD_REQA)) ||
-         (DataPtr[0] == ISO14443A_CMD_WUPA) ){
-        DataPtr[0] = (ATQAValue >> 0) & 0x00FF;
-        DataPtr[1] = (ATQAValue >> 8) & 0x00FF;
+    if ( ISO14443AIsWakeUp(DataPtr, FromHalt) ) {
+        ISO14443ASetWakeUpResponse(DataPtr, ATQAValue);
 
         *BitCount = ISO14443A_ATQA_FRAME_SIZE;
 
