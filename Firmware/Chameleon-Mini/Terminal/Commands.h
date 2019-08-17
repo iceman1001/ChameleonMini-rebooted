@@ -58,14 +58,19 @@
 
 #include "../Common.h"
 
-#define MAX_COMMAND_LENGTH          16 // If this is more than 16 bytes, my unit becomes unresponsive with 8th entry.
-#define MAX_STATUS_LENGTH           32
+#define MAX_COMMAND_LENGTH              16 // If this is more than 16 bytes, my unit becomes unresponsive with 8th entry.
+#define MAX_STATUS_LENGTH               32
 
 // Firmware version details.
-#define FIRMWARE_VERSION_MAJOR			1
-#define FIRMWARE_VERSION_MINOR 			3
-#define FIRMWARE_NAME					"Rebooted"
-#define FIRMWARE_FORK_AUTHOR			"Iceman"
+#define FIRMWARE_VERSION_MAJOR          1
+#define FIRMWARE_VERSION_MINOR          3
+#define FIRMWARE_NAME                   "rebooted"
+#define FIRMWARE_FORK_AUTHOR            "Iceman"
+#ifdef  COMMIT_ID
+#define FIRMWARE_COMMIT_STRING          COMMIT_ID
+#else
+#define FIRMWARE_COMMIT_STRING          "N/A"
+#endif
 
 #define COMMAND_INFO_OK_ID              100
 #define COMMAND_INFO_OK                 "OK"
@@ -84,10 +89,10 @@
 #define TIMEOUT_COMMAND                 255 // this is just for the CommandLine module to know that this is a timeout command
 
 
-#define COMMAND_CHAR_TRUE           '1'
-#define COMMAND_CHAR_FALSE          '0'
+#define COMMAND_CHAR_TRUE               '1'
+#define COMMAND_CHAR_FALSE              '0'
 
-#define COMMAND_UID_BUFSIZE         32
+#define COMMAND_UID_BUFSIZE             32
 
 typedef uint8_t CommandStatusIdType;
 typedef const char CommandStatusMessageType[MAX_STATUS_LENGTH];
@@ -118,11 +123,11 @@ CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandGetUid(char* OutParam);
 CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam);
 
-#define COMMAND_ATQA		"ATQA"
+#define COMMAND_ATQA        "ATQA"
 CommandStatusIdType CommandGetAtqa(char* OutParam);
 CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam);
 
-#define COMMAND_SAK		"SAK"
+#define COMMAND_SAK         "SAK"
 CommandStatusIdType CommandGetSak(char* OutParam);
 CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam);
 
@@ -158,24 +163,24 @@ CommandStatusIdType CommandExecButtonLong(char* OutMessage);
 CommandStatusIdType CommandGetButtonLong(char* OutParam);
 CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam);
 
-#define COMMAND_SETTING		"SETTING"
+#define COMMAND_SETTING     "SETTING"
 CommandStatusIdType CommandGetSetting(char* OutParam);
 CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam);
 
-#define COMMAND_CLEAR		"CLEAR"
+#define COMMAND_CLEAR       "CLEAR"
 CommandStatusIdType CommandExecClear(char* OutParam);
 
 #define COMMAND_HELP        "HELP"
 CommandStatusIdType CommandExecHelp(char* OutMessage);
 
-#define COMMAND_RSSI		"RSSI"
+#define COMMAND_RSSI        "RSSI"
 CommandStatusIdType CommandGetRssi(char* OutParam);
 
-#define COMMAND_PWD			"PWD"
+#define COMMAND_PWD         "PWD"
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
-#define COMMAND_DETECTION	"DETECTION"
+#define COMMAND_DETECTION   "DETECTION"
 CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
