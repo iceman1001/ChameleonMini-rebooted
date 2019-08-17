@@ -23,6 +23,7 @@
 
 #define MEM_S0B0_ADDRESS            0x00
 #define MEM_INVALID_ADDRESS         0xFF
+#define MEM_UID7_SIZE               7         /* Bits */
 #define MEM_UID_CL1_ADDRESS         0x00
 #define MEM_UID_CL1_SIZE            4
 #define MEM_UID_BCC1_ADDRESS        0x04
@@ -384,35 +385,25 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value)
 void MifareClassicAppInit1K(void)
 {
     State = STATE_IDLE;
-    CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
+    is7BitsUID = (ActiveConfiguration.UidSize == MEM_UID7_SIZE);
+    if (is7BitsUID) {
+        CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
+    } else {
+        CardATQAValue = MFCLASSIC_1K_7B_ATQA_VALUE;
+    }
     CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
-    is7BitsUID = false;
-}
-
-void MifareClassicAppInit1K_7B(void)
-{
-    State = STATE_IDLE;
-    CardATQAValue = MFCLASSIC_1K_7B_ATQA_VALUE;
-    CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
-    uint8_t UidSize = ActiveConfiguration.UidSize;
-    is7BitsUID = (UidSize == 7);
 }
 
 void MifareClassicAppInit4K(void)
 {
     State = STATE_IDLE;
-    CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
+    is7BitsUID = (ActiveConfiguration.UidSize == MEM_UID7_SIZE);
+    if (is7BitsUID) {
+        CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
+    } else {
+        CardATQAValue = MFCLASSIC_4K_7B_ATQA_VALUE;
+    }
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
-    is7BitsUID = false;
-}
-
-void MifareClassicAppInit4K_7B(void)
-{
-    State = STATE_IDLE;
-    CardATQAValue = MFCLASSIC_4K_7B_ATQA_VALUE;
-    CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
-    uint8_t UidSize = ActiveConfiguration.UidSize;
-    is7BitsUID = (UidSize == 7);
 }
 
 void MifareClassicAppReset(void)
