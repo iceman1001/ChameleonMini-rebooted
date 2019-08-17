@@ -401,6 +401,15 @@ void MifareClassicAppInit4K(void)
 	_7BUID = 0x00;
 }
 
+void MifareClassicAppInit4K_7B(void)
+{
+    State = STATE_IDLE;
+    CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
+    CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
+	uint8_t UidSize = ActiveConfiguration.UidSize;
+	_7BUID = (UidSize == 7);
+}
+
 void MifareClassicAppReset(void)
 {
     State = STATE_IDLE;

@@ -193,7 +193,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 [CONFIG_MF_CLASSIC_4K_7B] = {
 	.CodecInitFunc = ISO14443ACodecInit,
 	.CodecTaskFunc = ISO14443ACodecTask,
-	.ApplicationInitFunc = MifareClassicAppInit4K7B,
+	.ApplicationInitFunc = MifareClassicAppInit4K_7B,
 	.ApplicationResetFunc = MifareClassicAppReset,
 	.ApplicationTaskFunc = MifareClassicAppTask,
 	.ApplicationTickFunc = ApplicationTickDummy,
@@ -257,7 +257,7 @@ void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 bool ConfigurationSetByName(const char* Configuration)
 {
     MapIdType Id;
-	
+
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
 		if (Id == CONFIG_MF_CLASSIC_4K && GlobalSettings.ActiveSetting != 0)
