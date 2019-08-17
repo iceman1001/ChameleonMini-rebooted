@@ -7,8 +7,8 @@
 
 #include "ISO14443-3A.h"
 
-#define CRC_INIT		0x6363
-#define CRC_INIT_R		0xC6C6 /* Bit reversed */
+#define CRC_INIT        0x6363
+#define CRC_INIT_R      0xC6C6 /* Bit reversed */
 
 #define USE_HW_CRC
 
