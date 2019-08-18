@@ -7,11 +7,11 @@ REM Uses srec_cat to append the hex files
 SET MCU=atxmega32a4u
 SET PIN=PA6
 SET VER=104
-SET BUILDDIR=Chameleon-Mini
-SET BUILDHEX=Chameleon-Mini.hex
-SET BOOTDIR=Atmel-DFU-Bootloader
+SET BUILDDIR=..\ChameleonMini
+SET BUILDHEX=..\ChameleonMini.hex
+SET BOOTDIR=..\Atmel-DFU-Bootloader
 SET BOOTHEX=%MCU%_%VER%_%PIN%.hex
-SET OUTHEX=bootloader-%MCU%-%VER%-%PIN%-SPM.hex
+SET OUTHEX=%BOOTDIR%\bootloader-%MCU%-%VER%-%PIN%-SPM.hex
 SET WORKDIR=%CD%
 
 REM Enter build directory and build SPM helper
