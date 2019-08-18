@@ -12,9 +12,9 @@
     <OutputFileName>$(MSBuildProjectName)</OutputFileName>
     <OutputFileExtension>.elf</OutputFileExtension>
     <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
-    <AssemblyName>ITS_A_CARD</AssemblyName>
-    <Name>ITS_A_CARD</Name>
-    <RootNamespace>ITS_A_CARD</RootNamespace>
+    <AssemblyName>ChameleonMini</AssemblyName>
+    <Name>ChameleonMini</Name>
+    <RootNamespace>ChameleonMini</RootNamespace>
     <ToolchainFlavour>Native</ToolchainFlavour>
     <KeepTimersRunning>true</KeepTimersRunning>
     <OverrideVtor>false</OverrideVtor>
@@ -637,7 +637,7 @@
     <Compile Include="Button.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Chameleon-Mini.c">
+    <Compile Include="ChameleonMini.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Common.c">

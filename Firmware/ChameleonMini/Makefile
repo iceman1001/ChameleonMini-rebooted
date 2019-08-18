@@ -97,7 +97,7 @@ ARCH		 = XMEGA
 BOARD		 = NONE
 F_CPU		 = 32000000
 F_USB		 = 48000000
-TARGET		 = Chameleon-Mini
+TARGET		 = ChameleonMini
 OPTIMIZATION = s
 SRC			+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c Map.c AntennaLevel.c Uart.c
 SRC			+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
@@ -121,8 +121,8 @@ AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
 AVRDUDE_FLAGS = -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 
 #AVRDUDE settings to program the precompiled firmware
-AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/Chameleon-Mini.hex
-AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/Chameleon-Mini.eep
+AVRDUDE_WRITE_APP_LATEST = -U application:w:Latest/$(TARGET).hex
+AVRDUDE_WRITE_EEPROM_LATEST = -U eeprom:w:Latest/$(TARGET).eep
 endif
 
 # Default target
