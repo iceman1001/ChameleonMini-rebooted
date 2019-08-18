@@ -1,16 +1,5 @@
 Compiling
 =========
 
-# pre-requisites  UBUNTU
-
-You need do download the following 
-
-`sudo apt-get install gcc-avr avr-libc binutils-avr`
-
-# compiling UBUNTU
-
-`make`
-
-
-As-is,  there is a lot of warnings and errors.
+Please see the "Compiling" section on our [Wiki](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Compiling-Linux-(Unix))
 
