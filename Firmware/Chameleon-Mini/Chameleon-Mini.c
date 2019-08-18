@@ -1,4 +1,4 @@
-#include "Chameleon-Mini.h"
+#include "ChameleonMini.h"
 
 int main(void) {
 	SystemInit();
