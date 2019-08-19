@@ -33,7 +33,7 @@ if not exist "%dirpath%Createbin.exe" (
 
 if not exist "%dirpath%%name%.eep" (
 	if exist "%dirpath%%oldname%.eep" (
-		move /y %dirpath%%oldname%.eep %dirpath%%name%.eep
+		move /y "%dirpath%%oldname%.eep" "%dirpath%%name%.eep"
 	) else (
 		echo Cannot find eep file. Please run this .bat script in the same directory where it is saved.
 		pause > nul
@@ -43,7 +43,7 @@ if not exist "%dirpath%%name%.eep" (
 
 if not exist "%dirpath%%name%.hex" (
 	if exist "%dirpath%%oldname%.hex" (
-		move /y %dirpath%%oldname%.hex %dirpath%%name%.hex
+		move /y "%dirpath%%oldname%.hex" "%dirpath%%name%.hex"
 	) else (
 		echo Cannot find hex file. Please run this .bat script in the same directory where it is saved.
 		pause > nul
@@ -56,19 +56,19 @@ echo Creating the EEPROM binary...
 
 "%dirpath%Createbin.exe" eeprom.bin bin
 
-del %dirpath%eeprom.bin
+del "%dirpath%eeprom.bin"
 
 echo.
 echo.
 
-move %dirpath%myfile.bin %dirpath%myfilee.bin >nul
+move "%dirpath%myfile.bin" "%dirpath%myfilee.bin" >nul
 
 echo Creating the Flash binary...
 "%dirpath%avr-objcopy.exe" -I ihex %name%.hex -O binary flash.bin
 
 "%dirpath%Createbin.exe" flash.bin bin
 
-del %dirpath%flash.bin
+del "%dirpath%flash.bin"
 
 echo.
 echo.
