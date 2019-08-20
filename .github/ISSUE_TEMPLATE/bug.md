@@ -1,3 +1,10 @@
+---
+name: 'Bug Report'
+about: 'Something did not function as expected, and you would like to help fixing it.
+labels: 'bug'
+assignees: ''
+
+---
 <!-- Everything wrote in between such markers before and after this phrase are comments, will not be displayed, and are to be replaced or can be deleted. The rest is to let untouched, except where specified, or your report will be ugly. Use "Preview" tab just above to check how things will be displayed. -->
 <!-- If you do not understand what is requested somewhere in here, please read Wiki pages and read other issues first. -->
 ## Environment
