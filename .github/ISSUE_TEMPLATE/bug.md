@@ -1,6 +1,6 @@
 ---
 name: 'Bug Report'
-about: 'Something did not function as expected, and you would like to help fixing it.
+about: 'Something did not function as expected, and you would like to help fixing it.'
 title: '[BUG] Please enter a short description'
 labels: 'bug'
 assignees: ''
