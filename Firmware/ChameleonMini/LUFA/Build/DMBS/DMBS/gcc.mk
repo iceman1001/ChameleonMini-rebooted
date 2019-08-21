@@ -163,7 +163,7 @@ build_end:
 size: $(TARGET).elf
 	@echo $(MSG_SIZE_CMD) Determining size of \"$<\"
 	@echo ""
-	$(CROSS)-size $(SIZE_MCU_FLAG) $(SIZE_FORMAT_FLAG) $<
+	$(CROSS)-objdump -Pmem-usage $<
 
 # Prints size information on the symbols within a compiled application in decimal bytes
 symbol-sizes: $(TARGET).elf
