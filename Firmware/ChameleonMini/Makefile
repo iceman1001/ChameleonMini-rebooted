@@ -34,6 +34,10 @@ SETTINGS	+= -DCONFIG_MF_DETECTION_SUPPORT
 #Support activating firmware upgrade mode through command-line
 SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
 
+#Enable the MEMORYTEST and/or MEMORYINFO commands to help with memory management debug
+#SETTINGS    += -DCONFIG_DEBUG_MEMORYTEST_COMMAND
+#SETTINGS    += -DCONFIG_DEBUG_MEMORYINFO_COMMAND
+
 #Default configuration
 SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_1K
 #SETTINGS	+= -DDEFAULT_CONFIGURATION=CONFIG_MF_CLASSIC_4K
@@ -77,8 +81,6 @@ SETTINGS	+= -DDEFAULT_SETTING=0
 #Default pending task timeout
 SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50 #* 100ms
 
-#Use EEPROM to store settings
-SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
 #Build configuration
 ifeq ($(OS),Windows_NT)
@@ -87,18 +89,19 @@ else
 BUILD_DATE	 = $(shell date +'\"%y%m%d\"')
 endif
 COMMIT_ID	 = $(shell git rev-parse --short HEAD)
-MCU			 = atxmega32a4u
+MCU 		 = atxmega32a4u
 ARCH		 = XMEGA
 BOARD		 = NONE
 F_CPU		 = 32000000
 F_USB		 = 48000000
 TARGET		 = ChameleonMini
 OPTIMIZATION = s
-SRC			+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c Map.c AntennaLevel.c
-SRC			+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
-SRC			+= Codec/Codec.c Codec/ISO14443-2A.c
-SRC			+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
-SRC			+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
+SRC 		+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Button.c Settings.c LED.c Map.c AntennaLevel.c
+SRC 		+= Memory/EEPROM.c Memory/SPIFlash.c Memory/Memory.c
+SRC 		+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
+SRC 		+= Codec/Codec.c Codec/ISO14443-2A.c
+SRC 		+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
+SRC 		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA
 CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 OBJDIR		 = Bin
@@ -151,9 +154,9 @@ dfu-flip: $(TARGET).hex $(TARGET).eep
 # Note that the device has to be in bootloader mode already
 # dfu-programmer >= 0.7.2 required
 dfu-prog: $(TARGET).hex $(TARGET).eep
-	-dfu-programmer $(MCU) erase --force
-	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep
-	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex
+	dfu-programmer $(MCU) erase
+	dfu-programmer $(MCU) flash --eeprom $(TARGET).eep
+	dfu-programmer $(MCU) flash $(TARGET).hex
 	dfu-programmer $(MCU) launch
 
 else
