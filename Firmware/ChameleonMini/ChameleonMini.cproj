@@ -388,9 +388,6 @@
     <Compile Include="Map.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="sp_driver.s">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="System.c">
       <SubType>compile</SubType>
     </Compile>
