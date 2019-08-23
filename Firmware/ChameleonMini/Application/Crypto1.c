@@ -1,5 +1,5 @@
 #include "Crypto1.h"
-#include "Common.h"
+#include "../Common.h"
 
 /* avoid compiler complaining at the shift macros */
 #pragma GCC diagnostic ignored "-Wuninitialized"
