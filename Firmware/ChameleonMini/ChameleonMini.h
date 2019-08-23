@@ -18,6 +18,5 @@
 #include "Button.h"
 #include "AntennaLevel.h"
 #include "Settings.h"
-#include "sp_driver.h"
 
 #endif //CHAMELEON_MINI_H

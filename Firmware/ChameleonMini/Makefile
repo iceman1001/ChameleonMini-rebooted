@@ -12,6 +12,8 @@ UNLOCKED_F	 = False
 # Python binary, needed to run scrambling operations to flash.
 # Change it according to your system.
 PYTHON_BIN	 = /usr/bin/env python3
+# Tool for scrambling operations, to flash on locked (original bootloader) devices
+CRYPTO_TOOL	 = ../../Software/Tools/crypt_operations.py
 
 #Supported configurations
 SETTINGS	+= -DCONFIG_MF_CLASSIC_1K_SUPPORT
@@ -78,13 +80,6 @@ SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50 #* 100ms
 #Use EEPROM to store settings
 SETTINGS	+= -DENABLE_EEPROM_SETTINGS
 
-#Memory definitions and objcopy flags to include sections in binaries
-FLASH_DATA_ADDR = 0x10000 #Start of data section in flash
-FLASH_DATA_SIZE = 0x10000 #Size of data section in flash
-FLASH_DATA_OBJCOPY = --set-section-flags=.flashdata="alloc,load"
-SPM_HELPER_ADDR = 0x21FE0 #Start of SPM helper section. Should be last 32Byte in bootloader section
-SPM_HELPER_OBJCOPY = --set-section-flags=.spmhelper="alloc,load"
-
 #Build configuration
 ifeq ($(OS),Windows_NT)
 BUILD_DATE	 = "\"$(shell date /t)\""
@@ -99,17 +94,14 @@ F_CPU		 = 32000000
 F_USB		 = 48000000
 TARGET		 = ChameleonMini
 OPTIMIZATION = s
-SRC		+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c Map.c AntennaLevel.c Uart.c
-SRC		+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
-SRC		+= Codec/Codec.c Codec/ISO14443-2A.c
-SRC		+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
-SRC		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
+SRC			+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Memory.c Button.c Settings.c LED.c Map.c AntennaLevel.c Uart.c
+SRC			+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
+SRC			+= Codec/Codec.c Codec/ISO14443-2A.c
+SRC			+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
+SRC			+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA
-CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DFLASH_DATA_ADDR=$(FLASH_DATA_ADDR) -DFLASH_DATA_SIZE=$(FLASH_DATA_SIZE) -DSPM_HELPER_ADDR=$(SPM_HELPER_ADDR) -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
-LD_FLAGS	 = -Wl,--section-start=.flashdata=$(FLASH_DATA_ADDR) -Wl,--section-start=.spmhelper=$(SPM_HELPER_ADDR)
+CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 OBJDIR		 = Bin
-OBJECT_FILES =
-CRYPTO_TOOL	 = ../../Software/Tools/crypt_operations.py
 
 ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings
@@ -138,20 +130,6 @@ include $(LUFA_PATH)/Build/lufa_cppcheck.mk
 # include $(LUFA_PATH)/Build/lufa_hid.mk
 # include $(LUFA_PATH)/Build/lufa_avrdude.mk
 # include $(LUFA_PATH)/Build/lufa_atprogram.mk
-
-#Overwrite the LUFA versions of hex/bin file generation to include spmhelper and flashdata sections
-%.hex: %.elf
-	@echo $(MSG_OBJCPY_CMD) Extracting HEX file data from \"$<\"
-	$(CROSS)-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
-
-%.bin: %.elf
-	@echo $(MSG_OBJCPY_CMD) Extracting BIN file data from \"$<\"
-	$(CROSS)-objcopy -O binary -R .eeprom -R .fuse -R .lock -R .signature $(FLASH_DATA_OBJCOPY) $< $@
-
-# Extract SPMHelper in the last 32 Byte of the bootloader section to externally combine it with any bootloader
-spmhelper: $(TARGET).elf
-	@echo $(MSG_OBJCPY_CMD) Extracting SPM helper HEX file from $(TARGET).elf
-	$(CROSS)-objcopy -O ihex -j .spmhelper $(SPM_HELPER_OBJCOPY) $(TARGET).elf $(TARGET).hex
 
 ifeq ($(UNLOCKED_F),True)
 # Program the device using avrdude
