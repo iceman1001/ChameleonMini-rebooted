@@ -99,7 +99,7 @@ SRC			+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/Comm
 SRC			+= Codec/Codec.c Codec/ISO14443-2A.c
 SRC			+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c Application/Detection.c
 SRC			+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
-LUFA_PATH	 = src/LUFA/LUFA
+LUFA_PATH	 = ./LUFA
 CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 OBJDIR		 = Bin
 
