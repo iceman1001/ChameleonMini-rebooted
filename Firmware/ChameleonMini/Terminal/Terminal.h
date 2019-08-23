@@ -9,7 +9,7 @@
 #define TERMINAL_H_
 
 #include "../Common.h"
-#include "../src/LUFA/LUFA/Drivers/USB/USB.h"
+#include "../LUFA/Drivers/USB/USB.h"
 #include "XModem.h"
 #include "CommandLine.h"
 

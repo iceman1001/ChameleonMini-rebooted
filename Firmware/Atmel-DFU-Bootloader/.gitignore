@@ -52,7 +52,6 @@ settings/
 *.dbgdt
 *.cspy
 *.cspy.*
-*.xcl
 *.dni
 *.wsdt
 *.wspos
