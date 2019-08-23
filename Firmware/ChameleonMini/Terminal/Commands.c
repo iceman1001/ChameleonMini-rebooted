@@ -59,7 +59,7 @@
 #include "XModem.h"
 #include "../Settings.h"
 #include "../ChameleonMini.h"
-#include "../src/LUFA/LUFA/Version.h"
+#include "../LUFA/Version.h"
 #include "../Configuration.h"
 #include "../Random.h"
 #include "../Memory.h"
