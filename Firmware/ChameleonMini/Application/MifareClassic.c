@@ -410,9 +410,9 @@ void MifareClassicAppInit1K(void)
     State = STATE_IDLE;
     is7BitsUID = (ActiveConfiguration.UidSize == MEM_UID7_SIZE);
     if (is7BitsUID) {
-        CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
-    } else {
         CardATQAValue = MFCLASSIC_1K_7B_ATQA_VALUE;
+    } else {
+        CardATQAValue = MFCLASSIC_1K_ATQA_VALUE;
     }
     CardSAKValue = MFCLASSIC_1K_SAK_CL1_VALUE;
 }
@@ -422,9 +422,9 @@ void MifareClassicAppInit4K(void)
     State = STATE_IDLE;
     is7BitsUID = (ActiveConfiguration.UidSize == MEM_UID7_SIZE);
     if (is7BitsUID) {
-        CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
-    } else {
         CardATQAValue = MFCLASSIC_4K_7B_ATQA_VALUE;
+    } else {
+        CardATQAValue = MFCLASSIC_4K_ATQA_VALUE;
     }
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
 }
