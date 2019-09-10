@@ -75,6 +75,8 @@
 
 #define BYTES_PER_WRITE         4
 #define PAGE_WRITE_MIN          0x02
+#define PAGE_LOCK_BITS          0x02
+#define PAGE_OTP                0x03
 
 #define BYTES_PER_COMPAT_WRITE  16
 
@@ -195,6 +197,18 @@ static void AuthCounterReset(void)
 static uint8_t AppWritePage(uint8_t PageAddress, uint8_t* const Buffer)
 {
     if (!ActiveConfiguration.ReadOnly) {
+        if (PageAddress == PAGE_LOCK_BITS || PageAddress == PAGE_OTP) {
+            // OTP page and page with locks could not be resets to zero
+            uint8_t PageBytes[MIFARE_ULTRALIGHT_PAGE_SIZE];
+            MemoryReadBlock(PageBytes, PageAddress * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
+            // First two bytes of page with locks are not rewritable
+            if (PageAddress == PAGE_LOCK_BITS) {
+                Buffer[0] = Buffer[1] = 0;
+            }
+            for (uint8_t i = 0; i < MIFARE_ULTRALIGHT_PAGE_SIZE; i++) {
+                Buffer[i] |= PageBytes[i];
+            }
+        }
         MemoryWriteBlock(Buffer, PageAddress * MIFARE_ULTRALIGHT_PAGE_SIZE, MIFARE_ULTRALIGHT_PAGE_SIZE);
     } else {
         /* If the chameleon is in read only mode, it silently
