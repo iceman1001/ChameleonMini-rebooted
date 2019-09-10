@@ -467,6 +467,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY1:
+        ByteCount = (BitCount + 7) >> 3;
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
@@ -484,6 +485,10 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
             }
 
             return BitCount;
+        } else if (Cmd == CMD_READ && ByteCount == (CMD_READ_FRAME_SIZE + ISO14443A_CRCA_SIZE) && Buffer[1] == 0) {
+            /* This is a short activation method */
+            State = STATE_ACTIVE;
+            return AppProcess(Buffer, CMD_READ_FRAME_SIZE);
         } else {
             /* Unknown command. Enter halt state */
             State = STATE_IDLE;
@@ -491,6 +496,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY2:
+        ByteCount = (BitCount + 7) >> 3;
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
@@ -507,6 +513,10 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
             }
 
             return BitCount;
+        } else if (Cmd == CMD_READ && ByteCount == (CMD_READ_FRAME_SIZE + ISO14443A_CRCA_SIZE) && Buffer[1] == 0) {
+            /* This is a short activation method */
+            State = STATE_ACTIVE;
+            return AppProcess(Buffer, CMD_READ_FRAME_SIZE);
         } else {
             /* Unknown command. Enter halt state */
             State = STATE_IDLE;
@@ -526,7 +536,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
             return ISO14443A_APP_NO_RESPONSE;
         }
         /* All commands here have CRCA appended; verify it right away */
-        ByteCount -= 2;
+        ByteCount -= ISO14443A_CRCA_SIZE;
         if (!ISO14443ACheckCRCA(Buffer, ByteCount)) {
             Buffer[0] = NAK_CRC_ERROR;
             return NAK_FRAME_SIZE;
