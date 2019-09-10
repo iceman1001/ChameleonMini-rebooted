@@ -386,7 +386,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 
             case CMD_INCREMENT_CNT: {
                 uint8_t CounterId = Buffer[1];
-                uint32_t Addend = (Buffer[0]) | (Buffer[1] << 8) | ((uint32_t)Buffer[2] << 16);
+                uint32_t Addend = ((uint32_t)Buffer[2]) | ((uint32_t)Buffer[3] << 8) | ((uint32_t)Buffer[4] << 16);
                 uint32_t Counter = 0;
                 /* Validation */
                 if (CounterId > CNT_MAX) {
