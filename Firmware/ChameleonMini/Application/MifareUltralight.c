@@ -453,7 +453,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
 uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
 {
     uint8_t Cmd = Buffer[0];
-    uint16_t ByteCount;
+    uint16_t ByteCount = (BitCount + 7) >> 3;
 
     switch(State) {
     case STATE_IDLE:
@@ -467,11 +467,11 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_READY1:
-        ByteCount = (BitCount + 7) >> 3;
+    case STATE_READY2:
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
-        } else if (Cmd == ISO14443A_CMD_SELECT_CL1) {
+        } else if (Cmd == ISO14443A_CMD_SELECT_CL1 && State == STATE_READY1) {
             /* Load UID CL1 and perform anticollision. Since
             * MF Ultralight use a double-sized UID, the first byte
             * of CL1 has to be the cascade-tag byte. */
@@ -485,22 +485,7 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
             }
 
             return BitCount;
-        } else if (Cmd == CMD_READ && ByteCount == (CMD_READ_FRAME_SIZE + ISO14443A_CRCA_SIZE) && Buffer[1] == 0) {
-            /* This is a short activation method */
-            State = STATE_ACTIVE;
-            return AppProcess(Buffer, CMD_READ_FRAME_SIZE);
-        } else {
-            /* Unknown command. Enter halt state */
-            State = STATE_IDLE;
-        }
-        break;
-
-    case STATE_READY2:
-        ByteCount = (BitCount + 7) >> 3;
-        if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
-            State = FromHalt ? STATE_HALT : STATE_IDLE;
-            return ISO14443A_APP_NO_RESPONSE;
-        } else if (Cmd == ISO14443A_CMD_SELECT_CL2) {
+        } else if (Cmd == ISO14443A_CMD_SELECT_CL2 && State == STATE_READY2) {
             /* Load UID CL2 and perform anticollision */
             uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
 
@@ -524,8 +509,6 @@ uint16_t MifareUltralightAppProcess(uint8_t* Buffer, uint16_t BitCount)
         break;
 
     case STATE_ACTIVE:
-        /* Preserve incoming data length */
-        ByteCount = (BitCount + 7) >> 3;
         if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, FromHalt)) {
             State = FromHalt ? STATE_HALT : STATE_IDLE;
             return ISO14443A_APP_NO_RESPONSE;
