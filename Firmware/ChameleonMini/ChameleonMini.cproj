@@ -382,9 +382,6 @@
     <Compile Include="Terminal\XModem.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Uart.c">
-      <SubType>compile</SubType>
-    </Compile>
     <None Include="LUFA\Drivers\USB\Core\EndpointStream.h">
       <SubType>compile</SubType>
     </None>

@@ -57,7 +57,7 @@
 #include "../System.h"
 #include "../Application/Application.h"
 #include "Codec.h"
-#include "../Uart.h"
+
 /* Timing definitions for ISO14443A */
 #define ISO14443A_SUBCARRIER_DIVIDER    16
 #define ISO14443A_BIT_GRID_CYCLES       128
@@ -444,8 +444,6 @@ void ISO14443ACodecTask(void) {
 
             /* Call application if we received data */
             AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
-					    //for(uint16_t i=0;i<=DemodBitCount/8;i++)
-					    //uart_putc_hex(CodecBuffer[i]);
             if (AnswerBitCount & ISO14443A_APP_CUSTOM_PARITY) {
                 /* Application has generated it's own parity bits.
                  * Clear this option bit. */
