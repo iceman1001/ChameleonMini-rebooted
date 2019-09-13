@@ -67,7 +67,7 @@
 
 /* Sampling is done using internal clock, synchronized to the field modulation.
  * For that we need to convert the bit rate for the internal clock. */
-#define SAMPLE_RATE_SYSTEM_CYCLES		((uint16_t) (((uint64_t) F_CPU * ISO14443A_BIT_RATE_CYCLES) / CODEC_CARRIER_FREQ) )
+#define SAMPLE_RATE_SYSTEM_CYCLES       ((uint16_t) (((uint64_t) F_CPU * ISO14443A_BIT_RATE_CYCLES) / CODEC_CARRIER_FREQ) )
 
 static volatile struct {
     volatile bool DemodFinished;
@@ -315,12 +315,12 @@ ISR(CODEC_TIMER_OVF_VECT) {
         /* Fallthrough to first bit */
 
     case LOADMOD_START_BIT0:
-    	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
+        CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         LoadModState = LOADMOD_START_BIT1;
         break;
 
     case LOADMOD_START_BIT1:
-    	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+        CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         LoadModState = LOADMOD_DATA0;
 
         /* Fetch first byte */
@@ -329,9 +329,9 @@ ISR(CODEC_TIMER_OVF_VECT) {
 
     case LOADMOD_DATA0:
         if (DataRegister & 1) {
-        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         } else {
-        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         }
 
         LoadModState = LOADMOD_DATA1;
@@ -341,9 +341,9 @@ ISR(CODEC_TIMER_OVF_VECT) {
         Temp8 = DataRegister;
 
         if (Temp8 & 1) {
-        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         } else {
-        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         }
 
         DataRegister = Temp8 >> 1;
@@ -370,9 +370,9 @@ ISR(CODEC_TIMER_OVF_VECT) {
 
     case LOADMOD_PARITY0:
         if (*ParityBufferPtr) {
-        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         } else {
-        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         }
 
         LoadModState = LOADMOD_PARITY1;
@@ -380,9 +380,9 @@ ISR(CODEC_TIMER_OVF_VECT) {
 
     case LOADMOD_PARITY1:
         if (*ParityBufferPtr) {
-        	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         } else {
-        	CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
+            CODEC_LOADMOD_PORT.OUTSET = CODEC_LOADMOD_MASK;
         }
 
         if (BitSent == BitCount) {
@@ -398,12 +398,12 @@ ISR(CODEC_TIMER_OVF_VECT) {
         break;
 
     case LOADMOD_STOP_BIT0:
-    	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+        CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         LoadModState = LOADMOD_STOP_BIT1;
         break;
 
     case LOADMOD_STOP_BIT1:
-    	CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
+        CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
         LoadModState = LOADMOD_FINISHED;
         break;
 
