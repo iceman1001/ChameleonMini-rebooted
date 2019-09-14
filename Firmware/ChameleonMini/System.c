@@ -38,9 +38,6 @@ void SystemInit(void)
     /* Enable RTC with roughly 1kHz clock */
     CLK.RTCCTRL = CLK_RTCSRC_ULP_gc | CLK_RTCEN_bm;
     RTC.CTRL = RTC_PRESCALER_DIV1_gc;
-
-    /* Enable EEPROM data memory mapping */
-    NVM.CTRLB |= NVM_EEMAPEN_bm;
 }
 
 void SystemReset(void)
