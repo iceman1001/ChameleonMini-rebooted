@@ -69,8 +69,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = ApplicationSetSakDummy,
     .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
     .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+    .UidSize = CONFIGURATION_DUMMY_UID_SIZE,
+    .MemorySize = CONFIGURATION_DUMMY_MEMSIZE,
     .ReadOnly = true
 },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
@@ -257,23 +257,27 @@ void ConfigurationGetByName(char* Configuration, uint16_t BufferSize)
 bool ConfigurationSetByName(const char* Configuration)
 {
     MapIdType Id;
-
     if (MapTextToId(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), Configuration, &Id)) {
-#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
-        if (Id == CONFIG_MF_CLASSIC_4K && GlobalSettings.ActiveSetting != 0)
-        {
-            return false;
-        }
-#endif
         ConfigurationSetById(Id);
         return true;
     } else {
-    return false;
+        return false;
     }
 }
 
 void ConfigurationGetList(char* List, uint16_t BufferSize)
 {
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
+}
+
+uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
+    /* Possible other implementation
+    ConfigurationType ConfForSetting;
+    memcpy_P( &ConfForSetting,
+              &(ConfigurationTable[GlobalSettings.Settings[SettingNumber].Configuration]),
+              sizeof(ConfigurationType) );
+    return ConfForSetting.MemorySize;
+    */
+    return ( (uint16_t)pgm_read_word( &(ConfigurationTable[Configuration].MemorySize) ) );
 }
 

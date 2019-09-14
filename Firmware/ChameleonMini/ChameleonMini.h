@@ -7,7 +7,7 @@
 #include <avr/power.h>
 
 #include "System.h"
-#include "Memory.h"
+#include "Memory/Memory.h"
 #include "LED.h"
 #include "Terminal/Terminal.h"
 #include "Codec/Codec.h"

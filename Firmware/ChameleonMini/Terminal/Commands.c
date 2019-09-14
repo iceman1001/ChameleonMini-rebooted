@@ -62,7 +62,11 @@
 #include "../LUFA/Version.h"
 #include "../Configuration.h"
 #include "../Random.h"
-#include "../Memory.h"
+#include "../Memory/Memory.h"
+#if defined(CONFIG_DEBUG_MEMORYINFO_COMMAND) || defined(CONFIG_DEBUG_MEMORYTEST_COMMAND)
+#include "../Memory/SPIFlash.h"
+#include "../Memory/EEPROM.h"
+#endif
 #include "../System.h"
 #include "../Button.h"
 #include "../AntennaLevel.h"
@@ -212,12 +216,12 @@ CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam)
 }
 
 CommandStatusIdType CommandExecUpload(char* OutMessage) {
-    XModemReceive(MemoryUploadBlock);
+    XModemReceive(AppMemoryUploadXModem);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
 CommandStatusIdType CommandExecDownload(char* OutMessage) {
-    XModemSend(MemoryDownloadBlock);
+    XModemSend(AppMemoryDownloadXModem);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
@@ -306,7 +310,11 @@ CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam) {
 }
 
 CommandStatusIdType CommandExecClear(char* OutParam) {
-    MemoryClear();
+    AppMemoryClear();
+    ConfigurationSetById(DEFAULT_CONFIGURATION);
+    ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
+    ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_ACTION);
+    SettingsSave();
     return COMMAND_INFO_OK_ID;
 }
 
@@ -343,7 +351,7 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
     uint8_t pwd[4];
     /* Read saved password from authentication */
-    MemoryReadBlock(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, sizeof(pwd));
+    AppMemoryRead(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, sizeof(pwd));
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%02x%02x%02x%02x"), pwd[0], pwd[1], pwd[2], pwd[3]);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
@@ -369,10 +377,10 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
  CommandStatusIdType CommandGetDetection(char* OutParam)
  {
      /* Read UID / s0-b0 */
-     MemoryReadBlock(OutParam, 0, 16);
+     AppMemoryRead(OutParam, 0, 16);
 
      /* Read saved nonce data from authentication */
-     MemoryReadBlock(OutParam+16, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
+     AppMemoryRead(OutParam+16, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
 
      /* add file integrity to byte !! 209, 210 !! */
      ISO14443AAppendCRCA(OutParam, 208);
@@ -393,23 +401,82 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
      /* Fill memory for detection with 0xFF,  clearing it */
      uint8_t t[200];
      memset(t, 0xff, 200);
-     MemoryWriteBlock(t, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
+     AppMemoryWrite(t, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
      return COMMAND_INFO_OK_ID;
  }
 #endif
 
-CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage)
+CommandStatusIdType CommandExecClearAll(char* OutMessage)
 {
-    snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE,
-        PSTR("Manufacturer ID: %02x\r\nFamily code: %d\r\nDensity code: %d\r\nMLC Code: %d\r\nProduct version: %d\r\nFlash memory size: %dMbits (%dKBytes)"),
-        FlashManufacturerInfo.manufacturerId, FlashManufacturerInfo.familyCode, FlashManufacturerInfo.densityCode, FlashManufacturerInfo.MLCCode, FlashManufacturerInfo.productVersionCode, FlashManufacturerInfo.sizeMbits, FlashManufacturerInfo.sizeKbytes);
-    return COMMAND_INFO_OK_WITH_TEXT_ID;
+    MemoryClearAll();
+    for(uint8_t i = SETTINGS_FIRST; i <= SETTINGS_LAST; i++) {
+        SettingsSetActiveById(i);
+        ConfigurationSetById(DEFAULT_CONFIGURATION);
+        ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
+        ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_ACTION);
+    }
+    SettingsSetActiveById(SETTINGS_FIRST);
+    SettingsSave();
+    return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam)
+#ifdef CONFIG_DEBUG_MEMORYINFO_COMMAND
+CommandStatusIdType CommandExecMemoryInfo(char* OutMessage)
 {
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,
-        PSTR("%02x%02x%02x%02x"),
-        FlashManufacturerInfo.data[0], FlashManufacturerInfo.data[1], FlashManufacturerInfo.data[2], FlashManufacturerInfo.data[3]);
+    snprintf_P( OutMessage, TERMINAL_BUFFER_SIZE,
+        PSTR("SPI Flash:\r\n- Bytes Per Setting: %lu\r\n- MDID Bytes: %02X%02X%02X%02X\r\n- Memory size: %u Mbits (%u KBytes)\r\nEEPROM:\r\n- Bytes Per Setting: %u\r\n- Memory size: %u Bytes"),
+        MemoryMappingInfo.maxFlashBytesPerSlot,
+        FlashInfo.manufacturerId, FlashInfo.deviceId1, FlashInfo.deviceId2, FlashInfo.edi,
+        FlashInfo.geometry.sizeMbits, FlashInfo.geometry.sizeKbytes,
+        MemoryMappingInfo.maxEEPROMBytesPerSlot, EEPROMInfo.bytesTotal );
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+#endif
+
+#ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
+CommandStatusIdType CommandExecMemoryTest(char* OutMessage)
+{
+    uint8_t bigbuf[512];
+    uint8_t readbuf[70];
+    memset(bigbuf, 0x11, 512);
+    memset(readbuf, 0xAA, 70);
+
+    SettingsSetActiveById(3);
+    ConfigurationSetById(CONFIG_MF_CLASSIC_1K);
+    SettingsSave();
+    SettingsSetActiveById(0);
+    ConfigurationSetById(CONFIG_MF_CLASSIC_4K);
+    SettingsSave();
+
+    AppMemoryWriteForSetting(3, bigbuf, 0, 512);
+    AppMemoryWriteForSetting(3, bigbuf, 512, 512);
+    for(uint8_t i = 0; i < 8; i++){
+         AppMemoryWrite(bigbuf, i*512, 512);
+    }
+    FlashUnbufferedBytesRead(readbuf, 3*MemoryMappingInfo.maxFlashBytesPerSlot+1023, 1);
+    AppMemoryReadForSetting(3, readbuf+1, 250, 9);
+    readbuf[10] = 0x03;
+    FlashUnbufferedBytesRead(readbuf+11, 1024, 1);
+    FlashUnbufferedBytesRead(readbuf+12, 3118, 2);
+    AppMemoryRead(readbuf+14, 2046, 3);
+    AppMemoryRead(readbuf+17, 12, 4);
+    readbuf[21] = 0x00;
+    FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 1023);
+    AppMemoryClear();
+    FlashUnbufferedBytesRead(readbuf+22, 3*MemoryMappingInfo.maxFlashBytesPerSlot+1023, 1);
+    AppMemoryReadForSetting(3, readbuf+23, 250, 9);
+    readbuf[32] = 0x03;
+    FlashUnbufferedBytesRead(readbuf+33, 1024, 1);
+    FlashUnbufferedBytesRead(readbuf+34, 3118, 2);
+    AppMemoryRead(readbuf+36, 2046, 3);
+    AppMemoryRead(readbuf+39, 12, 4);
+    readbuf[43] = 0x00;
+    FlashUnbufferedBytesRead(readbuf+44, 5*MemoryMappingInfo.maxFlashBytesPerSlot+11, 10);
+    readbuf[54] = 0x05;
+    FlashClearAll();
+
+    BufferToHexString(OutMessage, TERMINAL_BUFFER_SIZE, readbuf, 56);
+
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+#endif

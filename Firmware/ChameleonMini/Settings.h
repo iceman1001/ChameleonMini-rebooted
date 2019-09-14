@@ -10,12 +10,16 @@
 
 #include "Button.h"
 #include "Configuration.h"
-#include "LED.h"
-#include "Memory.h"
+#include "Memory/Memory.h"
 
-#define SETTINGS_COUNT		8
-#define SETTINGS_FIRST		0
-#define SETTINGS_LAST		(SETTINGS_FIRST + SETTINGS_COUNT - 1)
+#define SETTINGS_COUNT                  8
+#define SETTINGS_FIRST                  0
+#define SETTINGS_LAST                   (SETTINGS_FIRST + SETTINGS_COUNT - 1)
+#ifdef DEFAULT_PENDING_TASK_TIMEOUT
+#define SETTINGS_TIMEOUT                DEFAULT_PENDING_TASK_TIMEOUT
+#else
+#define SETTINGS_TIMEOUT                50 // *100ms
+#endif
 
 /** Defines one setting.
  *
@@ -23,15 +27,15 @@
  */
 typedef struct {
     ButtonActionEnum ButtonAction; /// Button action for this setting.
-	ButtonActionEnum ButtonLongAction; /// Long button action for this setting.
+    ButtonActionEnum ButtonLongAction; /// Long button action for this setting.
     ConfigurationEnum Configuration; /// Active configuration for this setting.
     uint16_t PendingTaskTimeout; /// Timeout for timeout commands for this setting, in multiples of 100 ms.
 } SettingsEntryType;
 
 typedef struct {
-	uint8_t ActiveSetting;
-	SettingsEntryType* ActiveSettingPtr;
-	SettingsEntryType Settings[SETTINGS_COUNT];
+    uint8_t ActiveSetting;
+    SettingsEntryType* ActiveSettingPtr;
+    SettingsEntryType Settings[SETTINGS_COUNT];
 } SettingsType;
 
 extern SettingsType GlobalSettings;

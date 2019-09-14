@@ -185,9 +185,18 @@ CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
 
-#define COMMAND_SPI_FLASH_INFO  "SPI_FLASHINFO"
-CommandStatusIdType CommandExecSPIFlashInfo(char* OutMessage);
-CommandStatusIdType CommandGetSPIFlashInfo(char* OutParam);
+#define COMMAND_CLEARALL    "CLEARALL"
+CommandStatusIdType CommandExecClearAll(char* OutMessage);
+
+#ifdef CONFIG_DEBUG_MEMORYINFO_COMMAND
+#define COMMAND_MEMORYINFO  "MEMORYINFO"
+CommandStatusIdType CommandExecMemoryInfo(char* OutMessage);
+#endif
+
+#ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
+#define COMMAND_MEMORYTEST  "MEMORYTEST"
+CommandStatusIdType CommandExecMemoryTest(char* OutMessage);
+#endif
 
 #define COMMAND_LIST_END    ""
 

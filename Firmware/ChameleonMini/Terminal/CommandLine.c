@@ -12,7 +12,7 @@
 #define CHAR_GET_MODE   '?'     /* <Command>? */
 #define CHAR_SET_MODE   '='     /* <Command>=<Param> */
 #define CHAR_EXEC_MODE  '\0'    /* <Command> */
-#define CHAR_EXEC_MODE_PARAM 	' '		/* <Command> <Param> ... <ParamN> */
+#define CHAR_EXEC_MODE_PARAM    ' '     /* <Command> <Param> ... <ParamN> */
 
 #define IS_COMMAND_DELIMITER(c) ( \
   ((c) == CHAR_EXEC_MODE) || ((c) == CHAR_GET_MODE) || ((c) == CHAR_SET_MODE) || ((c) == CHAR_EXEC_MODE_PARAM) \
@@ -62,18 +62,18 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = CommandGetUid
   },
   {
-	  .Command    = COMMAND_ATQA,
-	  .ExecFunc   = NO_FUNCTION,
-	  .ExecParamFunc = NO_FUNCTION,
-	  .SetFunc    = CommandSetAtqa,
-	  .GetFunc    = CommandGetAtqa
+      .Command    = COMMAND_ATQA,
+      .ExecFunc   = NO_FUNCTION,
+      .ExecParamFunc = NO_FUNCTION,
+      .SetFunc    = CommandSetAtqa,
+      .GetFunc    = CommandGetAtqa
   },
   {
-	  .Command    = COMMAND_SAK,
-	  .ExecFunc   = NO_FUNCTION,
-	  .ExecParamFunc = NO_FUNCTION,
-	  .SetFunc    = CommandSetSak,
-	  .GetFunc    = CommandGetSak
+      .Command    = COMMAND_SAK,
+      .ExecFunc   = NO_FUNCTION,
+      .ExecParamFunc = NO_FUNCTION,
+      .SetFunc    = CommandSetSak,
+      .GetFunc    = CommandGetSak
   },
   {
     .Command    = COMMAND_READONLY,
@@ -134,11 +134,11 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = CommandGetButton
   },
   {
-	.Command    = COMMAND_BUTTON_LONG,
-	.ExecFunc   = CommandExecButtonLong,
+    .Command    = COMMAND_BUTTON_LONG,
+    .ExecFunc   = CommandExecButtonLong,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc    = CommandSetButtonLong,
-	.GetFunc    = CommandGetButtonLong
+    .SetFunc    = CommandSetButtonLong,
+    .GetFunc    = CommandGetButtonLong
   },
   /*
   {
@@ -178,33 +178,33 @@ const PROGMEM CommandEntryType CommandTable[] = {
   },
 */
   {
-	.Command	= COMMAND_SETTING,
-	.ExecFunc	= NO_FUNCTION,
+    .Command    = COMMAND_SETTING,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc	= CommandSetSetting,
-	.GetFunc	= CommandGetSetting
+    .SetFunc    = CommandSetSetting,
+    .GetFunc    = CommandGetSetting
   },
   {
-	.Command	= COMMAND_CLEAR,
-	.ExecFunc	= CommandExecClear,
+    .Command    = COMMAND_CLEAR,
+    .ExecFunc   = CommandExecClear,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc	= NO_FUNCTION,
-	.GetFunc	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
 /*
   {
-    .Command	= COMMAND_STORE,
-    .ExecFunc	= CommandExecStore,
+    .Command    = COMMAND_STORE,
+    .ExecFunc   = CommandExecStore,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc	= NO_FUNCTION,
-    .GetFunc	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
   {
-    .Command	= COMMAND_RECALL,
-    .ExecFunc	= CommandExecRecall,
+    .Command    = COMMAND_RECALL,
+    .ExecFunc   = CommandExecRecall,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc	= NO_FUNCTION,
-    .GetFunc	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
 */
   {
@@ -215,75 +215,75 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = NO_FUNCTION
   },
   {
-	.Command	= COMMAND_RSSI,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_RSSI,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= CommandGetRssi
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = CommandGetRssi
   },
   {
-	.Command	= COMMAND_PWD,
-	.ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_PWD,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-	.SetFunc 	= NO_FUNCTION,
-	.GetFunc 	= CommandGetUltralightPassword
-  },  
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = CommandGetUltralightPassword
+  },
 /*
   {
-    .Command	= COMMAND_SYSTICK,
-    .ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_SYSTICK,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc 	= NO_FUNCTION,
-    .GetFunc 	= CommandGetSysTick
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = CommandGetSysTick
   },
   {
-    .Command	= COMMAND_SEND_RAW,
-    .ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_SEND_RAW,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = CommandExecParamSendRaw,
-    .SetFunc 	= NO_FUNCTION,
-    .GetFunc 	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
   {
-    .Command	= COMMAND_SEND,
-    .ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_SEND,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = CommandExecParamSend,
-    .SetFunc 	= NO_FUNCTION,
-    .GetFunc 	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
   {
-    .Command	= COMMAND_GETUID,
-    .ExecFunc 	= CommandExecGetUid,
+    .Command    = COMMAND_GETUID,
+    .ExecFunc   = CommandExecGetUid,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc 	= NO_FUNCTION,
-    .GetFunc 	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
   {
-    .Command	= COMMAND_DUMP_MFU,
-    .ExecFunc 	= CommandExecDumpMFU,
+    .Command    = COMMAND_DUMP_MFU,
+    .ExecFunc   = CommandExecDumpMFU,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc 	= NO_FUNCTION,
-    .GetFunc 	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
   {
-    .Command	= COMMAND_IDENTIFY_CARD,
-    .ExecFunc 	= CommandExecIdentifyCard,
+    .Command    = COMMAND_IDENTIFY_CARD,
+    .ExecFunc   = CommandExecIdentifyCard,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc 	= NO_FUNCTION,
-    .GetFunc 	= NO_FUNCTION
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
   },
   {
-    .Command	= COMMAND_TIMEOUT,
-    .ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_TIMEOUT,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc 	= CommandSetTimeout,
-    .GetFunc 	= CommandGetTimeout
+    .SetFunc    = CommandSetTimeout,
+    .GetFunc    = CommandGetTimeout
   },
   {
-    .Command	= COMMAND_THRESHOLD,
-    .ExecFunc 	= NO_FUNCTION,
+    .Command    = COMMAND_THRESHOLD,
+    .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
-    .SetFunc 	= CommandSetThreshold,
-    .GetFunc 	= CommandGetThreshold
+    .SetFunc    = CommandSetThreshold,
+    .GetFunc    = CommandGetThreshold
   },
   {
     .Command    = COMMAND_AUTOCALIBRATE,
@@ -302,18 +302,34 @@ const PROGMEM CommandEntryType CommandTable[] = {
 */
 #ifdef CONFIG_MF_DETECTION_SUPPORT
   {
-	  .Command    = COMMAND_DETECTION,
-	  .ExecFunc   = NO_FUNCTION,
-	  .SetFunc    = CommandSetDetection,
-	  .GetFunc    = CommandGetDetection,
+      .Command    = COMMAND_DETECTION,
+      .ExecFunc   = NO_FUNCTION,
+      .SetFunc    = CommandSetDetection,
+      .GetFunc    = CommandGetDetection,
   },
 #endif
   {
-	  .Command    = COMMAND_SPI_FLASH_INFO,
-	  .ExecFunc   = CommandExecSPIFlashInfo,
-	  .SetFunc    = NO_FUNCTION,
-	  .GetFunc    = CommandGetSPIFlashInfo,
+      .Command    = COMMAND_CLEARALL,
+      .ExecFunc   = CommandExecClearAll,
+      .SetFunc    = NO_FUNCTION,
+      .GetFunc    = NO_FUNCTION,
   },
+#ifdef CONFIG_DEBUG_MEMORYINFO_COMMAND
+  {
+      .Command    = COMMAND_MEMORYINFO,
+      .ExecFunc   = CommandExecMemoryInfo,
+      .SetFunc    = NO_FUNCTION,
+      .GetFunc    = NO_FUNCTION,
+  },
+#endif
+#ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
+  {
+      .Command    = COMMAND_MEMORYTEST,
+      .ExecFunc   = CommandExecMemoryTest,
+      .SetFunc    = NO_FUNCTION,
+      .GetFunc    = NO_FUNCTION,
+  },
+#endif
   { /* This has to be last element */
     .Command    = COMMAND_LIST_END,
     .ExecFunc   = NO_FUNCTION,
@@ -331,15 +347,15 @@ typedef struct {
 } CommandStatusType;
 
 static const CommandStatusType PROGMEM StatusTable[] = {
-  STATUS_TABLE_ENTRY(COMMAND_INFO_OK_ID, COMMAND_INFO_OK),
-  STATUS_TABLE_ENTRY(COMMAND_INFO_OK_WITH_TEXT_ID, COMMAND_INFO_OK_WITH_TEXT),
-  STATUS_TABLE_ENTRY(COMMAND_INFO_XMODEM_WAIT_ID, COMMAND_INFO_XMODEM_WAIT),
-  STATUS_TABLE_ENTRY(COMMAND_ERR_UNKNOWN_CMD_ID, COMMAND_ERR_UNKNOWN_CMD),
-  STATUS_TABLE_ENTRY(COMMAND_ERR_INVALID_USAGE_ID, COMMAND_ERR_INVALID_USAGE),
-  STATUS_TABLE_ENTRY(COMMAND_ERR_INVALID_PARAM_ID, COMMAND_ERR_INVALID_PARAM),
-//  STATUS_TABLE_ENTRY(COMMAND_INFO_FALSE_ID, COMMAND_INFO_FALSE),
-//  STATUS_TABLE_ENTRY(COMMAND_INFO_TRUE_ID, COMMAND_INFO_TRUE),
-//  STATUS_TABLE_ENTRY(COMMAND_ERR_TIMEOUT_ID, COMMAND_ERR_TIMEOUT),
+    STATUS_TABLE_ENTRY(COMMAND_INFO_OK_ID, COMMAND_INFO_OK),
+    STATUS_TABLE_ENTRY(COMMAND_INFO_OK_WITH_TEXT_ID, COMMAND_INFO_OK_WITH_TEXT),
+    STATUS_TABLE_ENTRY(COMMAND_INFO_XMODEM_WAIT_ID, COMMAND_INFO_XMODEM_WAIT),
+    STATUS_TABLE_ENTRY(COMMAND_ERR_UNKNOWN_CMD_ID, COMMAND_ERR_UNKNOWN_CMD),
+    STATUS_TABLE_ENTRY(COMMAND_ERR_INVALID_USAGE_ID, COMMAND_ERR_INVALID_USAGE),
+    STATUS_TABLE_ENTRY(COMMAND_ERR_INVALID_PARAM_ID, COMMAND_ERR_INVALID_PARAM),
+    //STATUS_TABLE_ENTRY(COMMAND_INFO_FALSE_ID, COMMAND_INFO_FALSE),
+    //STATUS_TABLE_ENTRY(COMMAND_INFO_TRUE_ID, COMMAND_INFO_TRUE),
+    STATUS_TABLE_ENTRY(COMMAND_ERR_TIMEOUT_ID, COMMAND_ERR_TIMEOUT),
 };
 
 static uint16_t BufferIdx;
@@ -357,7 +373,7 @@ static const char* GetStatusMessageP(CommandStatusIdType StatusId) {
     return (void*) 0;
 }
 
-static CommandStatusIdType CallCommandFunc(	const CommandEntryType* CommandEntry, char CommandDelimiter, char* pParam) {
+static CommandStatusIdType CallCommandFunc( const CommandEntryType* CommandEntry, char CommandDelimiter, char* pParam) {
   char* pTerminalBuffer = (char*) TerminalBuffer;
   CommandStatusIdType Status = COMMAND_ERR_INVALID_USAGE_ID;
 
@@ -386,7 +402,7 @@ static CommandStatusIdType CallCommandFunc(	const CommandEntryType* CommandEntry
     /* This should not happen (TM) */
   }
 
-	if (Status == TIMEOUT_COMMAND) {
+    if (Status == TIMEOUT_COMMAND) {
         TaskPending = true;
         TaskPendingSince = SystemGetSysTick();
     }
@@ -448,17 +464,17 @@ void CommandLineInit(void) {
 }
 
 bool CommandLineProcessByte(uint8_t b) {
-	if (IS_CHARACTER(b)) {
-		
+    if (IS_CHARACTER(b)) {
+
     /* Store uppercase character */
-		if (IS_LOWERCASE(b))
-			b = TO_UPPERCASE(b);
+        if (IS_LOWERCASE(b))
+            b = TO_UPPERCASE(b);
 
     /* Prevent buffer overflow and account for '\0' */
-		if (BufferIdx < TERMINAL_BUFFER_SIZE - 1)
-			TerminalBuffer[BufferIdx++] = b;
+        if (BufferIdx < TERMINAL_BUFFER_SIZE - 1)
+            TerminalBuffer[BufferIdx++] = b;
 
-	} else if (b == '\r') {
+    } else if (b == '\r') {
     /* Process on \r. Terminate string and decode. */
     TerminalBuffer[BufferIdx] = '\0';
     BufferIdx = 0;
@@ -466,12 +482,12 @@ bool CommandLineProcessByte(uint8_t b) {
         if (!TaskPending)
     DecodeCommand();
 
-	} else if (b == '\b') {
+    } else if (b == '\b') {
     /* Backspace. Delete last character in buffer. */
-		if (BufferIdx > 0)
+        if (BufferIdx > 0)
       BufferIdx--;
 
-	} else if (b == 0x1B) {
+    } else if (b == 0x1B) {
     /* Drop buffer on escape */
     BufferIdx = 0;
   } else {
@@ -493,8 +509,8 @@ INLINE void Timeout(void) {
 
 void CommandLineTick(void) {
     if (TaskPending
-			 && GlobalSettings.ActiveSettingPtr->PendingTaskTimeout != 0	// 0 means no timeout
-             && SYSTICK_DIFF_100MS(TaskPendingSince) >= GlobalSettings.ActiveSettingPtr->PendingTaskTimeout) {	// timeout expired
+             && GlobalSettings.ActiveSettingPtr->PendingTaskTimeout != 0 // 0 means no timeout
+             && SYSTICK_DIFF_100MS(TaskPendingSince) >= GlobalSettings.ActiveSettingPtr->PendingTaskTimeout) {  // timeout expired
         Timeout();
     }
 }

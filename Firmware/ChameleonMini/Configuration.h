@@ -1,19 +1,20 @@
 /*
- * Standards.h
+ * Configuration.h
  *
  *  Created on: 15.02.2013
  *      Author: skuser
  */
 /** \file */
-#ifndef STANDARDS_H_
-#define STANDARDS_H_
+#ifndef _CM_CONFIGURATION_H_
+#define _CM_CONFIGURATION_H_
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "Terminal/CommandLine.h"
 
 #define CONFIGURATION_NAME_LENGTH_MAX   32
 #define CONFIGURATION_UID_SIZE_MAX      16
+#define CONFIGURATION_DUMMY_UID_SIZE    4
+#define CONFIGURATION_DUMMY_MEMSIZE     16
 
 typedef uint8_t ConfigurationUidType[CONFIGURATION_UID_SIZE_MAX];
 
@@ -151,5 +152,6 @@ void ConfigurationSetById(ConfigurationEnum Configuration);
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize);
 bool ConfigurationSetByName(const char* Configuration);
 void ConfigurationGetList(char* ConfigurationList, uint16_t BufferSize);
+uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration);
 
-#endif /* STANDARDS_H_ */
+#endif /* _CM_CONFIGURATION_H_ */

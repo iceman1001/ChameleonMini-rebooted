@@ -2,7 +2,7 @@
 
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
-#include "../Memory.h"
+#include "../Memory/Memory.h"
 #include "../LED.h"
 #include "../Random.h"
 #include "../Settings.h"
@@ -78,7 +78,7 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 			if (ISO14443AWakeUp(Buffer, &BitCount, CardATQAValue, true)) {
 				State = STATE_READY;
 				return BitCount;
-			}		
+			}
 		break;
 
 		case STATE_READY:
@@ -88,7 +88,7 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 			} else if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
 				/* Load UID CL1 and perform anti-collision */
 				uint8_t UidCL1[4];
-				MemoryReadBlock(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
+				AppMemoryRead(UidCL1, MEM_UID_CL1_ADDRESS, MEM_UID_CL1_SIZE);
 				if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
 					State = STATE_ACTIVE;
 				}
@@ -96,7 +96,7 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 			} else {
 				/* Unknown command. Enter HALT state. */
 				State = STATE_HALT;
-			}	
+			}
 		break;
 
 		case STATE_ACTIVE:
@@ -109,7 +109,7 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
 					/* Generate a random nonce and read UID and key from memory */
 					RandomGetBuffer(CardNonce, sizeof(CardNonce));
-				
+
 					memcpy(data_save, Buffer, 4);
 					memcpy(data_save+4, CardNonce, 4);
 
@@ -130,7 +130,7 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 
 		case STATE_AUTHING:
 			State = STATE_IDLE;
-		
+
 			// Save information
 			memcpy(data_save + 8, Buffer, 8);
 
@@ -143,16 +143,16 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 				// KEY A) 0,1,2,3,4,5  *  16 + 4096
 				// KEY B) 0,1,2,3,4,5  *  16 + +112 + 4096
 				// 5*16 ?
-				MemoryWriteBlock(data_save, (turn_flaga * MEM_BYTES_PER_BLOCK) + 4096, MEM_BYTES_PER_BLOCK);
+				AppMemoryWrite(data_save, (turn_flaga * MEM_BYTES_PER_BLOCK) + 4096, MEM_BYTES_PER_BLOCK);
 				turn_flaga++;
 				turn_flaga = turn_flaga % 6;
 			} else {
-				MemoryWriteBlock(data_save, (turn_flagb * MEM_BYTES_PER_BLOCK) + 112 + 4096, MEM_BYTES_PER_BLOCK);
+				AppMemoryWrite(data_save, (turn_flagb * MEM_BYTES_PER_BLOCK) + 112 + 4096, MEM_BYTES_PER_BLOCK);
 				turn_flagb++;
 				turn_flagb = turn_flagb % 6;
 			}
 		break;
-		
+
 		default:
 		break;
 	}
