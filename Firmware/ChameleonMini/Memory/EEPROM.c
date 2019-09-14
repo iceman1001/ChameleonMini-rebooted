@@ -14,6 +14,9 @@
 // Dummy init to prepare for future use
 bool EEPROMInit(void) {
     bool ret = false;
+    // Enable EEPROM data memory mapping
+    NVM.CTRLB |= NVM_EEMAPEN_bm;
+    // Calculate available EEPROM size per setting
     if (EEPROM_BYTES_TOTAL > EEPROM_NO_MEMORY) {
         EEPROMInfo.bytesTotal = EEPROM_BYTES_TOTAL;
         ret = true;

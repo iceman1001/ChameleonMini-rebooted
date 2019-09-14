@@ -4,7 +4,6 @@
  *  Created on: 15.02.2013
  *      Author: skuser
  */
-/** \file */
 #ifndef _CM_CONFIGURATION_H_
 #define _CM_CONFIGURATION_H_
 
@@ -14,6 +13,9 @@
 #define CONFIGURATION_NAME_LENGTH_MAX   32
 #define CONFIGURATION_UID_SIZE_MAX      16
 #define CONFIGURATION_DUMMY_UID_SIZE    4
+#define CONFIGURATION_DUMMY_UID_PART    0x00
+#define CONFIGURATION_DUMMY_ATQA        0x0000
+#define CONFIGURATION_DUMMY_SAK         0x00
 #define CONFIGURATION_DUMMY_MEMSIZE     16
 
 typedef uint8_t ConfigurationUidType[CONFIGURATION_UID_SIZE_MAX];
@@ -133,7 +135,7 @@ typedef struct {
      * Defines how many space the configuration needs. For emulating configurations this is the memory space of
      * the emulated card.
      */
-    uint16_t MemorySize;
+    uint32_t MemorySize;
     /**
      * Defines the size of the UID for emulating configurations.
      */
@@ -152,6 +154,6 @@ void ConfigurationSetById(ConfigurationEnum Configuration);
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize);
 bool ConfigurationSetByName(const char* Configuration);
 void ConfigurationGetList(char* ConfigurationList, uint16_t BufferSize);
-uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration);
+uint32_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration);
 
 #endif /* _CM_CONFIGURATION_H_ */

@@ -5,11 +5,10 @@
  *      Author: skuser
  */
 
+#include <avr/pgmspace.h>
 #include "Configuration.h"
 #include "Settings.h"
-#include <avr/pgmspace.h>
 #include "Map.h"
-#include "AntennaLevel.h"
 
 /* Map IDs to text */
 static const MapEntryType PROGMEM ConfigurationMap[] = {
@@ -46,13 +45,13 @@ static void ApplicationInitDummy(void) {}
 static void ApplicationResetDummy(void) {}
 static void ApplicationTaskDummy(void) {}
 static void ApplicationTickDummy(void) {}
-static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return 0; }
-static void ApplicationGetUidDummy(ConfigurationUidType Uid) { }
+static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return CONFIGURATION_DUMMY_UID_PART; }
+static void ApplicationGetUidDummy(ConfigurationUidType Uid) { memset(Uid, CONFIGURATION_DUMMY_UID_PART, CONFIGURATION_DUMMY_UID_SIZE); }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
-static void ApplicationGetAtqaDummy(uint16_t * Atqa) { }
+static void ApplicationGetAtqaDummy(uint16_t * Atqa) { *Atqa = CONFIGURATION_DUMMY_ATQA; }
 static void ApplicationSetAtqaDummy(uint16_t Atqa) { }
-static void ApplicationGetSakDummy(uint8_t * Atqa) { }
-static void ApplicationSetSakDummy(uint8_t Atqa) { }
+static void ApplicationGetSakDummy(uint8_t * Sak) { *Sak = CONFIGURATION_DUMMY_SAK; }
+static void ApplicationSetSakDummy(uint8_t Sak) { }
 
 static const PROGMEM ConfigurationType ConfigurationTable[] = {
 [CONFIG_NONE] = {
@@ -270,7 +269,7 @@ void ConfigurationGetList(char* List, uint16_t BufferSize)
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
 
-uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
+uint32_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
     /* Possible other implementation
     ConfigurationType ConfForSetting;
     memcpy_P( &ConfForSetting,
@@ -278,6 +277,6 @@ uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
               sizeof(ConfigurationType) );
     return ConfForSetting.MemorySize;
     */
-    return ( (uint16_t)pgm_read_word( &(ConfigurationTable[Configuration].MemorySize) ) );
+    return ( (uint32_t)pgm_read_dword( &(ConfigurationTable[Configuration].MemorySize) ) );
 }
 
