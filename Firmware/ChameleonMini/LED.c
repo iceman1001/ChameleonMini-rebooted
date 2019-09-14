@@ -1,61 +1,49 @@
+#include <stdbool.h>
+#include <avr/io.h>
+#include <avr/pgmspace.h>
 #include "LED.h"
+#include "Settings.h"
+#include "Common.h"
 
-uint8_t LEDLowPulseMask = 0, LEDHighPulseMask = 0;
+static const LedPining_t LEDPiningTable[] PROGMEM = {
+    [LED_ONE] =   { .ledPort = &LED_HIGH_PORT, .ledPin = PIN5_bm },
+    [LED_TWO] =   { .ledPort = &LED_HIGH_PORT, .ledPin = PIN4_bm },
+    [LED_THREE] = { .ledPort = &LED_HIGH_PORT, .ledPin = PIN3_bm },
+    [LED_FOUR] =  { .ledPort = &LED_HIGH_PORT, .ledPin = PIN2_bm },
+    [LED_FIVE] =  { .ledPort = &LED_LOW_PORT,  .ledPin = PIN3_bm },
+    [LED_SIX] =   { .ledPort = &LED_LOW_PORT,  .ledPin = PIN2_bm },
+    [LED_SEVEN] = { .ledPort = &LED_LOW_PORT,  .ledPin = PIN1_bm },
+    [LED_EIGHT] = { .ledPort = &LED_LOW_PORT,  .ledPin = PIN0_bm }
+};
 
-inline
-void LEDMode(void) {
-	LEDHighSetOff(LED_ONE);
-	LEDHighSetOff(LED_TWO);
-	LEDHighSetOff(LED_THREE);
-	LEDHighSetOff(LED_FOUR);
-	LEDLowSetOff(LED_FIVE);
-	LEDLowSetOff(LED_SIX);
-	LEDLowSetOff(LED_SEVEN);
-	LEDLowSetOff(LED_EIGHT);
+INLINE void LEDMode(void) {
+    for(Led id = LED_ONE; id <= LED_EIGHT; id++) {
+        LEDSetOff(id);
+    }
 
-	switch(GlobalSettings.ActiveSetting) {
-		case 0: LEDHighSetOn(LED_ONE); break;
-		case 1: LEDHighSetOn(LED_TWO); break;
-		case 2: LEDHighSetOn(LED_THREE); break;
-		case 3: LEDHighSetOn(LED_FOUR); break;
-		case 4: LEDLowSetOn(LED_FIVE); break;
-		case 5:	LEDLowSetOn(LED_SIX); break;
-		case 6:	LEDLowSetOn(LED_SEVEN); break;
-		case 7:	LEDLowSetOn(LED_EIGHT); break;
-		default: break;
-	}
+    LEDSetOn(GlobalSettings.ActiveSetting);
+}
+
+void LEDTick(void) {
+    LED_HIGH_PORT.OUTCLR = LED_LOW_PULSE_MASK;
+    LED_LOW_PORT.OUTCLR = LED_HIGH_PULSE_MASK;
+    LEDMode();
 }
 
 void LEDInit(void) {
-	LED_LOW_PORT.DIRSET = LED_LOW_MASK;
-	LED_HIGH_PORT.DIRSET = LED_HIGH_MASK;
+    LED_LOW_PORT.DIRSET = LED_LOW_MASK;
+    LED_HIGH_PORT.DIRSET = LED_HIGH_MASK;
 }
 
-inline
-void LEDTick(void) {
-	LED_HIGH_PORT.OUTCLR = LEDLowPulseMask;
-	LEDLowPulseMask = 0;
-	LED_LOW_PORT.OUTCLR = LEDHighPulseMask;
-	LEDHighPulseMask = 0;
-	LEDMode();
+INLINE void LEDSet(Led LedId, bool on) {
+    PORT_t * ledPort = ( (PORT_t *)pgm_read_ptr( &(LEDPiningTable[LedId].ledPort) ) );
+    uint8_t ledPin = ( (uint8_t)pgm_read_byte( &(LEDPiningTable[LedId].ledPin) ) );
+    (on) ? (ledPort->OUTSET = ledPin) : (ledPort->OUTCLR = ledPin);
 }
 
-inline
-void LEDHighSetOn(uint8_t Mask) {
-	LED_HIGH_PORT.OUTSET = Mask;
+void LEDSetOn(Led LedId) {
+    LEDSet(LedId, true);
 }
-
-inline
-void LEDLowSetOn(uint8_t Mask) {
-	LED_LOW_PORT.OUTSET = Mask;
-}
-
-inline
-void LEDHighSetOff(uint8_t Mask) {
-	LED_HIGH_PORT.OUTCLR = Mask;
-}
-
-inline
-void LEDLowSetOff(uint8_t Mask) {
-	LED_LOW_PORT.OUTCLR = Mask;
+void LEDSetOff(Led LedId) {
+    LEDSet(LedId, false);
 }

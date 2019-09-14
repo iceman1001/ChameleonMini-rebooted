@@ -1,6 +1,5 @@
 #include "Terminal.h"
 #include "../System.h"
-#include "../LED.h"
 #include "../LUFADescriptors.h"
 
 #define INIT_DELAY		(2000 / SYSTEM_TICK_MS)
@@ -56,8 +55,6 @@ static void ProcessByte(void) {
 
     if (Byte >= 0) {
         /* Byte received */
-    	//LEDPulse(LED_RED);
-
         if (XModemProcessByte(Byte)) {
             /* XModem handled the byte */
         } else if (CommandLineProcessByte(Byte)) {
@@ -123,12 +120,10 @@ void TerminalTick(void) {
 
 /** Event handler for the library USB Connection event. */
 void EVENT_USB_Device_Connect(void) {
-    //LEDSetOn(LED_GREEN);
 }
 
 /** Event handler for the library USB Disconnection event. */
 void EVENT_USB_Device_Disconnect(void) {
-    //LEDSetOff(LED_GREEN);
 }
 
 /** Event handler for the library USB Configuration Changed event. */

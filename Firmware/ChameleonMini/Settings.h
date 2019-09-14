@@ -10,7 +10,6 @@
 
 #include "Button.h"
 #include "Configuration.h"
-#include "Memory/Memory.h"
 
 #define SETTINGS_COUNT                  8
 #define SETTINGS_FIRST                  0
