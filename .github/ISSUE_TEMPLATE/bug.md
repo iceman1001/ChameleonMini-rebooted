@@ -21,7 +21,7 @@ assignees: ''
 |**Reader**|<!-- Briefly describe the reader or device to which you applied your ChameleonMini (brand, type, use case). If it is not applicable, put N/A. -->|
 |**Flashing environment**|<!-- Briefly describe the environment from which you compile, flash and program your ChameleonMini (OS, version). If you use different ones from different activities, or could reproduce the bug on different environments, describe them all. If it is not applicable, put N/A. -->|
 |**Flashing method**|<!-- How do you connect and flash your ChameleonMini to your computer to flash it. Please specify amongst: USB, AVRISPmkII, dfu-programmer, flash.bat, BOOT_LOADER_EXE.exe, other (describe). If it is not applicable, put N/A. -->|
-|**Flash memory space**|<!-- How many flash memory space do you have in your device. Find this information with "SPI_FLASHINFO" command. -->|
+|**Flash memory space**|<!-- How many flash memory space do you have in your device. Find this information with "MEMORYINFO" command, after having enabled this command from Makefile. Put N/A if you do not feel like it. -->|
 |**Makefile configuration**|<!-- Tell which configuration/settings you tuned in Makefile. If it is not applicable or if you did not touch Makefile, put N/A. -->|
 
 ## Bug description
