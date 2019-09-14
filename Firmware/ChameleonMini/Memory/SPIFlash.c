@@ -288,6 +288,8 @@ bool FlashClearAll(void) {
         OPStart();
         SPIWriteBlock(opseq, sizeof(opseq));
         OPStop();
+        // Clearing might be long, so wait for memory to be ready before returning
+        WaitForReadyFlash();
         ret = true;
     }
     return ret;

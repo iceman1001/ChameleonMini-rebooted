@@ -69,8 +69,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = ApplicationSetSakDummy,
     .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
     .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+    .UidSize = CONFIGURATION_DUMMY_UID_SIZE,
+    .MemorySize = CONFIGURATION_DUMMY_MEMSIZE,
     .ReadOnly = true
 },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT

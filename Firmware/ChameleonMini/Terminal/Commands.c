@@ -311,6 +311,10 @@ CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam) {
 
 CommandStatusIdType CommandExecClear(char* OutParam) {
     AppMemoryClear();
+    ConfigurationSetById(DEFAULT_CONFIGURATION);
+    ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
+    ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_ACTION);
+    SettingsSave();
     return COMMAND_INFO_OK_ID;
 }
 
@@ -407,7 +411,9 @@ CommandStatusIdType CommandExecClearAll(char* OutMessage)
     MemoryClearAll();
     for(uint8_t i = SETTINGS_FIRST; i <= SETTINGS_LAST; i++) {
         SettingsSetActiveById(i);
-        ConfigurationSetById(CONFIG_NONE);
+        ConfigurationSetById(DEFAULT_CONFIGURATION);
+        ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
+        ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_ACTION);
     }
     SettingsSetActiveById(SETTINGS_FIRST);
     SettingsSave();
