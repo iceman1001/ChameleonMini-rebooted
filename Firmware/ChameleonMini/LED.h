@@ -5,34 +5,37 @@
  *      Author: skuser
  */
 
-#ifndef LED_H
-#define LED_H
+#ifndef _CM_LED_H_
+#define _CM_LED_H_
 
-#include "Common.h"
-#include "Settings.h"
 #include <avr/io.h>
 
-#define LED_HIGH_PORT  PORTA
-#define LED_ONE         PIN5_bm
-#define LED_TWO         PIN4_bm
-#define LED_THREE       PIN3_bm
-#define LED_FOUR        PIN2_bm
-#define LED_HIGH_MASK   (LED_ONE | LED_TWO | LED_THREE| LED_FOUR)
+#define LED_HIGH_PORT        PORTA
+#define LED_HIGH_MASK        (PIN5_bm | PIN4_bm | PIN3_bm | PIN2_bm)
+#define LED_LOW_PORT         PORTE
+#define LED_LOW_MASK         (PIN3_bm | PIN2_bm | PIN1_bm | PIN0_bm)
+#define LED_LOW_PULSE_MASK   0
+#define LED_HIGH_PULSE_MASK  0
 
-#define LED_LOW_PORT    PORTE
-#define LED_FIVE        PIN3_bm
-#define LED_SIX         PIN2_bm
-#define LED_SEVEN       PIN1_bm
-#define LED_EIGHT       PIN0_bm
-#define LED_LOW_MASK    (LED_FIVE | LED_SIX | LED_SEVEN| LED_EIGHT)
+typedef enum {
+    LED_ONE,
+    LED_TWO,
+    LED_THREE,
+    LED_FOUR,
+    LED_FIVE,
+    LED_SIX,
+    LED_SEVEN,
+    LED_EIGHT
+} Led;
 
-void LEDMode(void);
+typedef struct {
+    PORT_t * ledPort;
+    uint8_t ledPin;
+} LedPining_t;
+
 void LEDInit(void);
 void LEDTick(void);
-void CARDInit(void);
-void LEDHighSetOn(uint8_t Mask);
-void LEDLowSetOn(uint8_t Mask);
-void LEDHighSetOff(uint8_t Mask);
-void LEDLowSetOff(uint8_t Mask);
+void LEDSetOn(Led LedId);
+void LEDSetOff(Led LedId);
 
-#endif /* LED_H */
+#endif /* _CM_LED_H_ */

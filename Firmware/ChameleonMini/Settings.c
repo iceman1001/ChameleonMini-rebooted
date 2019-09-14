@@ -2,7 +2,6 @@
 #include <avr/eeprom.h>
 #include "Configuration.h"
 #include <string.h>
-#include "LED.h"
 #include "Memory/Memory.h"
 #include "Terminal/CommandLine.h"
 #include "System.h"
