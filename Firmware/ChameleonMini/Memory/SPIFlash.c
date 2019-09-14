@@ -30,6 +30,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include "SPIFlash.h"
@@ -341,20 +342,24 @@ INLINE void FlashClearRangeRound(uint32_t BytesPerItem, uint32_t * Address, uint
 * and finally pages */
 bool FlashClearRange(uint32_t Address, uint32_t ByteCount) {
     bool ret = false;
-    // We cannot clear less than a Page
-    if( ByteCount >= FlashInfo.geometry.bytesPerPage ) {
-        // If we want to clear all bytes from Address 0, then we FlashClearAll
-        if( (Address == FLASH_NO_OFFSET) && (ByteCount == FlashInfo.geometry.sizeBytes) ) {
-            ret = FlashClearAll();
-        } else if( checkAddrConsistency(Address, ByteCount) ) {
-            // Sectors clear round
-            FlashClearRangeRound(FlashInfo.geometry.bytesPerSectorN, &Address, &ByteCount);
-            // Blocks clear round
-            FlashClearRangeRound(FlashInfo.geometry.bytesPerBlock, &Address, &ByteCount);
-            // Pages clear round
-            FlashClearRangeRound(FlashInfo.geometry.bytesPerPage, &Address, &ByteCount);
-            ret = true;
-        }
+    // If we want to clear all bytes from Address 0, then we FlashClearAll
+    if( (Address == FLASH_NO_OFFSET) && (ByteCount == FlashInfo.geometry.sizeBytes) ) {
+        ret = FlashClearAll();
+    // We cannot clear less than a Page at once, so we buffer write instead
+    } else if( ByteCount < FlashInfo.geometry.bytesPerPage ) {
+        // Build a clear buffer of ByteCount FF bytes
+        uint8_t clearBuffer[ByteCount];
+        memset(clearBuffer, FLASH_CLEAR_BYTE, ByteCount);
+        // Write it with BufferedBytesWrite
+        ret = FlashBufferedBytesWrite(clearBuffer, Address, ByteCount);
+    } else if( checkAddrConsistency(Address, ByteCount) ) {
+        // Sectors clear round
+        FlashClearRangeRound(FlashInfo.geometry.bytesPerSectorN, &Address, &ByteCount);
+        // Blocks clear round
+        FlashClearRangeRound(FlashInfo.geometry.bytesPerBlock, &Address, &ByteCount);
+        // Pages clear round
+        FlashClearRangeRound(FlashInfo.geometry.bytesPerPage, &Address, &ByteCount);
+        ret = true;
     }
     return ret;
 }

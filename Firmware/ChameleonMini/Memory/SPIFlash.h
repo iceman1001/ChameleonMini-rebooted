@@ -82,6 +82,7 @@
 #define FLASH_STATUS_PAGESIZE_BIT   0x01 // Flash page size setting (0 is default, 1 is binary)
 
 #define FLASH_DUMMY_BYTE            0x00
+#define FLASH_CLEAR_BYTE            0xFF
 #define FLASH_NO_OFFSET             0
 #define FLASH_NO_PAGE               0
 #define FLASH_B_IN_KB               1024

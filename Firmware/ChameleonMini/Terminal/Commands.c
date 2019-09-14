@@ -55,6 +55,7 @@
 
 #include "Commands.h"
 #include <stdio.h>
+#include <string.h>
 #include <avr/pgmspace.h>
 #include "XModem.h"
 #include "../Settings.h"
@@ -436,12 +437,12 @@ CommandStatusIdType CommandExecMemoryInfo(char* OutMessage)
 #ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
 CommandStatusIdType CommandExecMemoryTest(char* OutMessage)
 {
-    uint8_t bigbuf[512];
-    uint8_t readbuf[56];
-    uint8_t expected[56];
-    HexStringToBuffer(expected, 56, "11111111AAAAAAAAAAAA03111111111111111111110011111111AAAAAAAAAAAA03FFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF05AA");
-    memset(bigbuf, 0x11, 512);
-    memset(readbuf, 0xAA, 56);
+    uint8_t bigbuf[128];
+    uint8_t readbuf[45];
+    uint8_t expected[45];
+    HexStringToBuffer(expected, 45, "11111111AA031111111111111111111100FFFFFFFFAA03FFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF05");
+    memset(bigbuf, 0x11, 128);
+    memset(readbuf, 0xAA, 45);
 
     SettingsSetActiveById(3);
     ConfigurationSetById(CONFIG_NONE);
@@ -451,32 +452,36 @@ CommandStatusIdType CommandExecMemoryTest(char* OutMessage)
     SettingsSave();
 
     AppMemoryWriteForSetting(3, bigbuf, 0, 512);
-    for(uint8_t i = 0; i < 8; i++){
-         AppMemoryWrite(bigbuf, i*512, 512);
+    for(uint8_t i = 0; i < 32; i++){
+         AppMemoryWrite(bigbuf, i*128, 128);
     }
     FlashUnbufferedBytesRead(readbuf, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
-    AppMemoryReadForSetting(3, readbuf+4, 250, 6);
-    readbuf[10] = 0x03;
-    FlashUnbufferedBytesRead(readbuf+11, 1024, 1);
-    FlashUnbufferedBytesRead(readbuf+12, 3118, 2);
-    AppMemoryRead(readbuf+14, 2046, 3);
-    AppMemoryRead(readbuf+17, 12, 4);
-    readbuf[21] = 0x00;
-    FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 15);
+    AppMemoryReadForSetting(3, readbuf+4, 250, 1);
+    readbuf[5] = 0x03;
+    FlashUnbufferedBytesRead(readbuf+6, 1024, 1);
+    FlashUnbufferedBytesRead(readbuf+7, 3118, 2);
+    AppMemoryRead(readbuf+9, 2046, 3);
+    AppMemoryRead(readbuf+12, 12, 4);
+    readbuf[16] = 0x00;
+    FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 16);
     AppMemoryClear();
-    FlashUnbufferedBytesRead(readbuf+22, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
-    AppMemoryReadForSetting(3, readbuf+26, 250, 6);
-    readbuf[32] = 0x03;
-    FlashUnbufferedBytesRead(readbuf+33, 1024, 1);
-    FlashUnbufferedBytesRead(readbuf+34, 3118, 2);
-    AppMemoryRead(readbuf+36, 2046, 3);
-    AppMemoryRead(readbuf+39, 12, 4);
-    readbuf[43] = 0x00;
-    FlashUnbufferedBytesRead(readbuf+44, 5*MemoryMappingInfo.maxFlashBytesPerSlot+11, 10);
-    readbuf[54] = 0x05;
+    FlashUnbufferedBytesRead(readbuf+17, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
+    AppMemoryReadForSetting(3, readbuf+21, 250, 1);
+    readbuf[22] = 0x03;
+    FlashUnbufferedBytesRead(readbuf+23, 1024, 1);
+    FlashUnbufferedBytesRead(readbuf+24, 3118, 2);
+    AppMemoryRead(readbuf+26, 2046, 3);
+    AppMemoryRead(readbuf+29, 12, 4);
+    readbuf[33] = 0x00;
+    FlashUnbufferedBytesRead(readbuf+34, 5*MemoryMappingInfo.maxFlashBytesPerSlot+11, 10);
+    readbuf[44] = 0x05;
     FlashClearAll();
 
-    BufferToHexString(OutMessage, TERMINAL_BUFFER_SIZE, readbuf, 56);
+    if(memcmp(readbuf, expected, 45)) {
+        BufferToHexString(OutMessage, TERMINAL_BUFFER_SIZE, readbuf, 45);
+    } else {
+        snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE,  PSTR("FINE"), NULL);
+    }
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
