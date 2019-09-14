@@ -437,34 +437,35 @@ CommandStatusIdType CommandExecMemoryInfo(char* OutMessage)
 CommandStatusIdType CommandExecMemoryTest(char* OutMessage)
 {
     uint8_t bigbuf[512];
-    uint8_t readbuf[70];
+    uint8_t readbuf[56];
+    uint8_t expected[56];
+    HexStringToBuffer(expected, 56, "11111111AAAAAAAAAAAA03111111111111111111110011111111AAAAAAAAAAAA03FFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF05AA");
     memset(bigbuf, 0x11, 512);
-    memset(readbuf, 0xAA, 70);
+    memset(readbuf, 0xAA, 56);
 
     SettingsSetActiveById(3);
-    ConfigurationSetById(CONFIG_MF_CLASSIC_1K);
+    ConfigurationSetById(CONFIG_NONE);
     SettingsSave();
     SettingsSetActiveById(0);
     ConfigurationSetById(CONFIG_MF_CLASSIC_4K);
     SettingsSave();
 
     AppMemoryWriteForSetting(3, bigbuf, 0, 512);
-    AppMemoryWriteForSetting(3, bigbuf, 512, 512);
     for(uint8_t i = 0; i < 8; i++){
          AppMemoryWrite(bigbuf, i*512, 512);
     }
-    FlashUnbufferedBytesRead(readbuf, 3*MemoryMappingInfo.maxFlashBytesPerSlot+1023, 1);
-    AppMemoryReadForSetting(3, readbuf+1, 250, 9);
+    FlashUnbufferedBytesRead(readbuf, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
+    AppMemoryReadForSetting(3, readbuf+4, 250, 6);
     readbuf[10] = 0x03;
     FlashUnbufferedBytesRead(readbuf+11, 1024, 1);
     FlashUnbufferedBytesRead(readbuf+12, 3118, 2);
     AppMemoryRead(readbuf+14, 2046, 3);
     AppMemoryRead(readbuf+17, 12, 4);
     readbuf[21] = 0x00;
-    FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 1023);
+    FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 15);
     AppMemoryClear();
-    FlashUnbufferedBytesRead(readbuf+22, 3*MemoryMappingInfo.maxFlashBytesPerSlot+1023, 1);
-    AppMemoryReadForSetting(3, readbuf+23, 250, 9);
+    FlashUnbufferedBytesRead(readbuf+22, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
+    AppMemoryReadForSetting(3, readbuf+26, 250, 6);
     readbuf[32] = 0x03;
     FlashUnbufferedBytesRead(readbuf+33, 1024, 1);
     FlashUnbufferedBytesRead(readbuf+34, 3118, 2);

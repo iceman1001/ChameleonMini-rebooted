@@ -270,7 +270,7 @@ void ConfigurationGetList(char* List, uint16_t BufferSize)
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
 
-uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
+uint32_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
     /* Possible other implementation
     ConfigurationType ConfForSetting;
     memcpy_P( &ConfForSetting,
@@ -278,6 +278,6 @@ uint16_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
               sizeof(ConfigurationType) );
     return ConfForSetting.MemorySize;
     */
-    return ( (uint16_t)pgm_read_word( &(ConfigurationTable[Configuration].MemorySize) ) );
+    return ( (uint32_t)pgm_read_dword( &(ConfigurationTable[Configuration].MemorySize) ) );
 }
 

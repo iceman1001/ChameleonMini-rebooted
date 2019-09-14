@@ -99,7 +99,13 @@ bool AppMemoryRead(void* Buffer, uint32_t Address, uint32_t ByteCount) {
 }
 
 bool AppMemoryDownloadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
-    return AppMemoryRead(Buffer, Address, ByteCount);
+    bool ret = false;
+    uint32_t AvailBytes = getAppMemSizeForSetting(GlobalSettings.ActiveSetting);
+    if(Address < AvailBytes) {
+        uint32_t BytesLeft = MIN(ByteCount, AvailBytes - Address);
+        ret = AppMemoryRead(Buffer, Address, BytesLeft);
+    }
+    return ret;
 }
 
 /* Memory write operations
@@ -118,7 +124,13 @@ bool AppMemoryWrite(const void* Buffer, uint32_t Address, uint32_t ByteCount) {
 }
 
 bool AppMemoryUploadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
-    return AppMemoryWrite((const void *)Buffer, Address, ByteCount);
+    bool ret = false;
+    uint32_t AvailBytes = getAppMemSizeForSetting(GlobalSettings.ActiveSetting);
+    if(Address < AvailBytes) {
+        uint32_t BytesLeft = MIN(ByteCount, AvailBytes - Address);
+        ret = AppMemoryWrite((const void *)Buffer, Address, BytesLeft);
+    }
+    return ret;
 }
 
 /* Memory delete/clear operations
