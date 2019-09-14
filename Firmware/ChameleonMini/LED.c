@@ -16,11 +16,13 @@ static const LedPining_t LEDPiningTable[] PROGMEM = {
     [LED_EIGHT] = { .ledPort = &LED_LOW_PORT,  .ledPin = PIN0_bm }
 };
 
-INLINE void LEDMode(void) {
-    for(Led id = LED_ONE; id <= LED_EIGHT; id++) {
-        LEDSetOff(id);
-    }
+INLINE void LEDAllOff(void) {
+    LED_HIGH_PORT.OUTCLR = LED_HIGH_MASK;
+    LED_LOW_PORT.OUTCLR = LED_LOW_MASK;
+}
 
+INLINE void LEDMode(void) {
+    LEDAllOff();
     LEDSetOn(GlobalSettings.ActiveSetting);
 }
 
