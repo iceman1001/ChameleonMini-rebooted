@@ -134,19 +134,14 @@ uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount)
 			memcpy(data_save + 8, Buffer, 8);
 
 			if (!keyb_flag) {
-				// MEM_OFFSET_DETECTION_DATA
-				//#define MEM_OFFSET_DETECTION_DATA  4096 + 16
-				// Since there is lots more of space in flashmemory,  it should be able to save many more nonces.
-				// also, current implementation overwrites memory space for next slot.
-				//
-				// KEY A) 0,1,2,3,4,5  *  16 + 4096
-				// KEY B) 0,1,2,3,4,5  *  16 + +112 + 4096
+				// KEY A) 0,1,2,3,4,5  *  16
+				// KEY B) 0,1,2,3,4,5  *  16 + +112
 				// 5*16 ?
-				AppMemoryWrite(data_save, (turn_flaga * MEM_BYTES_PER_BLOCK) + 4096, MEM_BYTES_PER_BLOCK);
+				AppMemoryWrite(data_save, (turn_flaga * MEM_BYTES_PER_BLOCK), MEM_BYTES_PER_BLOCK);
 				turn_flaga++;
 				turn_flaga = turn_flaga % 6;
 			} else {
-				AppMemoryWrite(data_save, (turn_flagb * MEM_BYTES_PER_BLOCK) + 112 + 4096, MEM_BYTES_PER_BLOCK);
+				AppMemoryWrite(data_save, (turn_flagb * MEM_BYTES_PER_BLOCK) + 112, MEM_BYTES_PER_BLOCK);
 				turn_flagb++;
 				turn_flagb = turn_flagb % 6;
 			}

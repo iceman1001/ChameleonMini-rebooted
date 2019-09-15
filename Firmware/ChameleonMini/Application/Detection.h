@@ -4,7 +4,11 @@
 #include "Application.h"
 #include "ISO14443-3A.h"
 
- void MifareDetectionInit(void);
- void MifareDetectionReset(void);
- uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount);
+#define DETECTION_DATA_OFFSET           16
+#define DETECTION_DATA_LEN              192
+
+void MifareDetectionInit(void);
+void MifareDetectionReset(void);
+uint16_t MifareDetectionAppProcess(uint8_t* Buffer, uint16_t BitCount);
+
 #endif
