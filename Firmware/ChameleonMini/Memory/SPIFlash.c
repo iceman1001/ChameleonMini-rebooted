@@ -218,12 +218,8 @@ bool FlashBufferedBytesWrite(const void* Buffer, uint32_t Address, uint32_t Byte
             OPStop();
             WaitForReadyFlash();
             OPStart();
-            sendAddrOp(FLASH_OP_BUF1_WRITE, Offset);
+            sendAddrOp(FLASH_OP_BUF1_WRITE_PAGE, (PageNum | Offset));
             SPIWriteBlock(Buffer+Head, ByteRoll);
-            OPStop();
-            WaitForReadyFlash();
-            OPStart();
-            sendAddrOp(FLASH_OP_BUF1_TO_PAGE, PageNum);
             OPStop();
             ByteCount -= ByteRoll;
             Address += ByteRoll;
