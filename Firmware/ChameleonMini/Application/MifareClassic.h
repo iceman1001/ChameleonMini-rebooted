@@ -11,12 +11,18 @@
 #include "Application.h"
 #include "ISO14443-3A.h"
 
-#define MIFARE_CLASSIC_UID_SIZE     ISO14443A_UID_SIZE_SINGLE
-#define MIFARE_CLASSIC_1K_MEM_SIZE  1024
-#define MIFARE_CLASSIC_4K_MEM_SIZE  4096
+#define MIFARE_CLASSIC_UID_SIZE       ISO14443A_UID_SIZE_SINGLE
+#define MIFARE_CLASSIC_1K_MEM_SIZE    1024
+#define MIFARE_CLASSIC_4K_MEM_SIZE    4096
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+#define MIFARE_CLASSIC_MINI_MEM_SIZE  320
+#endif
 
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+void MifareClassicAppInitMini(void);
+#endif
 void MifareClassicAppReset(void);
 void MifareClassicAppTask(void);
 

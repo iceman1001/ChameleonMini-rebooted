@@ -11,27 +11,30 @@
 #include "Map.h"
 
 /* Map IDs to text */
-static const MapEntryType PROGMEM ConfigurationMap[] = {
-    { .Id = CONFIG_NONE,            .Text = "CLOSED" },
+static const MapEntryType ConfigurationMap[] PROGMEM = {
+    { .Id = CONFIG_NONE,                     .Text = "CLOSED" },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
-    { .Id = CONFIG_MF_ULTRALIGHT,   .Text = "MF_ULTRALIGHT" },
-    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,   .Text = "MF_ULTRALIGHT_EV1_80B" },
+    { .Id = CONFIG_MF_ULTRALIGHT,            .Text = "MF_ULTRALIGHT" },
+    { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,    .Text = "MF_ULTRALIGHT_EV1_80B" },
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_1K,   .Text = "MF_CLASSIC_1K" },
+    { .Id = CONFIG_MF_CLASSIC_1K,            .Text = "MF_CLASSIC_1K" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_1K_7B,    .Text = "MF_CLASSIC_1K_7B" },
+    { .Id = CONFIG_MF_CLASSIC_1K_7B,         .Text = "MF_CLASSIC_1K_7B" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_4K,   .Text = "MF_CLASSIC_4K" },
+    { .Id = CONFIG_MF_CLASSIC_4K,            .Text = "MF_CLASSIC_4K" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
-    { .Id = CONFIG_MF_CLASSIC_4K_7B,    .Text = "MF_CLASSIC_4K_7B" },
+    { .Id = CONFIG_MF_CLASSIC_4K_7B,         .Text = "MF_CLASSIC_4K_7B" },
+#endif
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_MINI,          .Text = "MF_CLASSIC_MINI" },
 #endif
 #ifdef CONFIG_MF_DETECTION_SUPPORT
-    { .Id = CONFIG_MF_DETECTION,    .Text = "MF_DETECTION" },
+    { .Id = CONFIG_MF_DETECTION,             .Text = "MF_DETECTION" },
 #endif
 };
 
@@ -205,6 +208,26 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = ISO14443A_UID_SIZE_DOUBLE,
     .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+    .ReadOnly = false
+},
+#endif
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+[CONFIG_MF_CLASSIC_MINI] = {
+    .CodecInitFunc = ISO14443ACodecInit,
+    .CodecTaskFunc = ISO14443ACodecTask,
+    .ApplicationInitFunc = MifareClassicAppInitMini,
+    .ApplicationResetFunc = MifareClassicAppReset,
+    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationProcessFunc = MifareClassicAppProcess,
+    .ApplicationGetUidFunc = MifareClassicGetUid,
+    .ApplicationSetUidFunc = MifareClassicSetUid,
+    .ApplicationGetSakFunc = MifareClassicGetSak,
+    .ApplicationSetSakFunc = MifareClassicSetSak,
+    .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+    .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
+    .UidSize = MIFARE_CLASSIC_UID_SIZE,
+    .MemorySize = MIFARE_CLASSIC_MINI_MEM_SIZE,
     .ReadOnly = false
 },
 #endif
