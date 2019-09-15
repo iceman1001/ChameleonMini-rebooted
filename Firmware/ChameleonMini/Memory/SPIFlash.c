@@ -37,8 +37,10 @@
 #include "../Common.h"
 
 // Operating parameters for the different size flash chips that are supported
-static const flashGeometry_t AT45DBXX1E[] PROGMEM = {
+static const flashGeometry_t AT45DBXX1X[] PROGMEM = {
 /*
+SPI Flash chips on ChameleonMini RevE rebooted are supposed to be AT45DBXX1D-SSU.
+This library will also work with AT45DBXX1E more recent family.
 ID = densityCode - FLASH_MDID_ID_OFFSET
 Sector (s) > Block (b) > Page (p) > Byte (B)
 53,50,7c,7c,B/p,   np, B/b,  nb,  B/sN, /0a,   /0b,ns,sM, sKB,sB
@@ -122,8 +124,7 @@ INLINE void sendAddrOp(uint8_t Op, uint32_t Address) {
 ***************************************************************************************/
 
 // Get sure we set the binary page format
-// During tests, ChameleonMini SPI flash chip could not be set to DataFlash
-// format, probably because of faulty chips, or previous configuration overflow
+// AT45DBXXD cannot be set back to 264 bits pages when set once to 256 bits pages.
 // (page size configuration is limited to 10000 configurations).
 INLINE void FlashConfigurePageSize(void) {
     if( !(FlashReadStatusRegister() & FLASH_STATUS_PAGESIZE_BIT) ) {
@@ -154,7 +155,7 @@ INLINE bool FillFlashInfo(void) {
     FlashInfo.productVariant = FlashInfo.deviceId2 & FLASH_PRODUCT_MASK;
     if( (FlashInfo.densityCode >= FLASH_DENSITY_FIRST)
         && (FlashInfo.densityCode <= FLASH_DENSITY_LAST) ) {
-        memcpy_P( &FlashInfo.geometry, &(AT45DBXX1E[FlashInfo.densityCode - FLASH_MDID_ID_OFFSET]), sizeof(FlashInfo.geometry) );
+        memcpy_P( &FlashInfo.geometry, &(AT45DBXX1X[FlashInfo.densityCode - FLASH_MDID_ID_OFFSET]), sizeof(FlashInfo.geometry) );
         ret = true;
     }
     return ret;
