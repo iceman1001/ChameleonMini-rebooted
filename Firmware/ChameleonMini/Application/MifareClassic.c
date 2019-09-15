@@ -18,6 +18,10 @@
 #define MFCLASSIC_4K_7B_ATQA_VALUE  0x0042
 #define MFCLASSIC_1K_SAK_CL1_VALUE  0x08
 #define MFCLASSIC_4K_SAK_CL1_VALUE  0x18
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+#define MFCLASSIC_MINI_ATQA_VALUE   MFCLASSIC_1K_ATQA_VALUE
+#define MFCLASSIC_MINI_SAK_VALUE    0x09
+#endif
 #define SAK_CL1_VALUE               ISO14443A_SAK_INCOMPLETE
 #define SAK_CL2_VALUE               ISO14443A_SAK_COMPLETE_NOT_COMPLIANT
 
@@ -428,6 +432,15 @@ void MifareClassicAppInit4K(void)
     }
     CardSAKValue = MFCLASSIC_4K_SAK_CL1_VALUE;
 }
+
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+void MifareClassicAppInitMini(void)
+{
+    State = STATE_IDLE;
+    CardATQAValue = MFCLASSIC_MINI_ATQA_VALUE;
+    CardSAKValue = MFCLASSIC_MINI_SAK_VALUE;
+}
+#endif
 
 void MifareClassicAppReset(void)
 {
