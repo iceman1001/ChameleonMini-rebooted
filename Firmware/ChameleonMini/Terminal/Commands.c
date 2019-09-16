@@ -360,25 +360,22 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 CommandStatusIdType CommandGetDetection(char* OutParam)
 {
-    /* Read UID / s0-b0 */
-    AppMemoryRead(OutParam, 0, 16);
-    /* Read saved nonce data from authentication */
-    AppMemoryRead(OutParam+16, DETECTION_DATA_OFFSET, DETECTION_DATA_LEN);
-    /* add file integrity to byte !! 209, 210 !! */
-    ISO14443AAppendCRCA(OutParam, 208);
-    /* encrypt data , but not CRC*/
-    char newFileName[275] = { 0 };
-    memcpy(newFileName, OutParam, 208);
-    int i, s, t, size = 208, key = (int)123321;
-    for (i = 0; i < size; i++)
-    {
-        s = newFileName[i];
-        t = (size + key + i - size / key) ^ s;
+    /* Read BLOCK0 (UID, ATQA, SAK and so on) */
+    AppMemoryRead(OutParam, DETECTION_BLOCK0_ADDR, DETECTION_MEM_BLOCK0_SIZE);
+    /* Read saved data from KEY A and KEY B AUTH Phase 1 and 2 attempts */
+    AppMemoryRead(OutParam+DETECTION_MEM_BLOCK0_SIZE, DETECTION_MEM_DATA_START_ADDR, DETECTION_MEM_MFKEY_DATA_LEN);
+    /* Add file integrity to our saved data. OutParam buffer is now DETECTION_MEM_APP_SIZE + 2 long */
+    ISO14443AAppendCRCA(OutParam, DETECTION_MEM_APP_SIZE);
+    /* Encrypt data, but not CRC. TODO: Understand what is this doing really?! */
+    int i, t, size = DETECTION_MEM_APP_SIZE, key = (int)123321;
+    for (i = 0; i < size; i++) {
+        t = (size + key + i - size / key) ^ OutParam[i];
         OutParam[i] = t;
     }
-    /* send data + CRC */
-    for(uint16_t num=0; num < 208+2; num++)
-       TerminalSendChar(OutParam[num]);
+    /* Send data + CRC */
+    for(uint8_t num=0; num < DETECTION_MEM_APP_SIZE+2; num++) {
+        TerminalSendChar(OutParam[num]);
+    }
     OutParam[0] = 0;
     return COMMAND_INFO_OK_ID;
 }
@@ -386,9 +383,7 @@ CommandStatusIdType CommandGetDetection(char* OutParam)
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
 {
     /* Fill memory for detection with 0xFF,  clearing it */
-    uint8_t t[200];
-    memset(t, 0xff, 200);
-    AppMemoryWrite(t, DETECTION_DATA_OFFSET, DETECTION_DATA_LEN);
+    AppMemoryClear();
     return COMMAND_INFO_OK_ID;
 }
 #endif

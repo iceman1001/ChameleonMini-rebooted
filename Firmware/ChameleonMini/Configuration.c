@@ -9,6 +9,9 @@
 #include "Configuration.h"
 #include "Settings.h"
 #include "Map.h"
+/* Include all Codecs and Applications */
+#include "Codec/Codec.h"
+#include "Application/Application.h"
 
 /* Map IDs to text */
 static const MapEntryType ConfigurationMap[] PROGMEM = {
@@ -37,10 +40,6 @@ static const MapEntryType ConfigurationMap[] PROGMEM = {
     { .Id = CONFIG_MF_DETECTION,             .Text = "MF_DETECTION" },
 #endif
 };
-
-/* Include all Codecs and Applications */
-#include "Codec/Codec.h"
-#include "Application/Application.h"
 
 static void CodecInitDummy(void) { }
 static void CodecTaskDummy(void) { }
@@ -246,8 +245,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+    .UidSize = DETECTION_UID_SIZE,
+    .MemorySize = DETECTION_MEM_APP_SIZE,
     .ReadOnly = false
 },
 #endif
