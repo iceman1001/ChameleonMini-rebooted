@@ -62,16 +62,8 @@
 #define FLASH_PRODUCT_MASK          0x1F
 
 #define FLASH_OP_READ               0x0B // Random access continuous read (max freq)
-                                         // Equivalent "1B" did not work during tests,
-                                         // and has not difference for frequently found
-                                         // ChameleonMini memories. Faster than "03".
-#define FLASH_OP_READ_LF            0x03 // Random access continuous read (low freq)
 #define FLASH_OP_PAGE_TO_BUF1       0x53 // Load a page to buffer 1
-#define FLASH_OP_BUF1_WRITE         0x84 // Write into buffer 1
-#define FLASH_OP_BUF1_TO_PAGE       0x83 // Dump buffer 1 into page
-#define FLASH_OP_RWM_WITH_BUF1      0x58 // Read-Modify-Write through buffer 1
-                                         // Note thats tests with Read-Modify-Write atomic
-                                         // operations (58 and 59) failed.
+#define FLASH_OP_BUF1_WRITE_PAGE    0x82 // Main Memory Page Program Through Buffer
 #define FLASH_OP_GET_STATUS         0xD7 // Read status
 #define FLASH_OP_SECTOR_ERASE       0x7C // Erase a sector
 #define FLASH_OP_BLOCK_ERASE        0x50 // Erase a block
@@ -89,8 +81,7 @@
 #define FLASH_BSIZE                 8 // Bits
 
 #define FLASH_SEQ_PAGE_SIZE_BINARY  0x3D, 0x2A, 0x80, 0xA6 // Binary page size (256 bytes)
-#define FLASH_SEQ_PAGE_SIZE_DEFAULT 0x3D, 0x2A, 0x80, 0xA7 // DataFlash (default) page size (264 bytes)
-#define FLASH_SEQ_CHIP_ERASE        0xC7, 0x94, 0x80, 0x9A // erase entire chip
+#define FLASH_SEQ_CHIP_ERASE        0xC7, 0x94, 0x80, 0x9A // Erase entire chip
 
 #define FLASH_SECTOR_ADDR_0A        0x00
 #define FLASH_SECTOR_ADDR_0B        0x01
