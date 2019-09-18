@@ -314,7 +314,7 @@ CommandStatusIdType CommandExecClear(char* OutParam) {
     AppMemoryClear();
     ConfigurationSetById(DEFAULT_CONFIGURATION);
     ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
-    ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_ACTION);
+    ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_LONG_ACTION);
     SettingsSave();
     return COMMAND_INFO_OK_ID;
 }
@@ -414,7 +414,7 @@ CommandStatusIdType CommandExecClearAll(char* OutMessage)
         SettingsSetActiveById(i);
         ConfigurationSetById(DEFAULT_CONFIGURATION);
         ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
-        ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_ACTION);
+        ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_LONG_ACTION);
     }
     SettingsSetActiveById(SETTINGS_FIRST);
     SettingsSave();
