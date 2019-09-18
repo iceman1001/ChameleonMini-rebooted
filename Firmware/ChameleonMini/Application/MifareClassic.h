@@ -155,6 +155,26 @@ C1 C2 C3    read    write   increment   decrement,
 #define MFCLASSIC_ACC_BLOCK_DECREMENT           0x08
 */
 
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+#define DETECTION_BYTES_PER_SAVE                16
+#define DETECTION_NONCE_SIZE                    4
+#define DETECTION_READER_AUTH_P1_SIZE           4
+#define DETECTION_READER_AUTH_P2_SIZE           8
+#define DETECTION_SAVE_P2_OFFSET                8
+#define DETECTION_KEYX_SAVE_IDX                 0
+#define DETECTION_BYTES_PER_SAVE                16
+#define DETECTION_MEM_BLOCK0_SIZE               16
+#define DETECTION_MEM_DATA_START_ADDR           16
+#define DETECTION_MEM_MAX_KEYX_SAVES            6
+#define DETECTION_MEM_KEYTYPE_NUM               2
+// (DETECTION_MEM_MAX_KEYX_SAVES * DETECTION_BYTES_PER_SAVE * DETECTION_MEM_KEYTYPE_NUM)
+#define DETECTION_MEM_MFKEY_DATA_LEN            192
+// (DETECTION_MEM_BLOCK0_SIZE + (DETECTION_MEM_MAX_KEYX_SAVES * DETECTION_BYTES_PER_SAVE))
+#define DETECTION_MEM_KEYX_SEPARATOR_OFFSET     112
+// (DETECTION_MEM_BLOCK0_SIZE + DETECTION_MEM_MFKEY_DATA_LEN)
+#define DETECTION_MEM_APP_SIZE                  208
+#endif
+
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
 void MifareClassicAppReset(void);
@@ -175,7 +195,7 @@ void MifareClassicSetSak(uint8_t Sak);
 void MifareClassicAppInitMini(void);
 #endif
 
-#ifdef #ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void);
 #endif
 

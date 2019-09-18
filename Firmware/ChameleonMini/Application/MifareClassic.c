@@ -9,9 +9,10 @@
 
 #include "MifareClassic.h"
 #include "ISO14443-3A.h"
+#include "Crypto1.h"
+#include "../Random.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory/Memory.h"
-#include "Crypto1.h"
 
 /* TODO: Access control not implemented yet
 // Decoding table for Access conditions of a data block
@@ -173,6 +174,11 @@ static bool is7BytesUID = false;
 static bool isFromHaltState = false;
 /* To enable MF_DETECTION behavior */
 static bool isDetectionEnabled = false;
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
+static uint8_t DetectionAttemptsKeyA = 0;
+static uint8_t DetectionAttemptsKeyB = 0;
+#endif
 
 /* TODO: Access control not implemented yet
 * Decode Access conditions for a block
@@ -229,8 +235,7 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
 */
 
 
-INLINE bool CheckValueIntegrity(uint8_t* Block)
-{
+INLINE bool CheckValueIntegrity(uint8_t* Block) {
     // Value Blocks contain a value stored three times, with
     // the middle portion inverted.
     if (    (Block[0] == (uint8_t) ~Block[4]) && (Block[0] == Block[8])
@@ -246,8 +251,7 @@ INLINE bool CheckValueIntegrity(uint8_t* Block)
     }
 }
 
-INLINE void ValueFromBlock(uint32_t* Value, uint8_t* Block)
-{
+INLINE void ValueFromBlock(uint32_t* Value, uint8_t* Block) {
     *Value = 0;
     *Value |= ((uint32_t) Block[0] << 0);
     *Value |= ((uint32_t) Block[1] << 8);
@@ -255,8 +259,7 @@ INLINE void ValueFromBlock(uint32_t* Value, uint8_t* Block)
     *Value |= ((uint32_t) Block[3] << 24);
 }
 
-INLINE void ValueToBlock(uint8_t* Block, uint32_t Value)
-{
+INLINE void ValueToBlock(uint8_t* Block, uint32_t Value) {
     Block[0] = (uint8_t) (Value >> 0);
     Block[1] = (uint8_t) (Value >> 8);
     Block[2] = (uint8_t) (Value >> 16);
@@ -272,10 +275,10 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value)
 }
 
 
-void MifareClassicAppInit(uint16_t ATQA_1K, uint8_t SAK, bool is7B, bool isDetection) {
+void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetection) {
     State = STATE_IDLE;
     is7BytesUID = is7B;
-    CardATQAValue = (is7BytesUID) ? (ATQA_1K | MFCLASSIC_7B_ATQA_MASK) : (ATQA_1K);
+    CardATQAValue = (is7BytesUID) ? (ATQA_4B | MFCLASSIC_7B_ATQA_MASK) : (ATQA_4B);
     CardSAKValue = SAK;
     isFromHaltState = false;
     isDetectionEnabled = isDetection;
@@ -287,7 +290,7 @@ void MifareClassicAppInit1K(void) {
 }
 
 void MifareClassicAppInit4K(void) {
-    MifareClassicAppInit( MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_4K_SAK_VALUE,
+    MifareClassicAppInit( MFCLASSIC_4K_ATQA_VALUE, MFCLASSIC_4K_SAK_VALUE,
                           (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE), false );
 }
 
@@ -359,8 +362,7 @@ INLINE uint16_t mfcHandleWUPCommand(uint8_t* Buffer, uint16_t BitCount, uint16_t
     return ret;
 }
 
-uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
-{
+uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     /* Reset Halt state */
     isFromHaltState = (State == STATE_HALT);
     /* Wakeup and Request may occure in all states. We handle is first, so we can skip
@@ -479,42 +481,54 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
                 retSize = mfcHandleHaltCommand(Buffer);
             } else if ( (Buffer[0] == MFCLASSIC_CMD_AUTH_A) || (Buffer[0] == MFCLASSIC_CMD_AUTH_B) ) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_CMD_AUTH_FRAME_SIZE)) {
-                    uint8_t SectorAddress;
-                    uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET);
-                    /* Fix for MFClassic 4k cards */
-                    if(Buffer[1] >= 128) {
-                        SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
-                        KeyOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
-                    } else {
-                        SectorAddress = Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK;
-                    }
-                    uint16_t KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
-                    uint8_t Key[6];
-                    uint8_t Uid[4];
-                    uint8_t CardNonce[4] = {0x01,0x20,0x01,0x45};
-                    uint8_t CardNonceSuccessor1[4] = {0x63, 0xe5, 0xbc, 0xa7};
-                    uint8_t CardNonceSuccessor2[4] = {0x99, 0x37, 0x30, 0xbd};
+                    if(!isDetectionEnabled) {
+                        uint8_t SectorAddress;
+                        uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET);
+                        /* Fix for MFClassic 4k cards */
+                        if(Buffer[1] >= 128) {
+                            SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
+                            KeyOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
+                        } else {
+                            SectorAddress = Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK;
+                        }
+                        uint16_t KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
+                        uint8_t Key[6];
+                        uint8_t Uid[4];
+                        uint8_t CardNonce[4] = {0x01,0x20,0x01,0x45};
+                        uint8_t CardNonceSuccessor1[4] = {0x63, 0xe5, 0xbc, 0xa7};
+                        uint8_t CardNonceSuccessor2[4] = {0x99, 0x37, 0x30, 0xbd};
 
-                    /* Generate a random nonce and read UID and key from memory */
-                    //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                    if (is7BytesUID) {
-                        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
-                    } else {
-                        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+                        /* Generate a random nonce and read UID and key from memory */
+                        //RandomGetBuffer(CardNonce, sizeof(CardNonce));
+                        if (is7BytesUID) {
+                            AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+                        } else {
+                            AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+                        }
+                        AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+                        /* Precalculate the reader response from card-nonce */
+                        memcpy(ReaderResponse, CardNonceSuccessor1, 4);
+                        /* Precalculate our response from the reader response */
+                        memcpy(CardResponse, CardNonceSuccessor2, 4);
+                        /* Respond with the random card nonce and expect further authentication
+                        * form the reader in the next frame. */
+                        for (uint8_t i=0; i<sizeof(CardNonce); i++) {
+                            Buffer[i] = CardNonce[i];
+                        }
+                        /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
+                        Crypto1Setup(Key, Uid, CardNonce, NULL);
                     }
-                    AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
-                    /* Precalculate the reader response from card-nonce */
-                    memcpy(ReaderResponse, CardNonceSuccessor1, 4);
-                    /* Precalculate our response from the reader response */
-                    memcpy(CardResponse, CardNonceSuccessor2, 4);
-                    /* Respond with the random card nonce and expect further authentication
-                    * form the reader in the next frame. */
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+                    else {
+                        // Save reader's auth phase 1: KEY type (A or B), and sector number
+                        memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
+                        // Generate a random nonce and save it for later output to mfkey
+                        RandomGetBuffer(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, DETECTION_NONCE_SIZE);
+                        // Fill reply buffer with generated nonce
+                        memcpy(Buffer, DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, DETECTION_NONCE_SIZE);
+                    }
+#endif
                     State = STATE_AUTHING;
-                    for (uint8_t i=0; i<sizeof(CardNonce); i++) {
-                        Buffer[i] = CardNonce[i];
-                    }
-                    /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
-                    Crypto1Setup(Key, Uid, CardNonce, NULL);
                     retSize = MFCLASSIC_CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
                 } else {
                     Buffer[0] = MFCLASSIC_NAK_TBOK_CRCKO;
@@ -536,29 +550,47 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
             break; /* End of state ACTIVE */
 
         case STATE_AUTHING:
-            /* Reader delivers an encrypted nonce. We use it
-            * to setup the crypto1 LFSR in nonlinear feedback mode.
-            * Furthermore it delivers an encrypted answer. Decrypt and check it */
-            Crypto1Auth(&Buffer[0]);
-            for (uint8_t i=0; i<4; i++) {
-                Buffer[i+4] ^= Crypto1Byte();
-            }
-            if ((Buffer[4] == ReaderResponse[0]) &&
-                (Buffer[5] == ReaderResponse[1]) &&
-                (Buffer[6] == ReaderResponse[2]) &&
-                (Buffer[7] == ReaderResponse[3])) {
-                /* Reader is authenticated. Encrypt the precalculated card response
-                * and generate the parity bits. */
-                for (uint8_t i=0; i<sizeof(CardResponse); i++) {
-                    Buffer[i] = CardResponse[i] ^ Crypto1Byte();
-                    Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(CardResponse[i]) ^ Crypto1FilterOutput();
+            if(!isDetectionEnabled) {
+                /* Reader delivers an encrypted nonce. We use it
+                * to setup the crypto1 LFSR in nonlinear feedback mode.
+                * Furthermore it delivers an encrypted answer. Decrypt and check it */
+                Crypto1Auth(&Buffer[0]);
+                for (uint8_t i=0; i<4; i++) {
+                    Buffer[i+4] ^= Crypto1Byte();
                 }
-                State = STATE_AUTHED_IDLE;
-                retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
-            } else {
-                /* Just reset on authentication error. */
+                if ((Buffer[4] == ReaderResponse[0]) &&
+                    (Buffer[5] == ReaderResponse[1]) &&
+                    (Buffer[6] == ReaderResponse[2]) &&
+                    (Buffer[7] == ReaderResponse[3])) {
+                    /* Reader is authenticated. Encrypt the precalculated card response
+                    * and generate the parity bits. */
+                    for (uint8_t i=0; i<sizeof(CardResponse); i++) {
+                        Buffer[i] = CardResponse[i] ^ Crypto1Byte();
+                        Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(CardResponse[i]) ^ Crypto1FilterOutput();
+                    }
+                    State = STATE_AUTHED_IDLE;
+                    retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                } else {
+                    /* Just reset on authentication error. */
+                    State = STATE_IDLE;
+                }
+            }
+#ifdef CONFIG_MF_DETECTION_SUPPORT
+            else {
+                // Save reader's auth phase 2 answer to our nonce from STATE_ACTIVE
+                memcpy(DetectionDataSave+DETECTION_SAVE_P2_OFFSET, Buffer, DETECTION_READER_AUTH_P2_SIZE);
+                if (DetectionDataSave[DETECTION_KEYX_SAVE_IDX] == MFCLASSIC_CMD_AUTH_A) {
+                    AppMemoryWrite(DetectionDataSave, (DetectionAttemptsKeyA * MFCLASSIC_MEM_BYTES_PER_BLOCK), MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    DetectionAttemptsKeyA++;
+                    DetectionAttemptsKeyA = DetectionAttemptsKeyA % DETECTION_MEM_MAX_KEYX_SAVES;
+                } else {
+                    AppMemoryWrite(DetectionDataSave, DETECTION_MEM_KEYX_SEPARATOR_OFFSET + (DetectionAttemptsKeyB * MFCLASSIC_MEM_BYTES_PER_BLOCK), MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    DetectionAttemptsKeyB++;
+                    DetectionAttemptsKeyB = DetectionAttemptsKeyB % DETECTION_MEM_MAX_KEYX_SAVES;
+                }
                 State = STATE_IDLE;
             }
+#endif
             break; /* End of state AUTHING */
 
         case STATE_AUTHED_IDLE:
@@ -753,8 +785,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount)
     return retSize;
 }
 
-void MifareClassicGetUid(ConfigurationUidType Uid)
-{
+void MifareClassicGetUid(ConfigurationUidType Uid) {
     if (is7BytesUID) {
         AppMemoryRead(&Uid[0], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
         AppMemoryRead(&Uid[3], MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
@@ -763,8 +794,7 @@ void MifareClassicGetUid(ConfigurationUidType Uid)
     }
 }
 
-void MifareClassicSetUid(ConfigurationUidType Uid)
-{
+void MifareClassicSetUid(ConfigurationUidType Uid) {
     if (is7BytesUID) {
         AppMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     } else {
@@ -774,22 +804,18 @@ void MifareClassicSetUid(ConfigurationUidType Uid)
     }
 }
 
-void MifareClassicGetAtqa(uint16_t * Atqa)
-{
+void MifareClassicGetAtqa(uint16_t * Atqa) {
     *Atqa = CardATQAValue;
 }
 
-void MifareClassicSetAtqa(uint16_t Atqa)
-{
+void MifareClassicSetAtqa(uint16_t Atqa) {
     CardATQAValue = Atqa;
 }
 
-void MifareClassicGetSak(uint8_t * Sak)
-{
+void MifareClassicGetSak(uint8_t * Sak) {
     *Sak = CardSAKValue;
 }
 
-void MifareClassicSetSak(uint8_t Sak)
-{
+void MifareClassicSetSak(uint8_t Sak) {
     CardSAKValue = Sak;
 }
