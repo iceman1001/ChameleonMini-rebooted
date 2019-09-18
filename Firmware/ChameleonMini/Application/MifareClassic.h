@@ -1,8 +1,10 @@
 /*
  * MifareClassic.h
  *
- *  Created on: 13.05.2013
- *      Author: skuser
+ * 2019, @shinhub
+ *
+ * Parts are Created on: 20.03.2013, Author: skuser
+ *
  */
 
 #ifndef MIFARECLASSIC_H_
