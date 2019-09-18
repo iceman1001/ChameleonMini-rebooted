@@ -25,6 +25,7 @@
 #define MFCLASSIC_1K_7B_ATQA_VALUE              0x0044
 #define MFCLASSIC_4K_ATQA_VALUE                 0x0002
 #define MFCLASSIC_4K_7B_ATQA_VALUE              0x0042
+#define MFCLASSIC_7B_ATQA_MASK                  0x40
 #define MFCLASSIC_1K_SAK_VALUE                  0x08
 #define MFCLASSIC_4K_SAK_VALUE                  0x18
 #ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
@@ -156,9 +157,6 @@ C1 C2 C3    read    write   increment   decrement,
 
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
-void MifareClassicAppInitMini(void);
-#endif
 void MifareClassicAppReset(void);
 void MifareClassicAppTask(void);
 
@@ -172,5 +170,13 @@ void MifareClassicSetAtqa(uint16_t Atqa);
 
 void MifareClassicGetSak(uint8_t * Sak);
 void MifareClassicSetSak(uint8_t Sak);
+
+#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
+void MifareClassicAppInitMini(void);
+#endif
+
+#ifdef #ifdef CONFIG_MF_DETECTION_SUPPORT
+void MifareClassicAppDetectionInit(void);
+#endif
 
 #endif /* MIFARECLASSIC_H_ */
