@@ -580,13 +580,13 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 // Save reader's auth phase 2 answer to our nonce from STATE_ACTIVE
                 memcpy(DetectionDataSave+DETECTION_SAVE_P2_OFFSET, Buffer, DETECTION_READER_AUTH_P2_SIZE);
                 // Align data storage in each KEYX dedicated memory space, and iterate counters
-                uint32_t memSaveAddr;
+                uint32_t memSaveAddr = DETECTION_MEM_BLOCK0_SIZE;
                 if (DetectionDataSave[DETECTION_KEYX_SAVE_IDX] == MFCLASSIC_CMD_AUTH_A) {
-                    memSaveAddr = (DetectionAttemptsKeyA * MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    memSaveAddr += (DetectionAttemptsKeyA * MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     DetectionAttemptsKeyA++;
                     DetectionAttemptsKeyA = DetectionAttemptsKeyA % DETECTION_MEM_MAX_KEYX_SAVES;
                 } else {
-                    memSaveAddr = (DETECTION_MEM_KEYX_SEPARATOR_OFFSET + (DetectionAttemptsKeyB * MFCLASSIC_MEM_BYTES_PER_BLOCK));
+                    memSaveAddr += (DETECTION_MEM_KEYX_SEPARATOR_OFFSET + (DetectionAttemptsKeyB * MFCLASSIC_MEM_BYTES_PER_BLOCK));
                     DetectionAttemptsKeyB++;
                     DetectionAttemptsKeyB = DetectionAttemptsKeyB % DETECTION_MEM_MAX_KEYX_SAVES;
                 }
