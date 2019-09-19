@@ -358,53 +358,43 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 }
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
- #define MEM_OFFSET_DETECTION_DATA  4096 + 16
- #define MEM_LEN_DETECTION_DATA 192
+/* Function to encrypt the transfer for collected data */
+void ComPass(char *toBeEncFileName, int key, int len)
+{
+    char newFileName[275] = { 0 };
+    memcpy(newFileName, toBeEncFileName, len);
+    int i, s, t, size = len;
+    for (i = 0; i < size; i++)
+    {
+        s = newFileName[i];
+        t = (size + key + i - size / key) ^ s;
+        toBeEncFileName[i] = t;
+    }
+}
 
- /* Function to encrypt the transfer for collected data */
- void ComPass(char *toBeEncFileName, int key, int len)
- {
-     char newFileName[275] = { 0 };
-     memcpy(newFileName, toBeEncFileName, len);
-     int i, s, t, size = len;
-     for (i = 0; i < size; i++)
-     {
-         s = newFileName[i];
-         t = (size + key + i - size / key) ^ s;
-         toBeEncFileName[i] = t;
-     }
- }
+CommandStatusIdType CommandGetDetection(char* OutParam)
+{
+    /* Read UID / s0-b0 */
+    AppMemoryRead(OutParam, MFCLASSIC_MEM_S0B0_ADDRESS, DETECTION_MEM_BLOCK0_SIZE);
+    /* Read saved nonce data from authentication */
+    AppMemoryRead(OutParam+DETECTION_MEM_BLOCK0_SIZE, DETECTION_MEM_DATA_START_ADDR, DETECTION_MEM_MFKEY_DATA_LEN);
+    /* Add file integrity to byte. This adds 2 bytes (209, 210) to DETECTION_MEM_APP_SIZE */
+    ISO14443AAppendCRCA(OutParam, DETECTION_MEM_APP_SIZE);
+    /* Encrypt data , but not CRC */
+    ComPass(OutParam, (int)123321, DETECTION_MEM_APP_SIZE);
+    /* Send data + CRC */
+    for(uint8_t num=0; num < DETECTION_MEM_APP_SIZE+2; num++) {
+       TerminalSendChar(OutParam[num]);
+    }
+    OutParam[0] = 0;
+    return COMMAND_INFO_OK_ID;
+}
 
- CommandStatusIdType CommandGetDetection(char* OutParam)
- {
-     /* Read UID / s0-b0 */
-     AppMemoryRead(OutParam, 0, 16);
-
-     /* Read saved nonce data from authentication */
-     AppMemoryRead(OutParam+16, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
-
-     /* add file integrity to byte !! 209, 210 !! */
-     ISO14443AAppendCRCA(OutParam, 208);
-
-     /* encrypt data , but not CRC*/
-     ComPass(OutParam, (int)123321, 208);
-
-     /* send data + CRC */
-     for(uint16_t num=0; num < 208+2; num++)
-        TerminalSendChar(OutParam[num]);
-
-     OutParam[0] = 0;
-     return COMMAND_INFO_OK_ID;
- }
-
- CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
- {
-     /* Fill memory for detection with 0xFF,  clearing it */
-     uint8_t t[200];
-     memset(t, 0xff, 200);
-     AppMemoryWrite(t, MEM_OFFSET_DETECTION_DATA, MEM_LEN_DETECTION_DATA);
-     return COMMAND_INFO_OK_ID;
- }
+CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
+{
+    AppMemoryClear();
+    return COMMAND_INFO_OK_ID;
+}
 #endif
 
 CommandStatusIdType CommandExecClearAll(char* OutMessage)
