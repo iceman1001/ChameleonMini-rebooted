@@ -50,6 +50,7 @@
 #define MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK       0xF0
 #define MFCLASSIC_MEM_BYTES_PER_BLOCK           16
 #define MFCLASSIC_MEM_VALUE_SIZE                4
+#define MFCLASSIC_MEM_NONCE_SIZE                4
 #define MFCLASSIC_ACK_NAK_FRAME_SIZE            4
 #define MFCLASSIC_ACK_VALUE                     0x0A
 
@@ -157,14 +158,12 @@ C1 C2 C3    read    write   increment   decrement,
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 #define DETECTION_BYTES_PER_SAVE                16
-#define DETECTION_NONCE_SIZE                    4
 #define DETECTION_READER_AUTH_P1_SIZE           4
 #define DETECTION_READER_AUTH_P2_SIZE           8
 #define DETECTION_SAVE_P2_OFFSET                8
 #define DETECTION_KEYX_SAVE_IDX                 0
-#define DETECTION_BYTES_PER_SAVE                16
 #define DETECTION_MEM_BLOCK0_SIZE               16
-#define DETECTION_MEM_DATA_START_ADDR           16
+#define DETECTION_MEM_DATA_START_ADDR           0x10
 #define DETECTION_MEM_MAX_KEYX_SAVES            6
 #define DETECTION_MEM_KEYTYPE_NUM               2
 // (DETECTION_MEM_MAX_KEYX_SAVES * DETECTION_BYTES_PER_SAVE * DETECTION_MEM_KEYTYPE_NUM)
@@ -173,6 +172,9 @@ C1 C2 C3    read    write   increment   decrement,
 #define DETECTION_MEM_KEYX_SEPARATOR_OFFSET     112
 // (DETECTION_MEM_BLOCK0_SIZE + DETECTION_MEM_MFKEY_DATA_LEN)
 #define DETECTION_MEM_APP_SIZE                  208
+#define DETECTION_BLOCK0_CANARY                 0xDE, 0x7E, 0xC7, 0x10
+#define DETECTION_BLOCK0_CANARY_ADDR            0x08
+#define DETECTION_BLOCK0_CANARY_SIZE            4
 #endif
 
 void MifareClassicAppInit1K(void);

@@ -248,7 +248,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
     .MemorySize = DETECTION_MEM_APP_SIZE,
-    .ReadOnly = false
+    .ReadOnly = true
 },
 #endif
 };

@@ -9,17 +9,8 @@
 #define SETTING_TO_INDEX(S) (S - SETTINGS_FIRST)
 #define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)
 
-SettingsType GlobalSettings = {
-    .ActiveSetting = DEFAULT_SETTING,
-    .ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
-    .Settings = { [SETTINGS_FIRST ... SETTINGS_LAST] =  {
-                .Configuration = DEFAULT_CONFIGURATION,
-                .ButtonAction = DEFAULT_BUTTON_ACTION,
-                .ButtonLongAction = DEFAULT_BUTTON_LONG_ACTION,
-                .PendingTaskTimeout = SETTINGS_TIMEOUT,
-                }
-            }
-};
+SettingsType GlobalSettings;
+
 SettingsType EEMEM StoredSettings = {
     .ActiveSetting = DEFAULT_SETTING,
     .ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],

@@ -358,30 +358,13 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 }
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
-/* Function to encrypt the transfer for collected data */
-void ComPass(char *toBeEncFileName, int key, int len)
-{
-    char newFileName[275] = { 0 };
-    memcpy(newFileName, toBeEncFileName, len);
-    int i, s, t, size = len;
-    for (i = 0; i < size; i++)
-    {
-        s = newFileName[i];
-        t = (size + key + i - size / key) ^ s;
-        toBeEncFileName[i] = t;
-    }
-}
-
-CommandStatusIdType CommandGetDetection(char* OutParam)
-{
+CommandStatusIdType CommandGetDetection(char* OutParam) {
     /* Read UID / s0-b0 */
     AppMemoryRead(OutParam, MFCLASSIC_MEM_S0B0_ADDRESS, DETECTION_MEM_BLOCK0_SIZE);
     /* Read saved nonce data from authentication */
     AppMemoryRead(OutParam+DETECTION_MEM_BLOCK0_SIZE, DETECTION_MEM_DATA_START_ADDR, DETECTION_MEM_MFKEY_DATA_LEN);
     /* Add file integrity to byte. This adds 2 bytes (209, 210) to DETECTION_MEM_APP_SIZE */
     ISO14443AAppendCRCA(OutParam, DETECTION_MEM_APP_SIZE);
-    /* Encrypt data , but not CRC */
-    ComPass(OutParam, (int)123321, DETECTION_MEM_APP_SIZE);
     /* Send data + CRC */
     for(uint8_t num=0; num < DETECTION_MEM_APP_SIZE+2; num++) {
        TerminalSendChar(OutParam[num]);
@@ -390,15 +373,13 @@ CommandStatusIdType CommandGetDetection(char* OutParam)
     return COMMAND_INFO_OK_ID;
 }
 
-CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam)
-{
+CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam) {
     AppMemoryClear();
     return COMMAND_INFO_OK_ID;
 }
 #endif
 
-CommandStatusIdType CommandExecClearAll(char* OutMessage)
-{
+CommandStatusIdType CommandExecClearAll(char* OutMessage) {
     MemoryClearAll();
     for(uint8_t i = SETTINGS_FIRST; i <= SETTINGS_LAST; i++) {
         SettingsSetActiveById(i);
@@ -412,8 +393,7 @@ CommandStatusIdType CommandExecClearAll(char* OutMessage)
 }
 
 #ifdef CONFIG_DEBUG_MEMORYINFO_COMMAND
-CommandStatusIdType CommandExecMemoryInfo(char* OutMessage)
-{
+CommandStatusIdType CommandExecMemoryInfo(char* OutMessage) {
     snprintf_P( OutMessage, TERMINAL_BUFFER_SIZE,
         PSTR("SPI Flash:\r\n- Bytes Per Setting: %lu\r\n- MDID Bytes: %02X%02X%02X%02X\r\n- Memory size: %u Mbits (%u KBytes)\r\nEEPROM:\r\n- Bytes Per Setting: %u\r\n- Memory size: %u Bytes"),
         MemoryMappingInfo.maxFlashBytesPerSlot,
@@ -425,8 +405,7 @@ CommandStatusIdType CommandExecMemoryInfo(char* OutMessage)
 #endif
 
 #ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
-CommandStatusIdType CommandExecMemoryTest(char* OutMessage)
-{
+CommandStatusIdType CommandExecMemoryTest(char* OutMessage) {
     uint8_t bigbuf[128];
     uint8_t readbuf[45];
     uint8_t expected[45];
