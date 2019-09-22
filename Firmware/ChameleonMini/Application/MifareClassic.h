@@ -36,6 +36,14 @@
 
 #define MFCLASSIC_MEM_S0B0_ADDRESS              0x00
 #define MFCLASSIC_MEM_INVALID_ADDRESS           0xFF
+#define MFCLASSIC_MEM_SAK_ADDR                  0x05
+#define MFCLASSIC_MEM_7B_SAK_ADDR               0x08
+#define MFCLASSIC_MEM_SAK_SIZE                  1
+#define MFCLASSIC_MEM_SAK_VOID                  0xFF
+#define MFCLASSIC_MEM_ATQA_ADDR                 0x06
+#define MFCLASSIC_MEM_7B_ATQA_ADDR              0x09
+#define MFCLASSIC_MEM_ATQA_SIZE                 2
+#define MFCLASSIC_MEM_ATQA_VOID                 0xFFFF
 #define MFCLASSIC_MEM_UID_CL1_ADDRESS           0x00
 #define MFCLASSIC_MEM_UID_CL1_SIZE              4
 #define MFCLASSIC_MEM_UID_BCC1_ADDRESS          0x04

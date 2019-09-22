@@ -109,9 +109,9 @@ CommandStatusIdType CommandGetAtqa(char* OutParam) {
     // Convert uint16 to uint8 buffer[]
     uint8_t atqaBuffer[2] = { 0,0 };
     atqaBuffer[1] = (uint8_t)Atqa;
-    atqaBuffer[0] = Atqa >> 8;
+    atqaBuffer[0] = (uint8_t)(Atqa >> 8);
 
-    BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, &atqaBuffer, sizeof(uint16_t));
+    BufferToHexString(OutParam, TERMINAL_BUFFER_SIZE, atqaBuffer, sizeof(uint16_t));
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
@@ -120,18 +120,13 @@ CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam) {
     uint8_t AtqaBuffer[2] = { 0, 0 };
     uint16_t Atqa = 0;
 
-    if (HexStringToBuffer(&AtqaBuffer, sizeof(AtqaBuffer), InParam) != sizeof(uint16_t)) {
+    if (HexStringToBuffer(AtqaBuffer, sizeof(AtqaBuffer), InParam) != sizeof(AtqaBuffer)) {
         // This has to be 4 digits (2 bytes), e.g.: 0004
         return COMMAND_ERR_INVALID_PARAM_ID;
     }
 
     // Convert uint8 buffer[] to uint16
-    if (strlen(InParam) > 2) {
-        Atqa = ((uint16_t)AtqaBuffer[0] << 8) | AtqaBuffer[1];
-    }
-    else {
-        Atqa = AtqaBuffer[0];
-    }
+    Atqa = ((uint16_t)AtqaBuffer[0] << 8) | AtqaBuffer[1];
 
     ApplicationSetAtqa(Atqa);
     return COMMAND_INFO_OK_ID;

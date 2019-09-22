@@ -276,10 +276,24 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value) {
 void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetection) {
     State = STATE_IDLE;
     is7BytesUID = is7B;
-    CardATQAValue = (is7BytesUID) ? (ATQA_4B | MFCLASSIC_7B_ATQA_MASK) : (ATQA_4B);
-    CardSAKValue = SAK;
+    uint16_t expectedATQA = (is7BytesUID) ? (ATQA_4B | MFCLASSIC_7B_ATQA_MASK) : (ATQA_4B);
+    uint8_t expectedSAK = SAK;
+    uint16_t readATQA;
+    uint8_t readSAK;
+    MifareClassicGetSak(&readSAK);
+    MifareClassicGetAtqa(&readATQA);
+    if ( (readSAK == MFCLASSIC_MEM_SAK_VOID) ) {
+        MifareClassicSetSak(expectedSAK);
+    }
+    if ( (readATQA == MFCLASSIC_MEM_ATQA_VOID) ) {
+        MifareClassicSetAtqa(expectedATQA);
+    }
     isFromHaltState = false;
     isDetectionEnabled = isDetection;
+    if(isDetectionEnabled) {
+        uint8_t canary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
+        AppMemoryWrite(canary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+    }
 }
 
 void MifareClassicAppInit1K(void) {
@@ -558,8 +572,6 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     DetectionAttemptsKeyB++;
                     DetectionAttemptsKeyB = DetectionAttemptsKeyB % DETECTION_MEM_MAX_KEYX_SAVES;
                 }
-                uint8_t canary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
-                AppMemoryWrite(canary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
                 // Write to app memory
                 AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
                 // Rage quit
@@ -798,17 +810,27 @@ void MifareClassicSetUid(ConfigurationUidType Uid) {
 }
 
 void MifareClassicGetAtqa(uint16_t * Atqa) {
+    uint8_t addrATQA = (is7BytesUID) ? (MFCLASSIC_MEM_7B_ATQA_ADDR) : (MFCLASSIC_MEM_ATQA_ADDR);
+    AppMemoryRead(((uint8_t *)&CardATQAValue), addrATQA, MFCLASSIC_MEM_ATQA_SIZE-1);
+    AppMemoryRead(((uint8_t *)&CardATQAValue)+1, addrATQA+1, MFCLASSIC_MEM_ATQA_SIZE-1);
     *Atqa = CardATQAValue;
 }
 
 void MifareClassicSetAtqa(uint16_t Atqa) {
     CardATQAValue = Atqa;
+    uint8_t addrATQA = (is7BytesUID) ? (MFCLASSIC_MEM_7B_ATQA_ADDR) : (MFCLASSIC_MEM_ATQA_ADDR);
+    AppMemoryWrite(((uint8_t *)&CardATQAValue), addrATQA, MFCLASSIC_MEM_ATQA_SIZE-1);
+    AppMemoryWrite(((uint8_t *)&CardATQAValue)+1, addrATQA+1, MFCLASSIC_MEM_ATQA_SIZE-1);
 }
 
 void MifareClassicGetSak(uint8_t * Sak) {
+    uint8_t addrSAK = (is7BytesUID) ? (MFCLASSIC_MEM_7B_SAK_ADDR) : (MFCLASSIC_MEM_SAK_ADDR);
+    AppMemoryRead(&CardSAKValue, addrSAK, MFCLASSIC_MEM_SAK_SIZE);
     *Sak = CardSAKValue;
 }
 
 void MifareClassicSetSak(uint8_t Sak) {
     CardSAKValue = Sak;
+    uint8_t addrSAK = (is7BytesUID) ? (MFCLASSIC_MEM_7B_SAK_ADDR) : (MFCLASSIC_MEM_SAK_ADDR);
+    AppMemoryWrite(&CardSAKValue, addrSAK, MFCLASSIC_MEM_SAK_SIZE);
 }
