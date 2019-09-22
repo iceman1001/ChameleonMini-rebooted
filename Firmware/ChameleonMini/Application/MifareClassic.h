@@ -172,9 +172,9 @@ C1 C2 C3    read    write   increment   decrement,
 #define DETECTION_MEM_KEYX_SEPARATOR_OFFSET     112
 // (DETECTION_MEM_BLOCK0_SIZE + DETECTION_MEM_MFKEY_DATA_LEN)
 #define DETECTION_MEM_APP_SIZE                  208
-#define DETECTION_BLOCK0_CANARY                 0xDE, 0x7E, 0xC7, 0x10
+#define DETECTION_BLOCK0_CANARY                 0x52, 0x45, 0x56, 0x45, 0x56, 0x31, 0x2E, 0x34
 #define DETECTION_BLOCK0_CANARY_ADDR            0x08
-#define DETECTION_BLOCK0_CANARY_SIZE            4
+#define DETECTION_BLOCK0_CANARY_SIZE            8
 #endif
 
 void MifareClassicAppInit1K(void);
