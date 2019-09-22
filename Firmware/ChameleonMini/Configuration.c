@@ -146,8 +146,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+    .UidSize = MFCLASSIC_UID_SIZE,
+    .MemorySize = MFCLASSIC_1K_MEM_SIZE,
     .ReadOnly = false
 },
 #endif
@@ -166,8 +166,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
+    .UidSize = MFCLASSIC_UID_7B_SIZE,
+    .MemorySize = MFCLASSIC_1K_MEM_SIZE,
     .ReadOnly = false
 },
 #endif
@@ -186,8 +186,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+    .UidSize = MFCLASSIC_UID_SIZE,
+    .MemorySize = MFCLASSIC_4K_MEM_SIZE,
     .ReadOnly = false
 },
 #endif
@@ -206,8 +206,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = ISO14443A_UID_SIZE_DOUBLE,
-    .MemorySize = MIFARE_CLASSIC_4K_MEM_SIZE,
+    .UidSize = MFCLASSIC_UID_7B_SIZE,
+    .MemorySize = MFCLASSIC_4K_MEM_SIZE,
     .ReadOnly = false
 },
 #endif
@@ -226,8 +226,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_MINI_MEM_SIZE,
+    .UidSize = MFCLASSIC_UID_SIZE,
+    .MemorySize = MFCLASSIC_MINI_MEM_SIZE,
     .ReadOnly = false
 },
 #endif
@@ -235,20 +235,20 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 [CONFIG_MF_DETECTION] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
-    .ApplicationInitFunc = MifareDetectionInit,
-    .ApplicationResetFunc = MifareDetectionReset,
+    .ApplicationInitFunc = MifareClassicAppDetectionInit,
+    .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = MifareClassicAppTask,
     .ApplicationTickFunc = ApplicationTickDummy,
-    .ApplicationProcessFunc = MifareDetectionAppProcess,
+    .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
     .ApplicationGetSakFunc = MifareClassicGetSak,
     .ApplicationSetSakFunc = MifareClassicSetSak,
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
-    .UidSize = MIFARE_CLASSIC_UID_SIZE,
-    .MemorySize = MIFARE_CLASSIC_1K_MEM_SIZE,
-    .ReadOnly = false
+    .UidSize = MFCLASSIC_UID_SIZE,
+    .MemorySize = DETECTION_MEM_APP_SIZE,
+    .ReadOnly = true
 },
 #endif
 };

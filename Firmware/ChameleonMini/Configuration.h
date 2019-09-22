@@ -45,10 +45,7 @@ typedef enum  {
     CONFIG_MF_CLASSIC_MINI,
 #endif
 #ifdef CONFIG_MF_DETECTION_SUPPORT
-CONFIG_MF_DETECTION,
-#endif
-#ifdef CONFIG_ISO15693_GEN_SUPPORT
-    CONFIG_ISO15693_GEN,
+    CONFIG_MF_DETECTION,
 #endif
     /* This HAS to be the last element */
     CONFIG_COUNT

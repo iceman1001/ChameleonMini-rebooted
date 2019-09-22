@@ -18,9 +18,9 @@
 #define MEMORY_NO_MEMORY                    0x00
 #define MEMORY_NO_ADDR                      0
 #ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
-#define MEMORY_MIN_BYTES_PER_APP            MIFARE_CLASSIC_4K_MEM_SIZE
+#define MEMORY_MIN_BYTES_PER_APP            MFCLASSIC_4K_MEM_SIZE
 #else
-#define MEMORY_MIN_BYTES_PER_APP            MIFARE_CLASSIC_1K_MEM_SIZE
+#define MEMORY_MIN_BYTES_PER_APP            MFCLASSIC_1K_MEM_SIZE
 #endif
 #define MEMORY_MIN_BYTES_PER_SETTING        (sizeof(SettingsEntryType)+sizeof(SettingsType))
 
