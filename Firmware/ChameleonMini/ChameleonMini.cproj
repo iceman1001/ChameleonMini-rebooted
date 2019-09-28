@@ -321,6 +321,7 @@
   <ItemGroup>
     <Folder Include="Application" />
     <Folder Include="Codec" />
+    <Folder Include="Memory" />
     <Folder Include="Terminal" />
     <Folder Include="LUFA\" />
     <Folder Include="LUFA\Common\" />
@@ -344,9 +345,6 @@
     <Compile Include="Application\Crypto1.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Application\Detection.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="Application\ISO14443-3A.c">
       <SubType>compile</SubType>
     </Compile>
@@ -363,6 +361,24 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Map.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Memory\EEPROM.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Memory\EEPROM.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Memory\Memory.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Memory\Memory.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Memory\SPIFlash.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Memory\SPIFlash.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="System.c">
@@ -615,9 +631,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="LUFADescriptors.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="Memory.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Random.c">
