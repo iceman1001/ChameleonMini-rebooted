@@ -169,6 +169,8 @@ static uint8_t CardSAKValue;
 static bool is7BytesUID = false;
 /* To differentiate between IDLE and HALT starts */
 static bool isFromHaltChain = false;
+/* To check if previous step of any cascading sequence has passed */
+static bool isCascadeStepOnePassed = false;
 /* To enable MF_DETECTION behavior */
 static bool isDetectionEnabled = false;
 #ifdef CONFIG_MF_DETECTION_SUPPORT
@@ -278,6 +280,7 @@ void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetec
     CardATQAValue = (is7BytesUID) ? (ATQA_4B | MFCLASSIC_7B_ATQA_MASK) : (ATQA_4B);
     CardSAKValue = SAK;
     isFromHaltChain = false;
+    isCascadeStepOnePassed = false;
     isDetectionEnabled = isDetection;
     if(isDetectionEnabled) {
         uint8_t canary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
@@ -389,6 +392,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
         case STATE_IDLE:
         case STATE_HALT:
             isFromHaltChain = (State == STATE_HALT);
+            isCascadeStepOnePassed = false;
 #ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
             if (Buffer[0] == MFCLASSIC_CMD_CHINESE_UNLOCK) {
                 State = STATE_CHINESE_IDLE;
@@ -449,31 +453,24 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 #endif
 
         case STATE_READY:
-            if ( (Buffer[0] == ISO14443A_CMD_SELECT_CL1) || (is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2)) ) {
+            /* Anticol/selection */
+            if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
                 uint8_t UidCL[ISO14443A_CL_UID_SIZE];
                 uint8_t * UidCLReadBuffer;
                 uint8_t UidMemAddr, UidReadSize, SAK;
                 enum estate NextState;
-                if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
-                    /* Load UID CL1 and perform anticollision */
-                    UidMemAddr = MFCLASSIC_MEM_UID_CL1_ADDRESS;
-                    if (is7BytesUID) {
-                        UidCL[0] = ISO14443A_UID0_CT;
-                        UidCLReadBuffer = &UidCL[1];
-                        UidReadSize = MFCLASSIC_MEM_UID_CL1_SIZE-1;
-                        SAK = MFCLASSIC_SAK_CL1_VALUE;
-                        NextState = STATE_READY;
-                    } else {
-                        UidCLReadBuffer = UidCL;
-                        UidReadSize = MFCLASSIC_MEM_UID_CL1_SIZE;
-                        SAK = CardSAKValue;
-                        NextState = STATE_ACTIVE;
-                    }
+                UidMemAddr = MFCLASSIC_MEM_UID_CL1_ADDRESS;
+                /* First step of anticol/selection as per MF1S50YYX_V1, title 10.1.2 */
+                if (is7BytesUID) {
+                    UidCL[0] = ISO14443A_UID0_CT;
+                    UidCLReadBuffer = &UidCL[1];
+                    UidReadSize = MFCLASSIC_MEM_UID_CL1_SIZE-1;
+                    SAK = MFCLASSIC_SAK_CL1_VALUE;
+                    NextState = STATE_READY;
+                /* 'Sequence 3' (no next step) as per MF1S50YYX_V1, title 10.1.2 */
                 } else {
-                    /* Load UID CL2 and perform anticollision */
-                    UidMemAddr = MFCLASSIC_MEM_UID_CL2_ADDRESS;
                     UidCLReadBuffer = UidCL;
-                    UidReadSize = MFCLASSIC_MEM_UID_CL2_SIZE;
+                    UidReadSize = MFCLASSIC_MEM_UID_CL1_SIZE;
                     SAK = CardSAKValue;
                     NextState = STATE_ACTIVE;
                 }
@@ -482,12 +479,35 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     /* TODO: Access control not implemented yet
                      * AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
                     State = NextState;
+                    isCascadeStepOnePassed = true;
                 }
                 /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                 retSize = BitCount;
+            /* Second cascade step of anticol/selection as per MF1S50YYX_V1, title 10.1.2 */
+            } else if (isCascadeStepOnePassed) {
+                /* 'Sequence 1' as per MF1S50YYX_V1, title 10.1.2 */
+                if ( is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2) ) {
+                    uint8_t UidCL[ISO14443A_CL_UID_SIZE];
+                    AppMemoryRead(UidCL, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+                    if (ISO14443ASelect(Buffer, &BitCount, UidCL, CardSAKValue)) {
+                        State = STATE_ACTIVE;
+                    }
+                /* 'Sequence 2' as per MF1S50YYX_V1, title 10.1.2 */
+                } else if (Buffer[0] == MFCLASSIC_CMD_READ) {
+                    /* Read sector 0 / block 0 and send in plain */
+                    AppMemoryRead(Buffer, MFCLASSIC_MEM_S0B0_ADDRESS, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    State = STATE_ACTIVE;
+                    retSize = ( (MFCLASSIC_CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE );
+                } else {
+                    /* Unknown command. Enter HALT or IDLE state depending on origin */
+                    State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+                }
+                isCascadeStepOnePassed = false;
             } else {
                 /* Unknown command. Enter HALT or IDLE state depending on origin */
                 State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+                isCascadeStepOnePassed = false;
             }
             break; /* End of state READY */
 
