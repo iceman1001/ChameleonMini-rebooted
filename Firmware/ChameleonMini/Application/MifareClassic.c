@@ -449,34 +449,39 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 #endif
 
         case STATE_READY:
-            if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
-                /* Load UID CL1 and perform anticollision */
-                uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
-                if (is7BytesUID) {
-                    AppMemoryRead(&UidCL1[1], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
-                    UidCL1[0] = ISO14443A_UID0_CT;
-                    if (ISO14443ASelect(Buffer, &BitCount, UidCL1, MFCLASSIC_SAK_CL1_VALUE)) {
-                        /* Then supposed to handle a SELECT_CL2 command */
-                        State = STATE_READY;
+            if ( (Buffer[0] == ISO14443A_CMD_SELECT_CL1) || (is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2)) ) {
+                uint8_t UidCL[ISO14443A_CL_UID_SIZE];
+                uint8_t * UidCLReadBuffer;
+                uint8_t UidMemAddr, UidReadSize, SAK;
+                enum estate NextState;
+                if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
+                    /* Load UID CL1 and perform anticollision */
+                    UidMemAddr = MFCLASSIC_MEM_UID_CL1_ADDRESS;
+                    if (is7BytesUID) {
+                        UidCL[0] = ISO14443A_UID0_CT;
+                        UidCLReadBuffer = &UidCL[1];
+                        UidReadSize = MFCLASSIC_MEM_UID_CL1_SIZE-1;
+                        SAK = MFCLASSIC_SAK_CL1_VALUE;
+                        NextState = STATE_READY;
+                    } else {
+                        UidCLReadBuffer = UidCL;
+                        UidReadSize = MFCLASSIC_MEM_UID_CL1_SIZE;
+                        SAK = CardSAKValue;
+                        NextState = STATE_ACTIVE;
                     }
                 } else {
-                    AppMemoryRead(UidCL1, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
-                    if (ISO14443ASelect(Buffer, &BitCount, UidCL1, CardSAKValue)) {
-                        /* TODO: Access control not implemented yet
-                        * AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
-                        State = STATE_ACTIVE;
-                    }
+                    /* Load UID CL2 and perform anticollision */
+                    UidMemAddr = MFCLASSIC_MEM_UID_CL2_ADDRESS;
+                    UidCLReadBuffer = UidCL;
+                    UidReadSize = MFCLASSIC_MEM_UID_CL2_SIZE;
+                    SAK = CardSAKValue;
+                    NextState = STATE_ACTIVE;
                 }
-                /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
-                retSize = BitCount;
-            } else if ( is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2) ) {
-                /* Load UID CL2 and perform anticollision */
-                uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
-                AppMemoryRead(UidCL2, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
-                if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
+                AppMemoryRead(UidCLReadBuffer, UidMemAddr, UidReadSize);
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL, SAK)) {
                     /* TODO: Access control not implemented yet
-                    AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
-                    State = STATE_ACTIVE;
+                     * AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
+                    State = NextState;
                 }
                 /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                 retSize = BitCount;
