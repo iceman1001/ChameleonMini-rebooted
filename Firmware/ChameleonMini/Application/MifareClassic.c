@@ -455,17 +455,17 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                 retSize = BitCount;
-            } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
-               /* Load UID CL2 and perform anticollision */
-               uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
-               AppMemoryRead(UidCL2, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
-               if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
-                   /* TODO: Access control not implemented yet
-                   AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
-                   State = STATE_ACTIVE;
-               }
-               /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
-               retSize = BitCount;
+            } else if ( is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2) ) {
+                /* Load UID CL2 and perform anticollision */
+                uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
+                AppMemoryRead(UidCL2, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+                if (ISO14443ASelect(Buffer, &BitCount, UidCL2, CardSAKValue)) {
+                    /* TODO: Access control not implemented yet
+                    AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
+                    State = STATE_ACTIVE;
+                }
+                /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
+                retSize = BitCount;
             } else {
                 /* Unknown command. Enter HALT state. */
                 State = STATE_HALT;
