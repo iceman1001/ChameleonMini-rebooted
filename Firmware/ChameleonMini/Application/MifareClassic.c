@@ -332,44 +332,40 @@ bool mfcHandleHaltCommand(uint8_t* Buffer, uint16_t * RetValue) {
     if ( (Buffer[0] == MFCLASSIC_CMD_HALT) && (Buffer[1] == 0) ) {
         /* If we get a buggy HALT, we fallback to IDLE or HALT depending on origin */
         State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+        ret = true;
         /* If valid HALT with CRC passed */
         if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_CMD_HALT_FRAME_SIZE)) {
             /* According to ISO 14443-3, we must not send anything to ACK */
             State = STATE_HALT;
             *RetValue = ISO14443A_APP_NO_RESPONSE;
-            ret = true;
         } else {
             Buffer[0] = MFCLASSIC_NAK_TBOK_CRCKO;
             *RetValue = MFCLASSIC_ACK_NAK_FRAME_SIZE;
         }
-    } else {
-        Buffer[0] = MFCLASSIC_NAK_TBOK_OPKO;
-        *RetValue = MFCLASSIC_ACK_NAK_FRAME_SIZE;
     }
     return ret;
 }
 
 /* Handle a WUPA or REQA during main process, as can be raised in all states.
 * Sets State, response buffer and response size. Returns if WUPA/REQA received. */
-uint16_t mfcHandleWUPCommand(bool isFromHaltState, uint8_t* Buffer, uint16_t BitCount, uint16_t ATQAValue, uint16_t * RetValue) {
+bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t* Buffer, uint16_t BitCount, uint16_t ATQAValue, uint16_t * RetValue) {
     bool ret = false;
     /* If we have been awoken */
     if ( (BitCount == MFCLASSIC_CMD_WUPA_BITCOUNT) && ISO14443AIsWakeUp(Buffer, isFromHaltState) ) {
         /* Set response buffer */
         ISO14443ASetWakeUpResponse(Buffer, ATQAValue);
+        ret = true;
         /* If valid WUPA or REQA, go to READY state */
         if ( (State == STATE_IDLE) || (State == STATE_HALT) ) {
             /* Not implemented yet. AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; */
             State = STATE_READY;
             *RetValue = ISO14443A_ATQA_FRAME_SIZE;
-        /* Else if in READY or ACTIVE, go back to IDLE or HALT, depending on where
+        /* Else we go back to IDLE or HALT, depending on where
          * we come from, as per ISO 14443-3 */
-        } else if ( (State == STATE_READY) || (State == STATE_ACTIVE) ) {
+        } else {
             State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
             *RetValue = ISO14443A_APP_NO_RESPONSE;
-        /* Else we do not do anything, and simply ignores command */
         }
-        ret = true;
     }
     return ret;
 }
@@ -381,13 +377,22 @@ void mfcDecryptBuffer(uint8_t * Buffer, uint8_t Size) {
     }
 }
 
+/* Encrypt and calculate parity bits for a response buffer */
+void mfcEncryptBuffer(uint8_t * Output, uint8_t * Input, uint8_t Size) {
+    for (uint8_t i=0; i < Size; i++) {
+        uint8_t Plain = Input[i];
+        Output[i] = Plain ^ Crypto1Byte();
+        Output[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(Plain) ^ Crypto1FilterOutput();
+    }
+}
+
 uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
     /* Size of data (byte) we will send back to reader. Is main process return value */
     uint16_t retSize = ISO14443A_APP_NO_RESPONSE;
     /* WUPA/REQA and HALT may occur in every state. We handle is first, so we can skip
     * states cases if we get valid WUPA/REQA */
-    if( !mfcHandleWUPCommand((State == STATE_HALT), Buffer, BitCount, CardATQAValue, &retSize)
-        && !!mfcHandleHaltCommand(Buffer, &retSize) ) {
+    if( (!mfcHandleWUPCommand((State == STATE_HALT), Buffer, BitCount, CardATQAValue, &retSize))
+        && (!mfcHandleHaltCommand(Buffer, &retSize)) ) {
         switch(State) {
         case STATE_IDLE:
         case STATE_HALT:
@@ -491,19 +496,22 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     AppMemoryRead(UidCL, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
                     if (ISO14443ASelect(Buffer, &BitCount, UidCL, CardSAKValue)) {
                         State = STATE_ACTIVE;
+                        isCascadeStepOnePassed = false;
                     }
+                    retSize = BitCount;
                 /* 'Sequence 2' as per MF1S50YYX_V1, title 10.1.2 */
                 } else if (Buffer[0] == MFCLASSIC_CMD_READ) {
                     /* Read sector 0 / block 0 and send in plain */
                     AppMemoryRead(Buffer, MFCLASSIC_MEM_S0B0_ADDRESS, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     State = STATE_ACTIVE;
+                    isCascadeStepOnePassed = false;
                     retSize = ( (MFCLASSIC_CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE );
                 } else {
                     /* Unknown command. Enter HALT or IDLE state depending on origin */
                     State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+                    isCascadeStepOnePassed = false;
                 }
-                isCascadeStepOnePassed = false;
             } else {
                 /* Unknown command. Enter HALT or IDLE state depending on origin */
                 State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
@@ -524,7 +532,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                         memcpy(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
                     } else {
                         uint8_t SectorAddress;
-                        uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET);
+                        uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
                         /* Fix for MFClassic 4k cards */
                         if(Buffer[1] >= 128) {
                             SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
@@ -601,19 +609,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 * to setup the crypto1 LFSR in nonlinear feedback mode.
                 * Furthermore it delivers an encrypted answer. Decrypt and check it */
                 Crypto1Auth(&Buffer[0]);
-                for (uint8_t i=0; i<4; i++) {
-                    Buffer[i+4] ^= Crypto1Byte();
-                }
+                mfcDecryptBuffer(Buffer+4, 4);
                 if ((Buffer[4] == ReaderResponse[0]) &&
                     (Buffer[5] == ReaderResponse[1]) &&
                     (Buffer[6] == ReaderResponse[2]) &&
                     (Buffer[7] == ReaderResponse[3])) {
                     /* Reader is authenticated. Encrypt the precalculated card response
                     * and generate the parity bits. */
-                    for (uint8_t i=0; i<sizeof(CardResponse); i++) {
-                        Buffer[i] = CardResponse[i] ^ Crypto1Byte();
-                        Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(CardResponse[i]) ^ Crypto1FilterOutput();
-                    }
+                    mfcEncryptBuffer(Buffer, CardResponse, MFCLASSIC_MEM_NONCE_SIZE);
                     State = STATE_AUTHED_IDLE;
                     retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
                 } else {
@@ -642,11 +645,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                         AppMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         /* Encrypt and calculate parity bits. */
-                        for (uint8_t i=0; i<(ISO14443A_CRCA_SIZE + MFCLASSIC_MEM_BYTES_PER_BLOCK); i++) {
-                            uint8_t Plain = Buffer[i];
-                            Buffer[i] = Plain ^ Crypto1Byte();
-                            Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = ODD_PARITY(Plain) ^ Crypto1FilterOutput();
-                        }
+                        mfcEncryptBuffer(Buffer, Buffer, (ISO14443A_CRCA_SIZE + MFCLASSIC_MEM_BYTES_PER_BLOCK));
                         retSize = ( (MFCLASSIC_CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE) * BITS_PER_BYTE )
                                   | ISO14443A_APP_CUSTOM_PARITY;
                     /* Write-type operation request */
