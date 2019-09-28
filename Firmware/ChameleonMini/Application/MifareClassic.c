@@ -144,8 +144,7 @@ enum estate {
     STATE_IDLE,
     STATE_CHINESE_IDLE,
     STATE_CHINESE_WRITE,
-    STATE_READY1,
-    STATE_READY2,
+    STATE_READY,
     STATE_ACTIVE,
     STATE_AUTHING,
     STATE_AUTHED_IDLE,
@@ -351,13 +350,13 @@ uint16_t mfcHandleWUPCommand(uint8_t* Buffer, uint16_t BitCount, uint16_t ATQAVa
         /* Set response buffer */
         ISO14443ASetWakeUpResponse(Buffer, ATQAValue);
         /* We should go to HALT or IDLE depending on previous state if we are
-        * in a ACTIVE, READY1 or READY2 */
-        if ( (State == STATE_READY1) || (State == STATE_READY2) || (State == STATE_ACTIVE) ) {
+        * in a ACTIVE, READY */
+        if ( (State == STATE_READY) || (State == STATE_ACTIVE) ) {
             State = isFromHaltState ? STATE_HALT : STATE_IDLE;
             *RetValue = ISO14443A_APP_NO_RESPONSE;
         } else {
             /* Not implemented yet. AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; */
-            State = STATE_READY1;
+            State = STATE_READY;
             *RetValue = ISO14443A_ATQA_FRAME_SIZE;
         }
         ret = true;
@@ -436,7 +435,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             break;
 #endif
 
-        case STATE_READY1:
+        case STATE_READY:
             if (Buffer[0] == ISO14443A_CMD_SELECT_CL1) {
                 /* Load UID CL1 and perform anticollision */
                 uint8_t UidCL1[ISO14443A_CL_UID_SIZE];
@@ -444,7 +443,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     AppMemoryRead(&UidCL1[1], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
                     UidCL1[0] = ISO14443A_UID0_CT;
                     if (ISO14443ASelect(Buffer, &BitCount, UidCL1, MFCLASSIC_SAK_CL1_VALUE)) {
-                        State = STATE_READY2;
+                        State = STATE_READY;
                     }
                 } else {
                     AppMemoryRead(UidCL1, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
@@ -456,14 +455,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                 retSize = BitCount;
-            } else {
-                /* Unknown command. Enter HALT state. */
-                State = STATE_HALT;
-            }
-            break; /* End of state READY1 */
-
-        case STATE_READY2:
-            if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
+            } else if (Buffer[0] == ISO14443A_CMD_SELECT_CL2) {
                /* Load UID CL2 and perform anticollision */
                uint8_t UidCL2[ISO14443A_CL_UID_SIZE];
                AppMemoryRead(UidCL2, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
@@ -475,10 +467,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                /* Will be frame size if selected, or 0 else, as set by ISO14443ASelect */
                retSize = BitCount;
             } else {
-              /* Unknown command. Enter HALT state. */
-              State = STATE_HALT;
+                /* Unknown command. Enter HALT state. */
+                State = STATE_HALT;
             }
-            break; /* End of state READY2 */
+            break; /* End of state READY */
 
         case STATE_ACTIVE:
             if (Buffer[0] == MFCLASSIC_CMD_HALT) {
