@@ -280,6 +280,10 @@ void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetec
     CardSAKValue = SAK;
     isFromHaltState = false;
     isDetectionEnabled = isDetection;
+    if(isDetectionEnabled) {
+        uint8_t canary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
+        AppMemoryWrite(canary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+    }
 }
 
 void MifareClassicAppInit1K(void) {
@@ -558,8 +562,6 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     DetectionAttemptsKeyB++;
                     DetectionAttemptsKeyB = DetectionAttemptsKeyB % DETECTION_MEM_MAX_KEYX_SAVES;
                 }
-                uint8_t canary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
-                AppMemoryWrite(canary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
                 // Write to app memory
                 AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
                 // Rage quit
