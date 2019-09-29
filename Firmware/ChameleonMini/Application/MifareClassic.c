@@ -273,7 +273,6 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value) {
     Block[11] = Block[3];
 }
 
-
 void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetection) {
     State = STATE_IDLE;
     is7BytesUID = is7B;
@@ -326,7 +325,7 @@ void MifareClassicAppTask(void)
 
 /* Handle a MFCLASSIC_CMD_HALT during main process, as can be raised in many states.
 * Sets State, response buffer and response size. Returns if valid HALT. */
-bool mfcHandleHaltCommand(uint8_t* Buffer, uint16_t * RetValue) {
+bool mfcHandleHaltCommand(uint8_t * Buffer, uint16_t * RetValue) {
     bool ret = false;
     /* Halts the tag. According to the ISO 14443-3, the second byte is supposed to be 0 */
     if ( (Buffer[0] == MFCLASSIC_CMD_HALT) && (Buffer[1] == 0) ) {
@@ -348,7 +347,7 @@ bool mfcHandleHaltCommand(uint8_t* Buffer, uint16_t * RetValue) {
 
 /* Handle a WUPA or REQA during main process, as can be raised in all states.
 * Sets State, response buffer and response size. Returns if WUPA/REQA received. */
-bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t* Buffer, uint16_t BitCount, uint16_t ATQAValue, uint16_t * RetValue) {
+bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t * Buffer, uint16_t BitCount, uint16_t ATQAValue, uint16_t * RetValue) {
     bool ret = false;
     /* If we have been awoken */
     if ( (BitCount == MFCLASSIC_CMD_WUPA_BITCOUNT) && ISO14443AIsWakeUp(Buffer, isFromHaltState) ) {
@@ -368,6 +367,77 @@ bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t* Buffer, uint16_t BitCoun
         }
     }
     return ret;
+}
+
+/* Handle an authentication request.
+* Sets State, response buffer and response size. */
+void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * RetValue) {
+    uint8_t SectorAddress;
+    uint8_t Key[MFCLASSIC_MEM_KEY_SIZE];
+    uint8_t Uid[MFCLASSIC_UID_SIZE];
+    uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
+    uint16_t KeyAddress;
+    /* Save Nonce in detection mode */
+    if(isDetectionEnabled) {
+        // Save reader's auth phase 1: KEY type (A or B), and sector number
+        memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
+        // Set selected key to be the DETECTION canary
+        KeyAddress = DETECTION_BLOCK0_CANARY_ADDR;
+    /* Set key address and loads it */
+    } else {
+        /* Fix for MFClassic 4k cards */
+        if(Buffer[1] >= 128) {
+            SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
+            KeyOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
+        } else {
+            SectorAddress = Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK;
+        }
+        KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
+    }
+    AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+    /* Load UID */
+    if (is7BytesUID) {
+        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+    } else {
+        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+    }
+    /* Proceed with nested or regular authent */
+    if(isNested) {
+        uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01};
+        uint8_t CardNonceParity[MFCLASSIC_MEM_NONCE_SIZE];
+         /* Precalculate the reader response from card-nonce */
+        memcpy(ReaderResponse, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
+        Crypto1PRNG(ReaderResponse, 64);
+        /* Precalculate our response from the reader response */
+        memcpy(CardResponse, ReaderResponse, MFCLASSIC_MEM_NONCE_SIZE);
+        Crypto1PRNG(CardResponse, 32);
+        /* Setup crypto1 cipher for nested authentication. */
+        Crypto1Setup(Key, Uid, CardNonce, CardNonceParity);
+        for (uint8_t i=0; i<MFCLASSIC_MEM_NONCE_SIZE; i++) {
+            Buffer[i] = CardNonce[i];
+            Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = CardNonceParity[i];
+        }
+        *RetValue = (MFCLASSIC_CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+    } else {
+        uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01, 0x20, 0x01, 0x45};
+        uint8_t CardNonceSuccessor1[MFCLASSIC_MEM_NONCE_SIZE] = {0x63, 0xe5, 0xbc, 0xa7};
+        uint8_t CardNonceSuccessor2[MFCLASSIC_MEM_NONCE_SIZE] = {0x99, 0x37, 0x30, 0xbd};
+        if(isDetectionEnabled) {
+            // Save sent 'random' nonce
+            memcpy(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
+        }
+        /* Precalculate the reader response from card-nonce */
+        memcpy(ReaderResponse, CardNonceSuccessor1, MFCLASSIC_MEM_NONCE_SIZE);
+        /* Precalculate our response from the reader response */
+        memcpy(CardResponse, CardNonceSuccessor2, MFCLASSIC_MEM_NONCE_SIZE);
+        /* Respond with the random card nonce and expect further authentication
+        * form the reader in the next frame. */
+        memcpy(Buffer, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
+        /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
+        Crypto1Setup(Key, Uid, CardNonce, NULL);
+        *RetValue = MFCLASSIC_CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
+    }
+    State = STATE_AUTHING;
 }
 
 /* Decrypt an encrypted buffer */
@@ -522,66 +592,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
         case STATE_ACTIVE:
             if ( (Buffer[0] == MFCLASSIC_CMD_AUTH_A) || (Buffer[0] == MFCLASSIC_CMD_AUTH_B) ) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_CMD_AUTH_FRAME_SIZE)) {
-                    uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01,0x20,0x01,0x45};
-                    if(isDetectionEnabled) {
-                        // Generate random nonce
-                        RandomGetBuffer(CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
-                        // Save reader's auth phase 1: KEY type (A or B), and sector number
-                        memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
-                        // Save sent 'random' nonce
-                        memcpy(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
-                    } else {
-                        uint8_t SectorAddress;
-                        uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
-                        /* Fix for MFClassic 4k cards */
-                        if(Buffer[1] >= 128) {
-                            SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
-                            KeyOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
-                        } else {
-                            SectorAddress = Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK;
-                        }
-                        uint16_t KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
-                        uint8_t Key[MFCLASSIC_MEM_KEY_SIZE];
-                        uint8_t Uid[MFCLASSIC_UID_SIZE];
-                        uint8_t CardNonceSuccessor1[MFCLASSIC_MEM_NONCE_SIZE] = {0x63, 0xe5, 0xbc, 0xa7};
-                        uint8_t CardNonceSuccessor2[MFCLASSIC_MEM_NONCE_SIZE] = {0x99, 0x37, 0x30, 0xbd};
-                        /* Generate a random nonce and read UID and key from memory */
-                        //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                        if (is7BytesUID) {
-                            AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
-                        } else {
-                            AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
-                        }
-                        AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
-                        /* Precalculate the reader response from card-nonce */
-                        memcpy(ReaderResponse, CardNonceSuccessor1, MFCLASSIC_MEM_NONCE_SIZE);
-                        /* Precalculate our response from the reader response */
-                        memcpy(CardResponse, CardNonceSuccessor2, MFCLASSIC_MEM_NONCE_SIZE);
-                        /* Setup crypto1 cipher. Discard in-place encrypted CardNonce. */
-                        Crypto1Setup(Key, Uid, CardNonce, NULL);
-                    }
-                    /* Respond with the random card nonce and expect further authentication
-                    * form the reader in the next frame. */
-                    memcpy(Buffer, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
-                    State = STATE_AUTHING;
-                    retSize = MFCLASSIC_CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE;
+                    mfcHandleAuthenticationRequest(false, Buffer, &retSize);
                 } else {
-                    State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
                     Buffer[0] = MFCLASSIC_NAK_TBOK_CRCKO;
                     retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
                 }
-            } else if ( (Buffer[0] == MFCLASSIC_CMD_READ) ||
-                        (Buffer[0] == MFCLASSIC_CMD_WRITE) ||
-                        (Buffer[0] == MFCLASSIC_CMD_DECREMENT) ||
-                        (Buffer[0] == MFCLASSIC_CMD_INCREMENT) ||
-                        (Buffer[0] == MFCLASSIC_CMD_RESTORE) ||
-                        (Buffer[0] == MFCLASSIC_CMD_TRANSFER) ) {
-                State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+            } else {
                 Buffer[0] = MFCLASSIC_NAK_TBKO_OPKO;
                 retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
-            } else {
-                /* Unknown command. Enter HALT or IDLE state depending on origin */
-                State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
             }
             break; /* End of state ACTIVE */
 
@@ -602,34 +620,28 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 // Write to app memory
                 AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
-                // Rage quit
-                State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+            }
+            /* Reader delivers an encrypted nonce. We use it
+            * to setup the crypto1 LFSR in nonlinear feedback mode.
+            * Furthermore it delivers an encrypted answer. Decrypt and check it */
+            Crypto1Auth(&Buffer[0]);
+            mfcDecryptBuffer(&Buffer[MFCLASSIC_MEM_NONCE_SIZE], MFCLASSIC_MEM_NONCE_SIZE);
+            if ( !memcmp(&Buffer[MFCLASSIC_MEM_NONCE_SIZE], ReaderResponse, MFCLASSIC_MEM_NONCE_SIZE) ) {
+                /* Reader is authenticated. Encrypt the precalculated card response
+                * and generate the parity bits. */
+                mfcEncryptBuffer(Buffer, CardResponse, MFCLASSIC_MEM_NONCE_SIZE);
+                State = STATE_AUTHED_IDLE;
+                retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
             } else {
-                /* Reader delivers an encrypted nonce. We use it
-                * to setup the crypto1 LFSR in nonlinear feedback mode.
-                * Furthermore it delivers an encrypted answer. Decrypt and check it */
-                Crypto1Auth(&Buffer[0]);
-                mfcDecryptBuffer(Buffer+4, 4);
-                if ((Buffer[4] == ReaderResponse[0]) &&
-                    (Buffer[5] == ReaderResponse[1]) &&
-                    (Buffer[6] == ReaderResponse[2]) &&
-                    (Buffer[7] == ReaderResponse[3])) {
-                    /* Reader is authenticated. Encrypt the precalculated card response
-                    * and generate the parity bits. */
-                    mfcEncryptBuffer(Buffer, CardResponse, MFCLASSIC_MEM_NONCE_SIZE);
-                    State = STATE_AUTHED_IDLE;
-                    retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
-                } else {
-                    /* Just reset on authentication error. */
-                    State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
-                }
+                /* Unknown command. Goes back to ACTIVE */
+                State = STATE_ACTIVE;
             }
             break; /* End of state AUTHING */
 
         case STATE_AUTHED_IDLE:
             /* In this state, all communication is encrypted. Thus we first have to decrypt
             * the incoming data. */
-            mfcDecryptBuffer(Buffer, 4);
+            mfcDecryptBuffer(Buffer, MFCLASSIC_MEM_NONCE_SIZE);
             /* We could also get an encrypted HALT... */
             if ( !mfcHandleHaltCommand(Buffer, &retSize) ) {
                 /* All possible operations at this state have all same frame size, so we do
@@ -687,47 +699,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                         retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
                     } else if ( (Buffer[0] == MFCLASSIC_CMD_AUTH_A) || (Buffer[0] == MFCLASSIC_CMD_AUTH_B) ) {
                         /* Nested authentication. */
-                        uint8_t SectorAddress;
-                        uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET);
-                        /* Fix for MFClassic 4k cards */
-                        if(Buffer[1] >= 128) {
-                            SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
-                            KeyOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
-                        } else {
-                            SectorAddress = Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK;
-                        }
-                        uint16_t KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
-                        uint8_t Key[MFCLASSIC_MEM_KEY_SIZE];
-                        uint8_t Uid[MFCLASSIC_UID_SIZE];
-                        uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01};
-                        uint8_t CardNonceParity[MFCLASSIC_MEM_NONCE_SIZE];
-                        /* Generate a random nonce and read UID and key from memory */
-                        //RandomGetBuffer(CardNonce, sizeof(CardNonce));
-                        if (is7BytesUID) {
-                            AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
-                        } else {
-                            AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
-                        }
-                        AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
-                        /* Precalculate the reader response from card-nonce */
-                        memcpy(ReaderResponse, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
-                        Crypto1PRNG(ReaderResponse, 64);
-                        /* Precalculate our response from the reader response */
-                        memcpy(CardResponse, ReaderResponse, MFCLASSIC_MEM_NONCE_SIZE);
-                        Crypto1PRNG(CardResponse, 32);
-                        /* Setup crypto1 cipher for nested authentication. */
-                        Crypto1Setup(Key, Uid, CardNonce, CardNonceParity);
-                        for (uint8_t i=0; i<sizeof(CardNonce); i++) {
-                            Buffer[i] = CardNonce[i];
-                            Buffer[ISO14443A_BUFFER_PARITY_OFFSET + i] = CardNonceParity[i];
-                        }
-                        /* Respond with the encrypted random card nonce and expect further authentication
-                        * form the reader in the next frame. */
-                        State = STATE_AUTHING;
-                        retSize = (MFCLASSIC_CMD_AUTH_RB_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                        mfcHandleAuthenticationRequest(true, Buffer, &retSize);
                     } else {
-                        /* Unknown command. Enter HALT or IDLE state depending on origin */
-                        State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+                        /* Unknown command. Goes back to ACTIVE */
+                        State = STATE_ACTIVE;
                     }
                 } /* End of if/else CRC check condition */
             } /* End of possible encrypted HALT command */
