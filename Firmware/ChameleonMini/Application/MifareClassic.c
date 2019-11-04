@@ -174,11 +174,11 @@ static bool isCascadeStepOnePassed = false;
 /* To enable MF_DETECTION behavior */
 static bool isDetectionEnabled = false;
 #ifdef CONFIG_MF_DETECTION_SUPPORT
+static bool isDetectionCanaryWritten = false;
+static uint8_t DetectionCanary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
 static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
 static uint8_t DetectionAttemptsKeyA = 0;
 static uint8_t DetectionAttemptsKeyB = 0;
-static bool isDetectionCanaryWritten = false;
-static uint8_t DetectionCanary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
 #endif
 
 /* TODO: Access control not implemented yet
@@ -275,52 +275,45 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value) {
     Block[11] = Block[3];
 }
 
-void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetection) {
+void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B) {
     State = STATE_IDLE;
     is7BytesUID = is7B;
     CardATQAValue = (is7BytesUID) ? (ATQA_4B | MFCLASSIC_7B_ATQA_MASK) : (ATQA_4B);
     CardSAKValue = SAK;
     isFromHaltChain = false;
     isCascadeStepOnePassed = false;
-    isDetectionEnabled = isDetection;
-    if(isDetectionEnabled) {
-        DetectionAttemptsKeyA = 0;
-        DetectionAttemptsKeyB = 0;
-    }
 }
 
 void MifareClassicAppInit1K(void) {
     MifareClassicAppInit( MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE,
-                          (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE), false );
+                          (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE) );
 }
 
 void MifareClassicAppInit4K(void) {
     MifareClassicAppInit( MFCLASSIC_4K_ATQA_VALUE, MFCLASSIC_4K_SAK_VALUE,
-                          (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE), false );
+                          (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE) );
 }
 
 #ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
-void MifareClassicAppInitMini(void)
-{
-    MifareClassicAppInit( MFCLASSIC_MINI_ATQA_VALUE, MFCLASSIC_MINI_SAK_VALUE,
-                          false, false );
+void MifareClassicAppInitMini(void) {
+    MifareClassicAppInit(MFCLASSIC_MINI_ATQA_VALUE, MFCLASSIC_MINI_SAK_VALUE, false);
 }
 #endif
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void) {
-    MifareClassicAppInit( MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE,
-                          false, true );
+    isDetectionEnabled = true;
+    DetectionAttemptsKeyA = 0;
+    DetectionAttemptsKeyB = 0;
+    MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
 }
 #endif
 
-void MifareClassicAppReset(void)
-{
+void MifareClassicAppReset(void) {
     State = STATE_IDLE;
 }
 
-void MifareClassicAppTask(void)
-{
+void MifareClassicAppTask(void) {
 
 }
 
@@ -380,7 +373,7 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
     uint16_t KeyAddress;
     /* Save Nonce in detection mode */
-    if(isDetectionEnabled) {
+    if(isDetectionEnabled && !isNested) {
         memset(DetectionDataSave, 0x00, DETECTION_BYTES_PER_SAVE);
         // Save reader's auth phase 1: KEY type (A or B), and sector number
         memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
