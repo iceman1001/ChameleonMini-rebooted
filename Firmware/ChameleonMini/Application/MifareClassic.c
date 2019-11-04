@@ -374,11 +374,13 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint16_t KeyAddress;
     /* Save Nonce in detection mode */
     if(isDetectionEnabled && !isNested) {
+#ifdef CONFIG_MF_DETECTION_SUPPORT
         memset(DetectionDataSave, 0x00, DETECTION_BYTES_PER_SAVE);
         // Save reader's auth phase 1: KEY type (A or B), and sector number
         memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
         // Set selected key to be the DETECTION canary
         KeyAddress = DETECTION_BLOCK0_CANARY_ADDR;
+#endif
     /* Set key address and loads it */
     } else {
         /* Fix for MFClassic 4k cards */
@@ -418,10 +420,12 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
         uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01, 0x20, 0x01, 0x45};
         uint8_t CardNonceSuccessor1[MFCLASSIC_MEM_NONCE_SIZE] = {0x63, 0xe5, 0xbc, 0xa7};
         uint8_t CardNonceSuccessor2[MFCLASSIC_MEM_NONCE_SIZE] = {0x99, 0x37, 0x30, 0xbd};
+#ifdef CONFIG_MF_DETECTION_SUPPORT
         if(isDetectionEnabled) {
             // Save sent 'random' nonce
             memcpy(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
         }
+#endif
         /* Precalculate the reader response from card-nonce */
         memcpy(ReaderResponse, CardNonceSuccessor1, MFCLASSIC_MEM_NONCE_SIZE);
         /* Precalculate our response from the reader response */
@@ -601,6 +605,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 
         case STATE_AUTHING:
             if(isDetectionEnabled) {
+#ifdef CONFIG_MF_DETECTION_SUPPORT
                 // Save reader's auth phase 2 answer to our nonce from STATE_ACTIVE
                 memcpy(DetectionDataSave+DETECTION_SAVE_P2_OFFSET, Buffer, DETECTION_READER_AUTH_P2_SIZE);
                 // Align data storage in each KEYX dedicated memory space, and iterate counters
@@ -621,6 +626,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
                 State = STATE_ACTIVE;
+#endif
             } else {
                 /* Reader delivers an encrypted nonce. We use it
                 * to setup the crypto1 LFSR in nonlinear feedback mode.
