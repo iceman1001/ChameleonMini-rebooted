@@ -177,6 +177,8 @@ static bool isDetectionEnabled = false;
 static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
 static uint8_t DetectionAttemptsKeyA = 0;
 static uint8_t DetectionAttemptsKeyB = 0;
+static bool isDetectionCanaryWritten = false;
+static uint8_t DetectionCanary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
 #endif
 
 /* TODO: Access control not implemented yet
@@ -282,8 +284,8 @@ void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B, bool isDetec
     isCascadeStepOnePassed = false;
     isDetectionEnabled = isDetection;
     if(isDetectionEnabled) {
-        uint8_t canary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
-        AppMemoryWrite(canary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+        DetectionAttemptsKeyA = 0;
+        DetectionAttemptsKeyB = 0;
     }
 }
 
@@ -379,6 +381,7 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint16_t KeyAddress;
     /* Save Nonce in detection mode */
     if(isDetectionEnabled) {
+        memset(DetectionDataSave, 0x00, DETECTION_BYTES_PER_SAVE);
         // Save reader's auth phase 1: KEY type (A or B), and sector number
         memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
         // Set selected key to be the DETECTION canary
@@ -608,33 +611,39 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 // Save reader's auth phase 2 answer to our nonce from STATE_ACTIVE
                 memcpy(DetectionDataSave+DETECTION_SAVE_P2_OFFSET, Buffer, DETECTION_READER_AUTH_P2_SIZE);
                 // Align data storage in each KEYX dedicated memory space, and iterate counters
-                uint16_t memSaveAddr = (uint16_t)DETECTION_MEM_BLOCK0_SIZE;
+                uint8_t memSaveAddr;
                 if (DetectionDataSave[DETECTION_KEYX_SAVE_IDX] == MFCLASSIC_CMD_AUTH_A) {
-                    memSaveAddr += ((uint16_t)DetectionAttemptsKeyA * DETECTION_BYTES_PER_SAVE);
+                    memSaveAddr = (DETECTION_MEM_DATA_START_ADDR + (DetectionAttemptsKeyA * DETECTION_BYTES_PER_SAVE));
                     DetectionAttemptsKeyA++;
                     DetectionAttemptsKeyA = DetectionAttemptsKeyA % DETECTION_MEM_MAX_KEYX_SAVES;
                 } else {
-                    memSaveAddr += (DETECTION_MEM_KEYX_SEPARATOR_OFFSET + ((uint16_t)DetectionAttemptsKeyB * DETECTION_BYTES_PER_SAVE));
+                    memSaveAddr = (DETECTION_MEM_KEYX_SEPARATOR_OFFSET + (DetectionAttemptsKeyB * DETECTION_BYTES_PER_SAVE));
                     DetectionAttemptsKeyB++;
                     DetectionAttemptsKeyB = DetectionAttemptsKeyB % DETECTION_MEM_MAX_KEYX_SAVES;
                 }
                 // Write to app memory
+                if(!isDetectionCanaryWritten) {
+                    AppMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+                    isDetectionCanaryWritten = true;
+                }
                 AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
-            }
-            /* Reader delivers an encrypted nonce. We use it
-            * to setup the crypto1 LFSR in nonlinear feedback mode.
-            * Furthermore it delivers an encrypted answer. Decrypt and check it */
-            Crypto1Auth(&Buffer[0]);
-            mfcDecryptBuffer(&Buffer[MFCLASSIC_MEM_NONCE_SIZE], MFCLASSIC_MEM_NONCE_SIZE);
-            if ( !memcmp(&Buffer[MFCLASSIC_MEM_NONCE_SIZE], ReaderResponse, MFCLASSIC_MEM_NONCE_SIZE) ) {
-                /* Reader is authenticated. Encrypt the precalculated card response
-                * and generate the parity bits. */
-                mfcEncryptBuffer(Buffer, CardResponse, MFCLASSIC_MEM_NONCE_SIZE);
-                State = STATE_AUTHED_IDLE;
-                retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
-            } else {
-                /* Unknown command. Goes back to ACTIVE */
                 State = STATE_ACTIVE;
+            } else {
+                /* Reader delivers an encrypted nonce. We use it
+                * to setup the crypto1 LFSR in nonlinear feedback mode.
+                * Furthermore it delivers an encrypted answer. Decrypt and check it */
+                Crypto1Auth(&Buffer[0]);
+                mfcDecryptBuffer(&Buffer[MFCLASSIC_MEM_NONCE_SIZE], MFCLASSIC_MEM_NONCE_SIZE);
+                if ( !memcmp(&Buffer[MFCLASSIC_MEM_NONCE_SIZE], ReaderResponse, MFCLASSIC_MEM_NONCE_SIZE) ) {
+                    /* Reader is authenticated. Encrypt the precalculated card response
+                    * and generate the parity bits. */
+                    mfcEncryptBuffer(Buffer, CardResponse, MFCLASSIC_MEM_NONCE_SIZE);
+                    State = STATE_AUTHED_IDLE;
+                    retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
+                } else {
+                    /* Unknown command. Goes back to ACTIVE */
+                    State = STATE_ACTIVE;
+                }
             }
             break; /* End of state AUTHING */
 
