@@ -12,9 +12,11 @@
 #include <avr/io.h>
 #include "Application/Application.h"
 
-#define BUTTON_PORT     PORTA
-#define BUTTON_MASK     PIN6_bm
-#define BUTTON_PINCTRL  PIN6CTRL
+#define BUTTON_PORT                     PORTA
+#define BUTTON_MASK                     PIN6_bm
+#define BUTTON_PINCTRL                  PIN6CTRL
+
+#define BUTTON_LONG_PRESS_TICK_COUNT    10
 
 typedef enum {
     BUTTON_ACTION_NONE,

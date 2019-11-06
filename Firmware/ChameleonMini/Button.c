@@ -3,8 +3,6 @@
 #include "Common.h"
 #include "Settings.h"
 
-#define LONG_PRESS_TICK_COUNT   10
-
 static const char PROGMEM ButtonActionTable[][32] =
 {
     [BUTTON_ACTION_NONE] = "CLOSED",
@@ -131,10 +129,10 @@ void ButtonTick(void)
 
     if (ThisButtonState & BUTTON_MASK) {
         /* Button is currently pressed */
-        if (PressTickCounter < LONG_PRESS_TICK_COUNT) {
+        if (PressTickCounter < BUTTON_LONG_PRESS_TICK_COUNT) {
             /* Count ticks while button is being pressed */
             PressTickCounter++;
-        } else if (PressTickCounter == LONG_PRESS_TICK_COUNT) {
+        } else if (PressTickCounter == BUTTON_LONG_PRESS_TICK_COUNT) {
             /* Long button press detected execute button action and advance PressTickCounter
              * to an invalid state. */
             ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonLongAction);
@@ -145,7 +143,7 @@ void ButtonTick(void)
     } else if (!(ThisButtonState & BUTTON_MASK)) {
         /* Button is currently not being pressed. Check if PressTickCounter contains
          * a recent short button press. */
-        if ( (PressTickCounter > 0) && (PressTickCounter <= LONG_PRESS_TICK_COUNT) ) {
+        if ( (PressTickCounter > 0) && (PressTickCounter <= BUTTON_LONG_PRESS_TICK_COUNT) ) {
             /* We have a short button press */
             ExecuteButtonAction(GlobalSettings.ActiveSettingPtr->ButtonAction);
         }
