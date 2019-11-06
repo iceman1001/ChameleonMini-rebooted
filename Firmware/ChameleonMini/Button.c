@@ -24,19 +24,23 @@ void ButtonInit(void)
 
 static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 {
-    uint8_t UidBuffer[CONFIGURATION_UID_SIZE_MAX];
+    ConfigurationUidType UidBuffer;
 
     if (ButtonAction == BUTTON_ACTION_UID_RANDOM) {
-
-        /* iceman,   2018,  this random functionality could be more localized to the current cardtype in use.
-            ie.  for Ultralight based cards with 7byte uid,  skip manufacturing byte
-        */
-
+        uint8_t startByte = 0;
         ApplicationGetUid(UidBuffer);
 
-        /* skip manufacturing byte UID0 */
-        for (uint8_t i=1; i<ActiveConfiguration.UidSize-1; i++) {
-            UidBuffer[i] = RandomGetByte();
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+        // Make RANDOM keep 1st byte safe for Ultralight types
+        ConfigurationEnum ActiveConfigurationId = GlobalSettings.ActiveSettingPtr->Configuration;
+        if( (ActiveConfigurationId == CONFIG_MF_ULTRALIGHT)
+            || (ActiveConfigurationId == CONFIG_MF_ULTRALIGHT_EV1_80B)
+            || (ActiveConfigurationId == CONFIG_MF_ULTRALIGHT_EV1_164B) ) {
+            startByte = 1;
+        }
+#endif
+        for( ; startByte < ActiveConfiguration.UidSize; startByte++) {
+            UidBuffer[startByte] = RandomGetByte();
         }
 
         ApplicationSetUid(UidBuffer);
