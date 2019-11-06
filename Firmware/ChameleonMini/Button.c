@@ -1,9 +1,10 @@
 #include "Button.h"
 #include "Random.h"
+#include "Configuration.h"
 #include "Common.h"
 #include "Settings.h"
 
-static const char PROGMEM ButtonActionTable[][32] =
+static const char PROGMEM ButtonActionTable[][BUTTON_NAME_MAX_LEN] =
 {
     [BUTTON_ACTION_NONE] = "CLOSED",
     [BUTTON_ACTION_UID_RANDOM] = "RANDOM_UID",
@@ -23,7 +24,7 @@ void ButtonInit(void)
 
 static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
 {
-    uint8_t UidBuffer[32];
+    uint8_t UidBuffer[CONFIGURATION_UID_SIZE_MAX];
 
     if (ButtonAction == BUTTON_ACTION_UID_RANDOM) {
 

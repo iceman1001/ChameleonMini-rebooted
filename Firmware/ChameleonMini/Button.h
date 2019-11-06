@@ -16,6 +16,7 @@
 #define BUTTON_MASK                     PIN6_bm
 #define BUTTON_PINCTRL                  PIN6CTRL
 
+#define BUTTON_NAME_MAX_LEN             20
 #define BUTTON_LONG_PRESS_TICK_COUNT    10
 
 typedef enum {
