@@ -309,6 +309,12 @@ void MifareClassicAppDetectionInit(void) {
 }
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+void MifareClassicAppBruteInit(void) {
+    MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
+}
+#endif
+
 void MifareClassicAppReset(void) {
     State = STATE_IDLE;
 }

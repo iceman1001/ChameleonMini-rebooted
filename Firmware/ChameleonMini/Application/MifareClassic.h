@@ -177,6 +177,10 @@ C1 C2 C3    read    write   increment   decrement,
 #define DETECTION_BLOCK0_CANARY_SIZE            8
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+#define BRUTE_MEM_APP_SIZE                      64
+#endif
+
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
 void MifareClassicAppReset(void);
@@ -199,6 +203,10 @@ void MifareClassicAppInitMini(void);
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void);
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+void MifareClassicAppBruteInit(void);
 #endif
 
 #endif /* MIFARECLASSIC_H_ */
