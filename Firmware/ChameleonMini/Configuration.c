@@ -255,7 +255,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
 },
 #endif
 #ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
-[CONFIG_MF_CLASSIC_BRUTE_SUPPORT] = {
+[CONFIG_MF_CLASSIC_BRUTE] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppBruteInit,
@@ -270,8 +270,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
-    .MemorySize = BRUTE_MEM_APP_SIZE,
-    .ReadOnly = true
+    .MemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .ReadOnly = false
 },
 #endif
 };

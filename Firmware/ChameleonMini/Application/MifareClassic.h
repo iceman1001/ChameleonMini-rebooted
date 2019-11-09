@@ -178,7 +178,7 @@ C1 C2 C3    read    write   increment   decrement,
 #endif
 
 #ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
-#define BRUTE_MEM_APP_SIZE                      64
+#define BRUTE_IDLE_MAX_ROUNDS                   2
 #endif
 
 void MifareClassicAppInit1K(void);

@@ -180,6 +180,11 @@ static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
 static uint8_t DetectionAttemptsKeyA = 0;
 static uint8_t DetectionAttemptsKeyB = 0;
 #endif
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+static bool hasBruted = false;
+static uint8_t BruteIdleRounds = 0;
+static uint32_t BruteCurrentUid = 0;
+#endif
 
 /* TODO: Access control not implemented yet
 * Decode Access conditions for a block
@@ -312,6 +317,31 @@ void MifareClassicAppDetectionInit(void) {
 #ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
 void MifareClassicAppBruteInit(void) {
     MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
+    ConfigurationUidType TempStartUid;
+    MifareClassicGetUid(TempStartUid);
+    BruteCurrentUid = ( (((uint32_t)TempStartUid[0]) << 24)
+                        | (((uint32_t)TempStartUid[1]) << 16)
+                        | (((uint32_t)TempStartUid[2]) << 8)
+                        | ((uint32_t)TempStartUid[3]) );
+    BruteIdleRounds = 0;
+    hasBruted = false;
+}
+
+void MifareClassicAppBruteStop(void) {
+    hasBruted = true;
+    BruteIdleRounds = 0;
+}
+
+void MifareClassicAppBruteMove(void) {
+    BruteCurrentUid++;
+    ConfigurationUidType TempMoveUid;
+    TempMoveUid[0] = ((uint8_t)(BruteCurrentUid >> 24) & 0xFF);
+    TempMoveUid[1] = ((uint8_t)(BruteCurrentUid >> 16) & 0xFF);
+    TempMoveUid[2] = ((uint8_t)(BruteCurrentUid >> 8) & 0xFF);
+    TempMoveUid[3] = ((uint8_t)(BruteCurrentUid & 0xFF));
+    MifareClassicSetUid(TempMoveUid);
+    BruteIdleRounds = 0;
+    State = STATE_IDLE;
 }
 #endif
 
@@ -593,9 +623,25 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
                 isCascadeStepOnePassed = false;
             }
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+            // If we were READY for too long, time to change UID
+            if( !hasBruted ) {
+                if( BruteIdleRounds > BRUTE_IDLE_MAX_ROUNDS ) {
+                    MifareClassicAppBruteMove();
+                } else {
+                    BruteIdleRounds++;
+                }
+            }
+#endif
             break; /* End of state READY */
 
         case STATE_ACTIVE:
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+            // If we get to there, our UID is probably fine to reader
+            if(!hasBruted) {
+                MifareClassicAppBruteStop();
+            }
+#endif
             if ( (Buffer[0] == MFCLASSIC_CMD_AUTH_A) || (Buffer[0] == MFCLASSIC_CMD_AUTH_B) ) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_CMD_AUTH_FRAME_SIZE)) {
                     mfcHandleAuthenticationRequest(false, Buffer, &retSize);
