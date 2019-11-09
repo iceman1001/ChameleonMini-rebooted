@@ -324,15 +324,22 @@ void MifareClassicAppBruteInit(void) {
                         | (((uint32_t)TempStartUid[2]) << 8)
                         | ((uint32_t)TempStartUid[3]) );
     BruteIdleRounds = 0;
-    hasBruted = false;
+    uint8_t hasBrutedByte;
+    AppMemoryRead(&hasBrutedByte, BRUTE_MEM_OFFSET+BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+    hasBruted = (hasBrutedByte == BRUTE_MEM_BRUTED_STATUS_CANARY);
 }
 
 void MifareClassicAppBruteStop(void) {
     hasBruted = true;
     BruteIdleRounds = 0;
+    uint8_t hasBrutedByte = BRUTE_MEM_BRUTED_STATUS_CANARY;
+    AppMemoryWrite(&hasBrutedByte, BRUTE_MEM_OFFSET+BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+    AppMemoryWrite(&BruteCurrentUid, BRUTE_MEM_OFFSET+BRUTE_MEM_FOUND_UID_ADDR, MFCLASSIC_UID_SIZE);
 }
 
 void MifareClassicAppBruteMove(void) {
+    hasBruted = false;
+    BruteIdleRounds = 0;
     BruteCurrentUid++;
     ConfigurationUidType TempMoveUid;
     TempMoveUid[0] = ((uint8_t)(BruteCurrentUid >> 24) & 0xFF);
@@ -340,8 +347,17 @@ void MifareClassicAppBruteMove(void) {
     TempMoveUid[2] = ((uint8_t)(BruteCurrentUid >> 8) & 0xFF);
     TempMoveUid[3] = ((uint8_t)(BruteCurrentUid & 0xFF));
     MifareClassicSetUid(TempMoveUid);
-    BruteIdleRounds = 0;
     State = STATE_IDLE;
+}
+
+void MifareClassicAppBruteToggle(void) {
+    if(!hasBruted) {
+        MifareClassicAppBruteStop();
+    } else {
+        uint8_t hasBrutedByte = BRUTE_MEM_BRUTED_STATUS_RESET;
+        AppMemoryWrite(&hasBrutedByte, BRUTE_MEM_OFFSET+BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+        MifareClassicAppBruteMove();
+    }
 }
 #endif
 

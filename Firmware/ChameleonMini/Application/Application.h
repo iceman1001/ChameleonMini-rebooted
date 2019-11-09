@@ -28,6 +28,10 @@ INLINE void ApplicationTick(void) {
     ActiveConfiguration.ApplicationTickFunc();
 }
 
+INLINE void ApplicationButton(void) {
+    ActiveConfiguration.ApplicationButtonFunc();
+}
+
 INLINE uint16_t ApplicationProcess(uint8_t* ByteBuffer, uint16_t ByteCount) {
     return ActiveConfiguration.ApplicationProcessFunc(ByteBuffer, ByteCount);
 }

@@ -14,6 +14,7 @@ static const char PROGMEM ButtonActionTable[][BUTTON_NAME_MAX_LEN] =
     [BUTTON_ACTION_UID_RIGHT_DECREMENT] = "UID_RIGHT_DECREMENT",
     [BUTTON_ACTION_CYCLE_SETTINGS] = "SWITCHCARD",
     [BUTTON_ACTION_TOGGLE_READONLY] = "READONLY",
+    [BUTTON_ACTION_FUNCTION] = "CARD_FUNCTION",
 };
 
 void ButtonInit(void)
@@ -120,6 +121,8 @@ static void ExecuteButtonAction(ButtonActionEnum ButtonAction)
         SettingsCycle();
     } else if (ButtonAction == BUTTON_ACTION_TOGGLE_READONLY) {
         ActiveConfiguration.ReadOnly = !ActiveConfiguration.ReadOnly;
+    } else if (ButtonAction == BUTTON_ACTION_FUNCTION) {
+        ApplicationButton();
     }
 }
 
