@@ -19,19 +19,11 @@ static const MapEntryType ConfigurationMap[] PROGMEM = {
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,    .Text = "MF_ULTRALIGHT_EV1_80B" },
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_164B,   .Text = "MF_ULTRALIGHT_EV1_164B" },
 #endif
-#ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_1K,            .Text = "MF_CLASSIC_1K" },
-#endif
-#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_1K_7B,         .Text = "MF_CLASSIC_1K_7B" },
-#endif
-#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_4K,            .Text = "MF_CLASSIC_4K" },
-#endif
-#ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_4K_7B,         .Text = "MF_CLASSIC_4K_7B" },
-#endif
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_MINI,          .Text = "MF_CLASSIC_MINI" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
@@ -147,13 +139,13 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ReadOnly = false
 },
 #endif
-#ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_SUPPORT
 [CONFIG_MF_CLASSIC_1K] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppInit1K,
     .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
@@ -168,14 +160,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
-#endif
-#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
 [CONFIG_MF_CLASSIC_1K_7B] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppInit1K,
     .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
@@ -190,14 +180,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
-#endif
-#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
 [CONFIG_MF_CLASSIC_4K] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppInit4K,
     .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
@@ -212,14 +200,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
-#endif
-#ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
 [CONFIG_MF_CLASSIC_4K_7B] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppInit4K,
     .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
@@ -234,14 +220,12 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
-#endif
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 [CONFIG_MF_CLASSIC_MINI] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppInitMini,
     .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,

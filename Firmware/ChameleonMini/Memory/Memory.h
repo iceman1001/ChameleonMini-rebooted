@@ -18,7 +18,7 @@
 #define MEMORY_NO_MEMORY                    0x00
 #define MEMORY_ALL_MEMORY                   0xFFFFFFFF
 #define MEMORY_NO_ADDR                      0
-#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_SUPPORT
 #define MEMORY_MIN_BYTES_PER_APP            MFCLASSIC_4K_MEM_SIZE
 #else
 #define MEMORY_MIN_BYTES_PER_APP            512

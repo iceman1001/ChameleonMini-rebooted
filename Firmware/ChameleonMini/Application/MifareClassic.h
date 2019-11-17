@@ -7,6 +7,10 @@
  *
  */
 
+#if defined(CONFIG_MF_CLASSIC_SUPPORT) || defined(CONFIG_MF_CLASSIC_DETECTION_SUPPORT) \
+    || defined(CONFIG_MF_CLASSIC_BRUTE_SUPPORT) || defined(SUPPORT_MF_CLASSIC_MAGIC_MODE) \
+    || defined(CONFIG_MF_CLASSIC_LOG_SUPPORT)
+
 #ifndef MIFARECLASSIC_H_
 #define MIFARECLASSIC_H_
 
@@ -17,9 +21,7 @@
 #define MFCLASSIC_UID_7B_SIZE                   ISO14443A_UID_SIZE_DOUBLE
 #define MFCLASSIC_1K_MEM_SIZE                   1024
 #define MFCLASSIC_4K_MEM_SIZE                   4096
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 #define MFCLASSIC_MINI_MEM_SIZE                 320
-#endif
 
 #define MFCLASSIC_1K_ATQA_VALUE                 0x0004
 #define MFCLASSIC_1K_7B_ATQA_VALUE              0x0044
@@ -28,10 +30,8 @@
 #define MFCLASSIC_7B_ATQA_MASK                  0x40
 #define MFCLASSIC_1K_SAK_VALUE                  0x08
 #define MFCLASSIC_4K_SAK_VALUE                  0x18
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 #define MFCLASSIC_MINI_ATQA_VALUE               MFCLASSIC_1K_ATQA_VALUE
 #define MFCLASSIC_MINI_SAK_VALUE                0x09
-#endif
 #define MFCLASSIC_SAK_CL1_VALUE                 ISO14443A_SAK_INCOMPLETE
 
 #define MFCLASSIC_MEM_S0B0_ADDRESS              0x00
@@ -214,8 +214,8 @@ C1 C2 C3    read    write   increment   decrement,
 
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
+void MifareClassicAppInitMini(void);
 void MifareClassicAppReset(void);
-void MifareClassicAppTask(void);
 
 uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount);
 
@@ -227,10 +227,6 @@ void MifareClassicSetAtqa(uint16_t Atqa);
 
 void MifareClassicGetSak(uint8_t * Sak);
 void MifareClassicSetSak(uint8_t Sak);
-
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
-void MifareClassicAppInitMini(void);
-#endif
 
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void);
@@ -249,3 +245,5 @@ void MifareClassicAppLogToggle(void);
 #endif
 
 #endif /* MIFARECLASSIC_H_ */
+
+#endif /* Compilation support */

@@ -7,6 +7,10 @@
  *
  */
 
+#if defined(CONFIG_MF_CLASSIC_SUPPORT) || defined(CONFIG_MF_CLASSIC_DETECTION_SUPPORT) \
+    || defined(CONFIG_MF_CLASSIC_BRUTE_SUPPORT) || defined(SUPPORT_MF_CLASSIC_MAGIC_MODE) \
+    || defined(CONFIG_MF_CLASSIC_LOG_SUPPORT)
+
 #include "MifareClassic.h"
 #include "ISO14443-3A.h"
 #include "Crypto1.h"
@@ -334,11 +338,9 @@ void MifareClassicAppInit4K(void) {
                           (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE) );
 }
 
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 void MifareClassicAppInitMini(void) {
     MifareClassicAppInit(MFCLASSIC_MINI_ATQA_VALUE, MFCLASSIC_MINI_SAK_VALUE, false);
 }
-#endif
 
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void) {
@@ -504,11 +506,6 @@ void MifareClassicAppLogToggle(void) {
 void MifareClassicAppReset(void) {
     State = STATE_IDLE;
 }
-
-void MifareClassicAppTask(void) {
-
-}
-
 
 /* Handle a MFCLASSIC_CMD_HALT during main process, as can be raised in many states.
 * Sets State, response buffer and response size. Returns if valid HALT. */
@@ -1028,3 +1025,5 @@ void MifareClassicGetSak(uint8_t * Sak) {
 void MifareClassicSetSak(uint8_t Sak) {
     CardSAKValue = Sak;
 }
+
+#endif /* Compilation support */
