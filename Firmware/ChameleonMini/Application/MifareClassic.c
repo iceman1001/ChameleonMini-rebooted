@@ -180,6 +180,11 @@ static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
 static uint8_t DetectionAttemptsKeyA = 0;
 static uint8_t DetectionAttemptsKeyB = 0;
 #endif
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+static bool isBruteEnabled = false;
+static uint8_t BruteIdleRounds = 0;
+static uint32_t BruteCurrentUid = 0;
+#endif
 
 /* TODO: Access control not implemented yet
 * Decode Access conditions for a block
@@ -275,6 +280,22 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value) {
     Block[11] = Block[3];
 }
 
+#if defined(CONFIG_MF_CLASSIC_BRUTE_SUPPORT)
+uint32_t BytesToUint32(uint8_t * Buffer) {
+    return ( (((uint32_t)(Buffer[0])) << 24)
+            | (((uint32_t)(Buffer[1])) << 16)
+            | (((uint32_t)(Buffer[2])) << 8)
+            | ((uint32_t)(Buffer[3])) );
+}
+
+void Uint32ToBytes(uint32_t Uint32, uint8_t * Buffer) {
+    Buffer[0] = ((uint8_t)(Uint32 >> 24) & 0xFF);
+    Buffer[1] = ((uint8_t)(Uint32 >> 16) & 0xFF);
+    Buffer[2] = ((uint8_t)(Uint32 >> 8) & 0xFF);
+    Buffer[3] = ((uint8_t)(Uint32 & 0xFF));
+}
+#endif
+
 void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B) {
     State = STATE_IDLE;
     is7BytesUID = is7B;
@@ -306,6 +327,65 @@ void MifareClassicAppDetectionInit(void) {
     DetectionAttemptsKeyA = 0;
     DetectionAttemptsKeyB = 0;
     MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
+}
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+void MifareClassicAppBruteGetCurrentUid(void) {
+    uint8_t TempUid[MFCLASSIC_UID_SIZE];
+    MifareClassicGetUid(TempUid);
+    BruteCurrentUid = BytesToUint32(TempUid);
+}
+
+void MifareClassicAppBruteWrite(void) {
+    uint8_t bruteStatusByte = (isBruteEnabled) ? (BRUTE_MEM_BRUTED_STATUS_CANARY) : (BRUTE_MEM_BRUTED_STATUS_RESET);
+    AppWorkingMemoryWrite(&bruteStatusByte, BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+    uint8_t TempUid[MFCLASSIC_UID_SIZE];
+    Uint32ToBytes(BruteCurrentUid, TempUid);
+    MifareClassicSetUid(TempUid);
+}
+
+void MifareClassicAppBruteInit(void) {
+    MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
+    uint8_t bruteStatusByte = BRUTE_MEM_BRUTED_STATUS_CANARY;
+    AppWorkingMemoryRead(&bruteStatusByte, BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+    isBruteEnabled = (bruteStatusByte == BRUTE_MEM_BRUTED_STATUS_CANARY);
+    BruteIdleRounds = 0;
+    MifareClassicAppBruteGetCurrentUid();
+}
+
+void MifareClassicAppBruteStop(void) {
+    isBruteEnabled = false;
+    BruteIdleRounds = 0;
+    MifareClassicAppBruteWrite();
+}
+
+void MifareClassicAppBruteMove(void) {
+    isBruteEnabled = true;
+    BruteIdleRounds = 0;
+    BruteCurrentUid++;
+    State = STATE_IDLE;
+    MifareClassicAppBruteWrite();
+}
+
+void MifareClassicAppBruteToggle(void) {
+    if(isBruteEnabled) {
+        MifareClassicAppBruteStop();
+    } else {
+        MifareClassicAppBruteGetCurrentUid();
+        MifareClassicAppBruteMove();
+    }
+}
+
+void MifareClassicAppBruteTick(void) {
+    // If we were using same UID for too long, change it
+    if( isBruteEnabled ) {
+        if( BruteIdleRounds >= BRUTE_IDLE_MAX_ROUNDS ) {
+            MifareClassicAppBruteMove();
+        } else {
+            BruteIdleRounds++;
+        }
+    }
 }
 #endif
 

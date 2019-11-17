@@ -177,6 +177,16 @@ C1 C2 C3    read    write   increment   decrement,
 #define DETECTION_BLOCK0_CANARY_SIZE            8
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+#define BRUTE_MEM_BRUTED_UID_ADDR               8
+#define BRUTE_MEM_BRUTED_STATUS_CANARY          0xB1
+#define BRUTE_MEM_BRUTED_STATUS_RESET           0xB0
+#define BRUTE_MEM_BRUTED_STATUS_ADDR            0
+#define BRUTE_MEM_BRUTED_STATUS_SIZE            1
+#define BRUTE_WORKING_MEM_SIZE                  16
+#define BRUTE_IDLE_MAX_ROUNDS                   3
+#endif
+
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
 void MifareClassicAppReset(void);
@@ -199,6 +209,12 @@ void MifareClassicAppInitMini(void);
 
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void);
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+void MifareClassicAppBruteInit(void);
+void MifareClassicAppBruteTick(void);
+void MifareClassicAppBruteToggle(void);
 #endif
 
 #endif /* MIFARECLASSIC_H_ */
