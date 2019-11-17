@@ -85,6 +85,8 @@ typedef struct {
     void (*ApplicationTaskFunc) (void);
     /** Function that is called roughly every 100ms. This can be used for parallel tasks of the application, that is independent of the codec module. */
     void (*ApplicationTickFunc) (void);
+    /** Function that is called when the "CARD_FUNCTION" button is pushed */
+    void (*ApplicationButtonFunc) (void);
     /** This function does two important things. It gets called by the codec.
      *  The first task is to deliver data that have been received by the codec module to
      *  the application module. The application then can decide how to answer to these data and return

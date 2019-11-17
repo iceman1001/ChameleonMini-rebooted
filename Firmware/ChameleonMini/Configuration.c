@@ -49,6 +49,7 @@ static void ApplicationInitDummy(void) {}
 static void ApplicationResetDummy(void) {}
 static void ApplicationTaskDummy(void) {}
 static void ApplicationTickDummy(void) {}
+static void ApplicationButtonFuncDummy(void) {}
 static uint16_t ApplicationProcessDummy(uint8_t* ByteBuffer, uint16_t ByteCount) { return CONFIGURATION_DUMMY_UID_PART; }
 static void ApplicationGetUidDummy(ConfigurationUidType Uid) { memset(Uid, CONFIGURATION_DUMMY_UID_PART, CONFIGURATION_DUMMY_UID_SIZE); }
 static void ApplicationSetUidDummy(ConfigurationUidType Uid) { }
@@ -65,6 +66,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = ApplicationResetDummy,
     .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = ApplicationProcessDummy,
     .ApplicationGetUidFunc = ApplicationGetUidDummy,
     .ApplicationSetUidFunc = ApplicationSetUidDummy,
@@ -85,6 +87,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareUltralightAppReset,
     .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareUltralightAppProcess,
     .ApplicationGetUidFunc = MifareUltralightGetUid,
     .ApplicationSetUidFunc = MifareUltralightSetUid,
@@ -104,6 +107,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareUltralightAppReset,
     .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareUltralightAppProcess,
     .ApplicationGetUidFunc = MifareUltralightGetUid,
     .ApplicationSetUidFunc = MifareUltralightSetUid,
@@ -123,6 +127,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareUltralightAppReset,
     .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareUltralightAppProcess,
     .ApplicationGetUidFunc = MifareUltralightGetUid,
     .ApplicationSetUidFunc = MifareUltralightSetUid,
@@ -144,6 +149,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = MifareClassicAppTask,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
@@ -165,6 +171,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = MifareClassicAppTask,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
@@ -186,6 +193,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = MifareClassicAppTask,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
@@ -207,6 +215,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = MifareClassicAppTask,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
@@ -228,6 +237,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = MifareClassicAppTask,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
@@ -249,6 +259,7 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationResetFunc = MifareClassicAppReset,
     .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
     .ApplicationSetUidFunc = MifareClassicSetUid,
