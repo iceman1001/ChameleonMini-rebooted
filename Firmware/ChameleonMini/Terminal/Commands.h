@@ -191,10 +191,9 @@ CommandStatusIdType CommandGetRssi(char* OutParam);
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
 #endif
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #define COMMAND_DETECTION           "DETECTION"
 CommandStatusIdType CommandGetDetection(char* OutParam);
-CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
 
 #define COMMAND_CLEARALL            "CLEARALL"

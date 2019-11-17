@@ -156,7 +156,7 @@ C1 C2 C3    read    write   increment   decrement,
 #define MFCLASSIC_ACC_BLOCK_DECREMENT           0x08
 */
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #define DETECTION_BYTES_PER_SAVE                16
 #define DETECTION_READER_AUTH_P1_SIZE           4
 #define DETECTION_READER_AUTH_P2_SIZE           8
@@ -197,7 +197,7 @@ void MifareClassicSetSak(uint8_t Sak);
 void MifareClassicAppInitMini(void);
 #endif
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void);
 #endif
 

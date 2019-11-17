@@ -34,8 +34,8 @@ static const MapEntryType ConfigurationMap[] PROGMEM = {
 #ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_MINI,          .Text = "MF_CLASSIC_MINI" },
 #endif
-#ifdef CONFIG_MF_DETECTION_SUPPORT
-    { .Id = CONFIG_MF_DETECTION,             .Text = "MF_DETECTION" },
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_DETECTION,     .Text = "MF_CLASSIC_DETECTION" },
 #endif
 };
 
@@ -241,13 +241,13 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ReadOnly = false
 },
 #endif
-#ifdef CONFIG_MF_DETECTION_SUPPORT
-[CONFIG_MF_DETECTION] = {
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
+[CONFIG_MF_CLASSIC_DETECTION] = {
     .CodecInitFunc = ISO14443ACodecInit,
     .CodecTaskFunc = ISO14443ACodecTask,
     .ApplicationInitFunc = MifareClassicAppDetectionInit,
     .ApplicationResetFunc = MifareClassicAppReset,
-    .ApplicationTaskFunc = MifareClassicAppTask,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationProcessFunc = MifareClassicAppProcess,
     .ApplicationGetUidFunc = MifareClassicGetUid,
@@ -257,9 +257,9 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
-    .CardMemorySize = DETECTION_MEM_APP_SIZE,
-    .WorkingMemorySize = MEMORY_NO_MEMORY,
-    .ReadOnly = true
+    .CardMemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .WorkingMemorySize = DETECTION_MEM_APP_SIZE,
+    .ReadOnly = false
 },
 #endif
 };

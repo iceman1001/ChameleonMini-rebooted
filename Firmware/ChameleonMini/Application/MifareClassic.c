@@ -171,9 +171,9 @@ static bool is7BytesUID = false;
 static bool isFromHaltChain = false;
 /* To check if previous step of any cascading sequence has passed */
 static bool isCascadeStepOnePassed = false;
-/* To enable MF_DETECTION behavior */
+/* To enable MF_CLASSIC_DETECTION behavior */
 static bool isDetectionEnabled = false;
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 static bool isDetectionCanaryWritten = false;
 static uint8_t DetectionCanary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
 static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
@@ -300,7 +300,7 @@ void MifareClassicAppInitMini(void) {
 }
 #endif
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void) {
     isDetectionEnabled = true;
     DetectionAttemptsKeyA = 0;
@@ -374,7 +374,7 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint16_t KeyAddress;
     /* Save Nonce in detection mode */
     if(isDetectionEnabled && !isNested) {
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
         memset(DetectionDataSave, 0x00, DETECTION_BYTES_PER_SAVE);
         // Save reader's auth phase 1: KEY type (A or B), and sector number
         memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
@@ -420,7 +420,7 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
         uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01, 0x20, 0x01, 0x45};
         uint8_t CardNonceSuccessor1[MFCLASSIC_MEM_NONCE_SIZE] = {0x63, 0xe5, 0xbc, 0xa7};
         uint8_t CardNonceSuccessor2[MFCLASSIC_MEM_NONCE_SIZE] = {0x99, 0x37, 0x30, 0xbd};
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
         if(isDetectionEnabled) {
             // Save sent 'random' nonce
             memcpy(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
@@ -605,7 +605,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 
         case STATE_AUTHING:
             if(isDetectionEnabled) {
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
                 // Save reader's auth phase 2 answer to our nonce from STATE_ACTIVE
                 memcpy(DetectionDataSave+DETECTION_SAVE_P2_OFFSET, Buffer, DETECTION_READER_AUTH_P2_SIZE);
                 // Align data storage in each KEYX dedicated memory space, and iterate counters
@@ -621,10 +621,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 // Write to app memory
                 if(!isDetectionCanaryWritten) {
-                    AppCardMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+                    AppWorkingMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
                     isDetectionCanaryWritten = true;
                 }
-                AppCardMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
+                AppWorkingMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
                 State = STATE_ACTIVE;
 #endif
             } else {
