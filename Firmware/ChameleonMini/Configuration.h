@@ -131,11 +131,10 @@ typedef struct {
      * @}
      */
 
-    /**
-     * Defines how many space the configuration needs. For emulating configurations this is the memory space of
-     * the emulated card.
-     */
-    uint32_t MemorySize;
+    // Defines how many space the configuration needs to store card emulation data.
+    uint32_t CardMemorySize;
+    // Defines how many space the configuration needs to store working data (logs, results, etc.)
+    uint32_t WorkingMemorySize;
     /**
      * Defines the size of the UID for emulating configurations.
      */
@@ -154,6 +153,7 @@ void ConfigurationSetById(ConfigurationEnum Configuration);
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize);
 bool ConfigurationSetByName(const char* Configuration);
 void ConfigurationGetList(char* ConfigurationList, uint16_t BufferSize);
-uint32_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration);
+uint32_t ConfigurationTableGetCardMemorySizeForId(ConfigurationEnum Configuration);
+uint32_t ConfigurationTableGetWorkingMemorySizeForId(ConfigurationEnum Configuration);
 
 #endif /* _CM_CONFIGURATION_H_ */

@@ -1,4 +1,4 @@
-/* Copyright 2013 Timo Kasper, Simon KÃ¼ppers, David Oswald ("ORIGINAL
+/* Copyright 2013 Timo Kasper, Simon KŸppers, David Oswald ("ORIGINAL
  * AUTHORS"). All rights reserved.
  *
  * DEFINITIONS:
@@ -110,95 +110,107 @@ typedef struct {
   CommandGetFuncType GetFunc;
 } CommandEntryType;
 
-#define COMMAND_VERSION     "VERSION"
+#define COMMAND_VERSION             "VERSION"
 CommandStatusIdType CommandGetVersion(char* OutParam);
 
-#define COMMAND_CONFIG      "CONFIG"
+#define COMMAND_CONFIG              "CONFIG"
 CommandStatusIdType CommandExecConfig(char* OutMessage);
 CommandStatusIdType CommandGetConfig(char* OutParam);
 CommandStatusIdType CommandSetConfig(char* OutMessage, const char* InParam);
 
-#define COMMAND_UID         "UID"
-#define COMMAND_UID_RANDOM  "RANDOM"
+#define COMMAND_UID                 "UID"
+#define COMMAND_UID_RANDOM          "RANDOM"
 CommandStatusIdType CommandGetUid(char* OutParam);
 CommandStatusIdType CommandSetUid(char* OutMessage, const char* InParam);
 
-#define COMMAND_ATQA        "ATQA"
+#define COMMAND_ATQA                "ATQA"
 CommandStatusIdType CommandGetAtqa(char* OutParam);
 CommandStatusIdType CommandSetAtqa(char* OutMessage, const char* InParam);
 
-#define COMMAND_SAK         "SAK"
+#define COMMAND_SAK                 "SAK"
 CommandStatusIdType CommandGetSak(char* OutParam);
 CommandStatusIdType CommandSetSak(char* OutMessage, const char* InParam);
 
-#define COMMAND_READONLY    "READONLY"
+#define COMMAND_READONLY            "READONLY"
 CommandStatusIdType CommandGetReadOnly(char* OutParam);
 CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam);
 
-#define COMMAND_UPLOAD      "UPLOAD"
+#define COMMAND_UPLOAD              "UPLOAD"
 CommandStatusIdType CommandExecUpload(char* OutMessage);
 
-#define COMMAND_DOWNLOAD    "DOWNLOAD"
+#define COMMAND_DOWNLOAD            "DOWNLOAD"
 CommandStatusIdType CommandExecDownload(char* OutMessage);
 
-#define COMMAND_RESET       "RESET"
+#define COMMAND_RESET               "RESET"
 CommandStatusIdType CommandExecReset(char* OutMessage);
 
-#define COMMAND_UPGRADE     "UPGRADE"
+#define COMMAND_UPGRADE             "UPGRADE"
 CommandStatusIdType CommandExecUpgrade(char* OutMessage);
 
-#define COMMAND_MEMSIZE     "MEMSIZE"
+#define COMMAND_MEMSIZE             "MEMSIZE"
 CommandStatusIdType CommandGetMemSize(char* OutParam);
 
-#define COMMAND_UIDSIZE     "UIDSIZE"
+#define COMMAND_WORKMEM             "WORKMEM"
+CommandStatusIdType CommandGetWorkingMem(char* OutParam);
+CommandStatusIdType CommandExecWorkingMem(char* OutMessage);
+
+#define COMMAND_WORKMEMUPLOAD       "WORKMEMUPLOAD"
+CommandStatusIdType CommandExecWorkingMemUpload(char* OutMessage);
+
+#define COMMAND_WORKMEMDOWNLOAD     "WORKMEMDOWNLOAD"
+CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage);
+
+#define COMMAND_UIDSIZE             "UIDSIZE"
 CommandStatusIdType CommandGetUidSize(char* OutParam);
 
-#define COMMAND_BUTTON      "BUTTON"
+#define COMMAND_BUTTON              "BUTTON"
 CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);
 CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam);
 
-#define COMMAND_BUTTON_LONG "BUTTON_LONG"
+#define COMMAND_BUTTON_LONG         "BUTTON_LONG"
 CommandStatusIdType CommandExecButtonLong(char* OutMessage);
 CommandStatusIdType CommandGetButtonLong(char* OutParam);
 CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam);
 
-#define COMMAND_SETTING     "SETTING"
+#define COMMAND_SETTING             "SETTING"
 CommandStatusIdType CommandGetSetting(char* OutParam);
 CommandStatusIdType CommandSetSetting(char* OutMessage, const char* InParam);
 
-#define COMMAND_CLEAR       "CLEAR"
+#define COMMAND_CLEAR               "CLEAR"
 CommandStatusIdType CommandExecClear(char* OutParam);
 
-#define COMMAND_HELP        "HELP"
+#define COMMAND_HELP                "HELP"
 CommandStatusIdType CommandExecHelp(char* OutMessage);
 
-#define COMMAND_RSSI        "RSSI"
+#define COMMAND_RSSI                "RSSI"
 CommandStatusIdType CommandGetRssi(char* OutParam);
 
-#define COMMAND_PWD         "PWD"
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+#define COMMAND_PWD                 "PWD"
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
+#endif
 
 #ifdef CONFIG_MF_DETECTION_SUPPORT
-#define COMMAND_DETECTION   "DETECTION"
+#define COMMAND_DETECTION           "DETECTION"
 CommandStatusIdType CommandGetDetection(char* OutParam);
 CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam);
 #endif
 
-#define COMMAND_CLEARALL    "CLEARALL"
+#define COMMAND_CLEARALL            "CLEARALL"
 CommandStatusIdType CommandExecClearAll(char* OutMessage);
 
 #ifdef CONFIG_DEBUG_MEMORYINFO_COMMAND
-#define COMMAND_MEMORYINFO  "MEMORYINFO"
+#define COMMAND_MEMORYINFO          "MEMORYINFO"
 CommandStatusIdType CommandExecMemoryInfo(char* OutMessage);
 #endif
 
 #ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
-#define COMMAND_MEMORYTEST  "MEMORYTEST"
+#define COMMAND_MEMORYTEST          "MEMORYTEST"
 CommandStatusIdType CommandExecMemoryTest(char* OutMessage);
 #endif
 
-#define COMMAND_LIST_END    ""
+#define COMMAND_LIST_END            ""
 
 /* Defines the end of command list. This is no actual command */
 

@@ -120,6 +120,27 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = CommandGetMemSize
   },
   {
+    .Command    = COMMAND_WORKMEM,
+    .ExecFunc   = CommandExecWorkingMem,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = CommandGetWorkingMem
+  },
+  {
+    .Command    = COMMAND_WORKMEMUPLOAD,
+    .ExecFunc   = CommandExecWorkingMemUpload,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
+  },
+  {
+    .Command    = COMMAND_WORKMEMDOWNLOAD,
+    .ExecFunc   = CommandExecWorkingMemDownload,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
+  },
+  {
     .Command    = COMMAND_UIDSIZE,
     .ExecFunc   = NO_FUNCTION,
     .ExecParamFunc = NO_FUNCTION,
@@ -221,6 +242,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = CommandGetRssi
   },
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
   {
     .Command    = COMMAND_PWD,
     .ExecFunc   = NO_FUNCTION,
@@ -228,6 +250,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = CommandGetUltralightPassword
   },
+#endif
 /*
   {
     .Command    = COMMAND_SYSTICK,

@@ -6,6 +6,7 @@
  */
 
 #include <avr/pgmspace.h>
+#include "Memory/Memory.h"
 #include "Configuration.h"
 #include "Settings.h"
 #include "Map.h"
@@ -72,7 +73,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
     .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
     .UidSize = CONFIGURATION_DUMMY_UID_SIZE,
-    .MemorySize = CONFIGURATION_DUMMY_MEMSIZE,
+    .CardMemorySize = CONFIGURATION_DUMMY_MEMSIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = true
 },
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
@@ -91,7 +93,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareUltralightGetAtqa,
     .ApplicationSetAtqaFunc = MifareUltralightSetAtqa,
     .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
-    .MemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+    .CardMemorySize = MIFARE_ULTRALIGHT_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 [CONFIG_MF_ULTRALIGHT_EV1_80B] = {
@@ -109,7 +112,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareUltralightGetAtqa,
     .ApplicationSetAtqaFunc = MifareUltralightSetAtqa,
     .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
-    .MemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
+    .CardMemorySize = MIFARE_ULTRALIGHT_EV11_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 [CONFIG_MF_ULTRALIGHT_EV1_164B] = {
@@ -127,7 +131,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareUltralightGetAtqa,
     .ApplicationSetAtqaFunc = MifareUltralightSetAtqa,
     .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
-    .MemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
+    .CardMemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 #endif
@@ -147,7 +152,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
-    .MemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .CardMemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 #endif
@@ -167,7 +173,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_7B_SIZE,
-    .MemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .CardMemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 #endif
@@ -187,7 +194,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
-    .MemorySize = MFCLASSIC_4K_MEM_SIZE,
+    .CardMemorySize = MFCLASSIC_4K_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 #endif
@@ -207,7 +215,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_7B_SIZE,
-    .MemorySize = MFCLASSIC_4K_MEM_SIZE,
+    .CardMemorySize = MFCLASSIC_4K_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 #endif
@@ -227,7 +236,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
-    .MemorySize = MFCLASSIC_MINI_MEM_SIZE,
+    .CardMemorySize = MFCLASSIC_MINI_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },
 #endif
@@ -247,7 +257,8 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
-    .MemorySize = DETECTION_MEM_APP_SIZE,
+    .CardMemorySize = DETECTION_MEM_APP_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = true
 },
 #endif
@@ -292,14 +303,10 @@ void ConfigurationGetList(char* List, uint16_t BufferSize)
     MapToString(ConfigurationMap, ARRAY_COUNT(ConfigurationMap), List, BufferSize);
 }
 
-uint32_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration) {
-    /* Possible other implementation
-    ConfigurationType ConfForSetting;
-    memcpy_P( &ConfForSetting,
-              &(ConfigurationTable[GlobalSettings.Settings[SettingNumber].Configuration]),
-              sizeof(ConfigurationType) );
-    return ConfForSetting.MemorySize;
-    */
-    return ( (uint32_t)pgm_read_dword( &(ConfigurationTable[Configuration].MemorySize) ) );
+uint32_t ConfigurationTableGetCardMemorySizeForId(ConfigurationEnum Configuration) {
+    return ( (uint32_t)pgm_read_dword( &(ConfigurationTable[Configuration].CardMemorySize) ) );
 }
 
+uint32_t ConfigurationTableGetWorkingMemorySizeForId(ConfigurationEnum Configuration) {
+    return ( (uint32_t)pgm_read_dword( &(ConfigurationTable[Configuration].WorkingMemorySize) ) );
+}

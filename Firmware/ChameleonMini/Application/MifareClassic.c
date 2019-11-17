@@ -392,12 +392,12 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
         }
         KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
     }
-    AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+    AppCardMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
     /* Load UID */
     if (is7BytesUID) {
-        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+        AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
     } else {
-        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+        AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
     }
     /* Proceed with nested or regular authent */
     if(isNested) {
@@ -494,7 +494,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
                 } else if (Buffer[0] == MFCLASSIC_CMD_READ) {
                     /* Read command. Read data from memory and append CRCA. */
-                    AppMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     retSize = (MFCLASSIC_CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE)
                               * BITS_PER_BYTE;
@@ -515,7 +515,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK)) {
                 /* CRC check passed. Write data into memory and send ACK. */
                 if (!ActiveConfiguration.ReadOnly) {
-                    AppMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                 }
                 Buffer[0] = MFCLASSIC_ACK_VALUE;
             } else {
@@ -549,7 +549,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     SAK = CardSAKValue;
                     NextState = STATE_ACTIVE;
                 }
-                AppMemoryRead(UidCLReadBuffer, UidMemAddr, UidReadSize);
+                AppCardMemoryRead(UidCLReadBuffer, UidMemAddr, UidReadSize);
                 if (ISO14443ASelect(Buffer, &BitCount, UidCL, SAK)) {
                     /* TODO: Access control not implemented yet
                      * AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
@@ -563,7 +563,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 /* 'Sequence 1' as per MF1S50YYX_V1, title 10.1.2 */
                 if ( is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2) ) {
                     uint8_t UidCL[ISO14443A_CL_UID_SIZE];
-                    AppMemoryRead(UidCL, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+                    AppCardMemoryRead(UidCL, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
                     if (ISO14443ASelect(Buffer, &BitCount, UidCL, CardSAKValue)) {
                         State = STATE_ACTIVE;
                         isCascadeStepOnePassed = false;
@@ -572,7 +572,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 /* 'Sequence 2' as per MF1S50YYX_V1, title 10.1.2 */
                 } else if (Buffer[0] == MFCLASSIC_CMD_READ) {
                     /* Read sector 0 / block 0 and send in plain */
-                    AppMemoryRead(Buffer, MFCLASSIC_MEM_S0B0_ADDRESS, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryRead(Buffer, MFCLASSIC_MEM_S0B0_ADDRESS, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     State = STATE_ACTIVE;
                     isCascadeStepOnePassed = false;
@@ -621,10 +621,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 // Write to app memory
                 if(!isDetectionCanaryWritten) {
-                    AppMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+                    AppCardMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
                     isDetectionCanaryWritten = true;
                 }
-                AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
+                AppCardMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
                 State = STATE_ACTIVE;
 #endif
             } else {
@@ -662,7 +662,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 } else {
                     if (Buffer[0] == MFCLASSIC_CMD_READ) {
                         /* Read command. Read data from memory and append CRCA. */
-                        AppMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                        AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         /* Encrypt and calculate parity bits. */
                         mfcEncryptBuffer(Buffer, Buffer, (ISO14443A_CRCA_SIZE + MFCLASSIC_MEM_BYTES_PER_BLOCK));
@@ -683,7 +683,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                         } else if (Buffer[0] == MFCLASSIC_CMD_TRANSFER) {
                             /* Write back the global block buffer to the desired block address */
                             if (!ActiveConfiguration.ReadOnly) {
-                                AppMemoryWrite(BlockBuffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                                AppCardMemoryWrite(BlockBuffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                             } else {
                                 /* In read only mode, silently ignore the write */
                             }
@@ -728,7 +728,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK)) {
                     /* Silently ignore in ReadOnly mode */
                     if (!ActiveConfiguration.ReadOnly) {
-                        AppMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                        AppCardMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     }
                     Buffer[0] = MFCLASSIC_ACK_VALUE ^ Crypto1Nibble();
                 } else {
@@ -752,7 +752,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             /* We could also get an encrypted HALT... */
             if ( !mfcHandleHaltCommand(Buffer, &retSize) ) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_MEM_VALUE_SIZE)) {
-                    AppMemoryRead(BlockBuffer, (uint16_t) CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryRead(BlockBuffer, (uint16_t) CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     if (CheckValueIntegrity(BlockBuffer)) {
                         uint32_t ParamValue;
                         uint32_t BlockValue;
@@ -793,20 +793,20 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 
 void MifareClassicGetUid(ConfigurationUidType Uid) {
     if (is7BytesUID) {
-        AppMemoryRead(&Uid[0], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
-        AppMemoryRead(&Uid[3], MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+        AppCardMemoryRead(&Uid[0], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
+        AppCardMemoryRead(&Uid[3], MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
     } else {
-        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+        AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
     }
 }
 
 void MifareClassicSetUid(ConfigurationUidType Uid) {
     if (is7BytesUID) {
-        AppMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
+        AppCardMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     } else {
         uint8_t BCC =  Uid[0] ^ Uid[1] ^ Uid[2] ^ Uid[3];
-        AppMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
-        AppMemoryWrite(&BCC, MFCLASSIC_MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
+        AppCardMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+        AppCardMemoryWrite(&BCC, MFCLASSIC_MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }
 
