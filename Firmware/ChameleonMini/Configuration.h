@@ -50,6 +50,9 @@ typedef enum  {
 #ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
     CONFIG_MF_CLASSIC_BRUTE,
 #endif
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+    CONFIG_MF_CLASSIC_LOG,
+#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;

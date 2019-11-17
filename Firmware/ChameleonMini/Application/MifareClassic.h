@@ -187,6 +187,31 @@ C1 C2 C3    read    write   increment   decrement,
 #define BRUTE_IDLE_MAX_ROUNDS                   3
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+#define MFCLASSIC_LOG_LINE_START                0x3E
+#define MFCLASSIC_LOG_LINE_END                  0x3B
+#define MFCLASSIC_LOG_EOL_CR                    0x0D
+#define MFCLASSIC_LOG_EOL_LF                    0x0A
+#define MFCLASSIC_LOG_EOS                       0x00
+#define MFCLASSIC_LOG_SEPARATOR                 0x21
+#define MFCLASSIC_LOG_READER                    0x52
+#define MFCLASSIC_LOG_TAG                       0x54
+#define MFCLASSIC_LOG_MEM_CHAR_LEN              1
+#define MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR    MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR
+#define MFCLASSIC_LOG_MEM_STATUS_CANARY         0x71
+#define MFCLASSIC_LOG_MEM_STATUS_RESET          0x70
+#define MFCLASSIC_LOG_MEM_STATUS_LEN            1
+#define MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR       12
+#define MFCLASSIC_LOG_MEM_WROTEBYTES_LEN        sizeof(uint32_t)
+#define MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR       0
+#define MFCLASSIC_LOG_MEM_LOG_HEADER_LEN        16
+#define MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN       128
+#define MFCLASSIC_LOG_MEM_LINE_START_ADDR       0
+#define MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN    sizeof(uint16_t)
+#define MFCLASSIC_LOG_LINE_OVERHEAD             (MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN+MFCLASSIC_LOG_MEM_CHAR_LEN*10)
+#define MFCLASSIC_LOG_BUFFER_OVERFLOW           0x0F
+#endif
+
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
 void MifareClassicAppReset(void);
@@ -215,6 +240,12 @@ void MifareClassicAppDetectionInit(void);
 void MifareClassicAppBruteInit(void);
 void MifareClassicAppBruteTick(void);
 void MifareClassicAppBruteToggle(void);
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+void MifareClassicAppLogInit(void);
+void MifareClassicAppLogWriteLines(void);
+void MifareClassicAppLogToggle(void);
 #endif
 
 #endif /* MIFARECLASSIC_H_ */

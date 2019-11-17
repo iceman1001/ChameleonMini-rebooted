@@ -40,6 +40,9 @@ static const MapEntryType ConfigurationMap[] PROGMEM = {
 #ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_BRUTE,         .Text = "MF_CLASSIC_BRUTE" },
 #endif
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+    { .Id = CONFIG_MF_CLASSIC_LOG,           .Text = "MF_CLASSIC_LOG" },
+#endif
 };
 
 /* Include all Codecs and Applications */
@@ -295,6 +298,28 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .UidSize = MFCLASSIC_UID_SIZE,
     .CardMemorySize = MFCLASSIC_1K_MEM_SIZE,
     .WorkingMemorySize = BRUTE_WORKING_MEM_SIZE,
+    .ReadOnly = false
+},
+#endif
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+[CONFIG_MF_CLASSIC_LOG] = {
+    .CodecInitFunc = ISO14443ACodecInit,
+    .CodecTaskFunc = ISO14443ACodecTask,
+    .ApplicationInitFunc = MifareClassicAppLogInit,
+    .ApplicationResetFunc = MifareClassicAppReset,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
+    .ApplicationTickFunc = MifareClassicAppLogWriteLines,
+    .ApplicationButtonFunc = MifareClassicAppLogToggle,
+    .ApplicationProcessFunc = MifareClassicAppProcess,
+    .ApplicationGetUidFunc = MifareClassicGetUid,
+    .ApplicationSetUidFunc = MifareClassicSetUid,
+    .ApplicationGetSakFunc = MifareClassicGetSak,
+    .ApplicationSetSakFunc = MifareClassicSetSak,
+    .ApplicationGetAtqaFunc = MifareClassicGetAtqa,
+    .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
+    .UidSize = MFCLASSIC_UID_SIZE,
+    .CardMemorySize = MFCLASSIC_1K_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_ALL_MEMORY,
     .ReadOnly = false
 },
 #endif
