@@ -5,6 +5,8 @@
  *      Author: skuser
  */
 
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
+
 #include "MifareUltralight.h"
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
@@ -161,11 +163,6 @@ void MifareUltralightEV12AppInit(void)
 void MifareUltralightAppReset(void)
 {
     State = STATE_IDLE;
-}
-
-void MifareUltralightAppTask(void)
-{
-
 }
 
 static bool VerifyAuthentication(uint8_t PageAddress)
@@ -362,7 +359,7 @@ static uint16_t AppProcess(uint8_t* const Buffer, uint16_t ByteCount)
                 uint8_t Password[4];
 
                 /* Save password */
-                AppCardMemoryWrite(Buffer+1, MIFARE_ULTRALIGHT_PWD_ADDRESS, 4);
+                AppWorkingMemoryWrite(Buffer+1, MIFARE_ULTRALIGHT_PWD_ADDRESS, MIFARE_ULTRALIGHT_PWD_SIZE);
 
                 /* Verify value and increment authentication attempt counter */
                 if (!AuthCounterIncrement()) {
@@ -570,20 +567,22 @@ void MifareUltralightSetUid(ConfigurationUidType Uid)
 
 void MifareUltralightGetAtqa(uint16_t * Atqa)
 {
-	*Atqa = CardATQAValue;
+    *Atqa = CardATQAValue;
 }
 
 void MifareUltralightSetAtqa(uint16_t Atqa)
 {
-	CardATQAValue = Atqa;
+    CardATQAValue = Atqa;
 }
 
 void MifareUltralightGetSak(uint8_t * Sak)
 {
-	*Sak = CardSAKValue;
+    *Sak = CardSAKValue;
 }
 
 void MifareUltralightSetSak(uint8_t Sak)
 {
-	CardSAKValue = Sak;
+    CardSAKValue = Sak;
 }
+
+#endif /* Compilation support */

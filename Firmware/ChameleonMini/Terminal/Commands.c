@@ -404,9 +404,9 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
 
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
-    uint8_t pwd[4];
+    uint8_t pwd[MIFARE_ULTRALIGHT_PWD_SIZE];
     /* Read saved password from authentication */
-    AppCardMemoryRead(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, 4);
+    AppWorkingMemoryRead(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, MIFARE_ULTRALIGHT_PWD_SIZE);
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%02x%02x%02x%02x"), pwd[0], pwd[1], pwd[2], pwd[3]);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
