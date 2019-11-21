@@ -7,12 +7,19 @@
  *
  */
 
+#if defined(CONFIG_MF_CLASSIC_SUPPORT) || defined(CONFIG_MF_CLASSIC_DETECTION_SUPPORT) \
+    || defined(CONFIG_MF_CLASSIC_BRUTE_SUPPORT) || defined(SUPPORT_MF_CLASSIC_MAGIC_MODE) \
+    || defined(CONFIG_MF_CLASSIC_LOG_SUPPORT)
+
 #include "MifareClassic.h"
 #include "ISO14443-3A.h"
 #include "Crypto1.h"
 #include "../Random.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory/Memory.h"
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+#include "System.h"
+#endif
 
 /* TODO: Access control not implemented yet
 // Decoding table for Access conditions of a data block
@@ -171,14 +178,26 @@ static bool is7BytesUID = false;
 static bool isFromHaltChain = false;
 /* To check if previous step of any cascading sequence has passed */
 static bool isCascadeStepOnePassed = false;
-/* To enable MF_DETECTION behavior */
+/* To enable MF_CLASSIC_DETECTION behavior */
 static bool isDetectionEnabled = false;
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 static bool isDetectionCanaryWritten = false;
 static uint8_t DetectionCanary[DETECTION_BLOCK0_CANARY_SIZE] = { DETECTION_BLOCK0_CANARY };
 static uint8_t DetectionDataSave[DETECTION_BYTES_PER_SAVE] = {0};
 static uint8_t DetectionAttemptsKeyA = 0;
 static uint8_t DetectionAttemptsKeyB = 0;
+#endif
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+static bool isBruteEnabled = false;
+static uint8_t BruteIdleRounds = 0;
+static uint32_t BruteCurrentUid = 0;
+#endif
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+static bool isLogEnabled = false;
+static uint32_t LogBytesWrote = 0;
+static uint16_t LogBytesBuffered = 0;
+static uint32_t LogMaxBytes = 0;
+static uint8_t LogLineBuffer[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
 #endif
 
 /* TODO: Access control not implemented yet
@@ -275,6 +294,31 @@ INLINE void ValueToBlock(uint8_t* Block, uint32_t Value) {
     Block[11] = Block[3];
 }
 
+#if defined(CONFIG_MF_CLASSIC_BRUTE_SUPPORT) || defined(CONFIG_MF_CLASSIC_LOG_SUPPORT)
+uint32_t BytesToUint32(uint8_t * Buffer) {
+    return ( (((uint32_t)(Buffer[0])) << 24)
+            | (((uint32_t)(Buffer[1])) << 16)
+            | (((uint32_t)(Buffer[2])) << 8)
+            | ((uint32_t)(Buffer[3])) );
+}
+
+uint16_t BytesToUint16(uint8_t * Buffer) {
+    return ( (((uint16_t)(Buffer[0])) << 8) | ((uint16_t)(Buffer[1])) );
+}
+
+void Uint32ToBytes(uint32_t Uint32, uint8_t * Buffer) {
+    Buffer[0] = ((uint8_t)(Uint32 >> 24) & 0xFF);
+    Buffer[1] = ((uint8_t)(Uint32 >> 16) & 0xFF);
+    Buffer[2] = ((uint8_t)(Uint32 >> 8) & 0xFF);
+    Buffer[3] = ((uint8_t)(Uint32 & 0xFF));
+}
+
+void Uint16ToBytes(uint16_t Uint16, uint8_t * Buffer) {
+    Buffer[0] = ((uint8_t)(Uint16 >> 8) & 0xFF);
+    Buffer[1] = ((uint8_t)(Uint16 & 0xFF));
+}
+#endif
+
 void MifareClassicAppInit(uint16_t ATQA_4B, uint8_t SAK, bool is7B) {
     State = STATE_IDLE;
     is7BytesUID = is7B;
@@ -294,13 +338,11 @@ void MifareClassicAppInit4K(void) {
                           (ActiveConfiguration.UidSize == MFCLASSIC_UID_7B_SIZE) );
 }
 
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 void MifareClassicAppInitMini(void) {
     MifareClassicAppInit(MFCLASSIC_MINI_ATQA_VALUE, MFCLASSIC_MINI_SAK_VALUE, false);
 }
-#endif
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void) {
     isDetectionEnabled = true;
     DetectionAttemptsKeyA = 0;
@@ -309,14 +351,161 @@ void MifareClassicAppDetectionInit(void) {
 }
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+void MifareClassicAppBruteGetCurrentUid(void) {
+    uint8_t TempUid[MFCLASSIC_UID_SIZE];
+    MifareClassicGetUid(TempUid);
+    BruteCurrentUid = BytesToUint32(TempUid);
+}
+
+void MifareClassicAppBruteWrite(void) {
+    uint8_t bruteStatusByte = (isBruteEnabled) ? (BRUTE_MEM_BRUTED_STATUS_CANARY) : (BRUTE_MEM_BRUTED_STATUS_RESET);
+    AppWorkingMemoryWrite(&bruteStatusByte, BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+    uint8_t TempUid[MFCLASSIC_UID_SIZE];
+    Uint32ToBytes(BruteCurrentUid, TempUid);
+    MifareClassicSetUid(TempUid);
+}
+
+void MifareClassicAppBruteInit(void) {
+    MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
+    uint8_t bruteStatusByte = BRUTE_MEM_BRUTED_STATUS_CANARY;
+    AppWorkingMemoryRead(&bruteStatusByte, BRUTE_MEM_BRUTED_STATUS_ADDR, BRUTE_MEM_BRUTED_STATUS_SIZE);
+    isBruteEnabled = (bruteStatusByte == BRUTE_MEM_BRUTED_STATUS_CANARY);
+    BruteIdleRounds = 0;
+    MifareClassicAppBruteGetCurrentUid();
+}
+
+void MifareClassicAppBruteStop(void) {
+    isBruteEnabled = false;
+    BruteIdleRounds = 0;
+    MifareClassicAppBruteWrite();
+}
+
+void MifareClassicAppBruteMove(void) {
+    isBruteEnabled = true;
+    BruteIdleRounds = 0;
+    BruteCurrentUid++;
+    State = STATE_IDLE;
+    MifareClassicAppBruteWrite();
+}
+
+void MifareClassicAppBruteToggle(void) {
+    if(isBruteEnabled) {
+        MifareClassicAppBruteStop();
+    } else {
+        MifareClassicAppBruteGetCurrentUid();
+        MifareClassicAppBruteMove();
+    }
+}
+
+void MifareClassicAppBruteTick(void) {
+    // If we were using same UID for too long, change it
+    if( isBruteEnabled ) {
+        if( BruteIdleRounds >= BRUTE_IDLE_MAX_ROUNDS ) {
+            MifareClassicAppBruteMove();
+        } else {
+            BruteIdleRounds++;
+        }
+    }
+}
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+void MifareClassicAppLogCheck(void) {
+    uint8_t headerLine[MFCLASSIC_LOG_MEM_LOG_HEADER_LEN];
+    AppWorkingMemoryRead(&headerLine, MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN);
+    if( (headerLine[MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR] == MFCLASSIC_LOG_MEM_STATUS_CANARY)
+        || (headerLine[MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR] == MFCLASSIC_LOG_MEM_STATUS_RESET) ) {
+        isLogEnabled = (headerLine[MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR] == MFCLASSIC_LOG_MEM_STATUS_CANARY);
+        LogBytesWrote = BytesToUint32(&headerLine[MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR]);
+    } else {
+        isLogEnabled = true;
+        LogBytesWrote = 0;
+    }
+}
+
+void MifareClassicAppLogWriteHeader(void) {
+    uint8_t headerLine[MFCLASSIC_LOG_MEM_LOG_HEADER_LEN] = { 0 };
+    headerLine[MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR] = (isLogEnabled) ? (MFCLASSIC_LOG_MEM_STATUS_CANARY) : (MFCLASSIC_LOG_MEM_STATUS_RESET);
+    Uint32ToBytes(LogBytesWrote, &headerLine[MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR]);
+    AppWorkingMemoryWrite(headerLine, MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN);
+}
+
+void MifareClassicAppLogBufferLine(const uint8_t * Data, uint16_t BitCount, uint8_t Source) {
+    uint16_t timeNow = SystemGetSysTick();
+    uint16_t dataBytesToBuffer = (BitCount / BITS_PER_BYTE);
+    if( !(BitCount % BITS_PER_BYTE) ) dataBytesToBuffer++;
+    if( (LogBytesBuffered + MFCLASSIC_LOG_LINE_OVERHEAD) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
+        uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_START;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        Uint16ToBytes(timeNow, &LogLineBuffer[idx]);
+        idx += MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = Source;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = State;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        memcpy(&LogLineBuffer[idx], Data, dataBytesToBuffer);
+        idx += dataBytesToBuffer;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_END;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_CR;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_LF;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogLineBuffer[idx] = MFCLASSIC_LOG_EOS;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogBytesBuffered = idx;
+    }
+}
+
+void MifareClassicAppLogWriteLines(void) {
+    if( isLogEnabled && (LogBytesBuffered > 0) ) {
+        if( (LogBytesWrote + LogBytesBuffered) >= LogMaxBytes) {
+            LogBytesWrote = 0;
+        }
+        AppWorkingMemoryWrite(LogLineBuffer, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesBuffered);
+        LogBytesWrote += LogBytesBuffered;
+        LogBytesBuffered = 0;
+        MifareClassicAppLogWriteHeader();
+    }
+}
+
+void MifareClassicAppLogStop(void) {
+    isLogEnabled = false;
+    MifareClassicAppLogWriteHeader();
+}
+
+void MifareClassicAppLogStart(void) {
+    isLogEnabled = true;
+    MifareClassicAppLogWriteHeader();
+}
+
+void MifareClassicAppLogInit(void) {
+    MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
+    MifareClassicAppLogCheck();
+    LogMaxBytes = ( AppWorkingMemorySize() - MFCLASSIC_LOG_MEM_LOG_HEADER_LEN );
+    LogBytesBuffered = 0;
+}
+
+void MifareClassicAppLogToggle(void) {
+    if(isLogEnabled) {
+        MifareClassicAppLogStop();
+    } else {
+        MifareClassicAppLogStart();
+    }
+}
+#endif
+
 void MifareClassicAppReset(void) {
     State = STATE_IDLE;
 }
-
-void MifareClassicAppTask(void) {
-
-}
-
 
 /* Handle a MFCLASSIC_CMD_HALT during main process, as can be raised in many states.
 * Sets State, response buffer and response size. Returns if valid HALT. */
@@ -374,7 +563,7 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint16_t KeyAddress;
     /* Save Nonce in detection mode */
     if(isDetectionEnabled && !isNested) {
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
         memset(DetectionDataSave, 0x00, DETECTION_BYTES_PER_SAVE);
         // Save reader's auth phase 1: KEY type (A or B), and sector number
         memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
@@ -392,12 +581,12 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
         }
         KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
     }
-    AppMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+    AppCardMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
     /* Load UID */
     if (is7BytesUID) {
-        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+        AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
     } else {
-        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+        AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
     }
     /* Proceed with nested or regular authent */
     if(isNested) {
@@ -420,7 +609,7 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
         uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01, 0x20, 0x01, 0x45};
         uint8_t CardNonceSuccessor1[MFCLASSIC_MEM_NONCE_SIZE] = {0x63, 0xe5, 0xbc, 0xa7};
         uint8_t CardNonceSuccessor2[MFCLASSIC_MEM_NONCE_SIZE] = {0x99, 0x37, 0x30, 0xbd};
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
         if(isDetectionEnabled) {
             // Save sent 'random' nonce
             memcpy(DetectionDataSave+DETECTION_READER_AUTH_P1_SIZE, CardNonce, MFCLASSIC_MEM_NONCE_SIZE);
@@ -457,6 +646,12 @@ void mfcEncryptBuffer(uint8_t * Output, uint8_t * Input, uint8_t Size) {
 }
 
 uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+    /* Log what comes from reader if logging enabled */
+    if(isLogEnabled) {
+        MifareClassicAppLogBufferLine(Buffer, BitCount, MFCLASSIC_LOG_READER);
+    }
+#endif
     /* Size of data (byte) we will send back to reader. Is main process return value */
     uint16_t retSize = ISO14443A_APP_NO_RESPONSE;
     /* WUPA/REQA and HALT may occur in every state. We handle is first, so we can skip
@@ -494,7 +689,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
                 } else if (Buffer[0] == MFCLASSIC_CMD_READ) {
                     /* Read command. Read data from memory and append CRCA. */
-                    AppMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     retSize = (MFCLASSIC_CMD_READ_RESPONSE_FRAME_SIZE + ISO14443A_CRCA_SIZE)
                               * BITS_PER_BYTE;
@@ -515,7 +710,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK)) {
                 /* CRC check passed. Write data into memory and send ACK. */
                 if (!ActiveConfiguration.ReadOnly) {
-                    AppMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                 }
                 Buffer[0] = MFCLASSIC_ACK_VALUE;
             } else {
@@ -549,7 +744,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     SAK = CardSAKValue;
                     NextState = STATE_ACTIVE;
                 }
-                AppMemoryRead(UidCLReadBuffer, UidMemAddr, UidReadSize);
+                AppCardMemoryRead(UidCLReadBuffer, UidMemAddr, UidReadSize);
                 if (ISO14443ASelect(Buffer, &BitCount, UidCL, SAK)) {
                     /* TODO: Access control not implemented yet
                      * AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
@@ -563,7 +758,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 /* 'Sequence 1' as per MF1S50YYX_V1, title 10.1.2 */
                 if ( is7BytesUID && (Buffer[0] == ISO14443A_CMD_SELECT_CL2) ) {
                     uint8_t UidCL[ISO14443A_CL_UID_SIZE];
-                    AppMemoryRead(UidCL, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+                    AppCardMemoryRead(UidCL, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
                     if (ISO14443ASelect(Buffer, &BitCount, UidCL, CardSAKValue)) {
                         State = STATE_ACTIVE;
                         isCascadeStepOnePassed = false;
@@ -572,7 +767,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 /* 'Sequence 2' as per MF1S50YYX_V1, title 10.1.2 */
                 } else if (Buffer[0] == MFCLASSIC_CMD_READ) {
                     /* Read sector 0 / block 0 and send in plain */
-                    AppMemoryRead(Buffer, MFCLASSIC_MEM_S0B0_ADDRESS, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryRead(Buffer, MFCLASSIC_MEM_S0B0_ADDRESS, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     State = STATE_ACTIVE;
                     isCascadeStepOnePassed = false;
@@ -605,7 +800,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 
         case STATE_AUTHING:
             if(isDetectionEnabled) {
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
                 // Save reader's auth phase 2 answer to our nonce from STATE_ACTIVE
                 memcpy(DetectionDataSave+DETECTION_SAVE_P2_OFFSET, Buffer, DETECTION_READER_AUTH_P2_SIZE);
                 // Align data storage in each KEYX dedicated memory space, and iterate counters
@@ -621,10 +816,10 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 // Write to app memory
                 if(!isDetectionCanaryWritten) {
-                    AppMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
+                    AppWorkingMemoryWrite(DetectionCanary, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
                     isDetectionCanaryWritten = true;
                 }
-                AppMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
+                AppWorkingMemoryWrite(DetectionDataSave, memSaveAddr, DETECTION_BYTES_PER_SAVE);
                 State = STATE_ACTIVE;
 #endif
             } else {
@@ -662,7 +857,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 } else {
                     if (Buffer[0] == MFCLASSIC_CMD_READ) {
                         /* Read command. Read data from memory and append CRCA. */
-                        AppMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                        AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         /* Encrypt and calculate parity bits. */
                         mfcEncryptBuffer(Buffer, Buffer, (ISO14443A_CRCA_SIZE + MFCLASSIC_MEM_BYTES_PER_BLOCK));
@@ -683,7 +878,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                         } else if (Buffer[0] == MFCLASSIC_CMD_TRANSFER) {
                             /* Write back the global block buffer to the desired block address */
                             if (!ActiveConfiguration.ReadOnly) {
-                                AppMemoryWrite(BlockBuffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                                AppCardMemoryWrite(BlockBuffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                             } else {
                                 /* In read only mode, silently ignore the write */
                             }
@@ -728,7 +923,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK)) {
                     /* Silently ignore in ReadOnly mode */
                     if (!ActiveConfiguration.ReadOnly) {
-                        AppMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                        AppCardMemoryWrite(Buffer, CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     }
                     Buffer[0] = MFCLASSIC_ACK_VALUE ^ Crypto1Nibble();
                 } else {
@@ -752,7 +947,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             /* We could also get an encrypted HALT... */
             if ( !mfcHandleHaltCommand(Buffer, &retSize) ) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_MEM_VALUE_SIZE)) {
-                    AppMemoryRead(BlockBuffer, (uint16_t) CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                    AppCardMemoryRead(BlockBuffer, (uint16_t) CurrentAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                     if (CheckValueIntegrity(BlockBuffer)) {
                         uint32_t ParamValue;
                         uint32_t BlockValue;
@@ -787,26 +982,31 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
         } /* End of states switch/case */
     } /* End of if/else WUPA/REQA condition */
-
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+    /* Log what goes from tag if logging enabled */
+    if(isLogEnabled) {
+        MifareClassicAppLogBufferLine(Buffer, retSize, MFCLASSIC_LOG_TAG);
+    }
+#endif
     return retSize;
 }
 
 void MifareClassicGetUid(ConfigurationUidType Uid) {
     if (is7BytesUID) {
-        AppMemoryRead(&Uid[0], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
-        AppMemoryRead(&Uid[3], MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
+        AppCardMemoryRead(&Uid[0], MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE-1);
+        AppCardMemoryRead(&Uid[3], MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
     } else {
-        AppMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+        AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
     }
 }
 
 void MifareClassicSetUid(ConfigurationUidType Uid) {
     if (is7BytesUID) {
-        AppMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
+        AppCardMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, ActiveConfiguration.UidSize);
     } else {
         uint8_t BCC =  Uid[0] ^ Uid[1] ^ Uid[2] ^ Uid[3];
-        AppMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
-        AppMemoryWrite(&BCC, MFCLASSIC_MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
+        AppCardMemoryWrite(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
+        AppCardMemoryWrite(&BCC, MFCLASSIC_MEM_UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
     }
 }
 
@@ -825,3 +1025,5 @@ void MifareClassicGetSak(uint8_t * Sak) {
 void MifareClassicSetSak(uint8_t Sak) {
     CardSAKValue = Sak;
 }
+
+#endif /* Compilation support */

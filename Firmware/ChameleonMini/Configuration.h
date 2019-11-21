@@ -29,23 +29,21 @@ typedef enum  {
     CONFIG_MF_ULTRALIGHT_EV1_80B,
     CONFIG_MF_ULTRALIGHT_EV1_164B,
 #endif
-#ifdef CONFIG_MF_CLASSIC_1K_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_SUPPORT
     CONFIG_MF_CLASSIC_1K,
-#endif
-#ifdef CONFIG_MF_CLASSIC_1K_7B_SUPPORT
     CONFIG_MF_CLASSIC_1K_7B,
-#endif
-#ifdef CONFIG_MF_CLASSIC_4K_SUPPORT
     CONFIG_MF_CLASSIC_4K,
-#endif
-#ifdef CONFIG_MF_CLASSIC_4K_7B_SUPPORT
     CONFIG_MF_CLASSIC_4K_7B,
-#endif
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
     CONFIG_MF_CLASSIC_MINI,
 #endif
-#ifdef CONFIG_MF_DETECTION_SUPPORT
-    CONFIG_MF_DETECTION,
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
+    CONFIG_MF_CLASSIC_DETECTION,
+#endif
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+    CONFIG_MF_CLASSIC_BRUTE,
+#endif
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+    CONFIG_MF_CLASSIC_LOG,
 #endif
     /* This HAS to be the last element */
     CONFIG_COUNT
@@ -85,6 +83,8 @@ typedef struct {
     void (*ApplicationTaskFunc) (void);
     /** Function that is called roughly every 100ms. This can be used for parallel tasks of the application, that is independent of the codec module. */
     void (*ApplicationTickFunc) (void);
+    /** Function that is called when the "CARD_FUNCTION" button is pushed */
+    void (*ApplicationButtonFunc) (void);
     /** This function does two important things. It gets called by the codec.
      *  The first task is to deliver data that have been received by the codec module to
      *  the application module. The application then can decide how to answer to these data and return
@@ -131,11 +131,10 @@ typedef struct {
      * @}
      */
 
-    /**
-     * Defines how many space the configuration needs. For emulating configurations this is the memory space of
-     * the emulated card.
-     */
-    uint32_t MemorySize;
+    // Defines how many space the configuration needs to store card emulation data.
+    uint32_t CardMemorySize;
+    // Defines how many space the configuration needs to store working data (logs, results, etc.)
+    uint32_t WorkingMemorySize;
     /**
      * Defines the size of the UID for emulating configurations.
      */
@@ -154,6 +153,7 @@ void ConfigurationSetById(ConfigurationEnum Configuration);
 void ConfigurationGetByName(char* Configuration, uint16_t BufferSize);
 bool ConfigurationSetByName(const char* Configuration);
 void ConfigurationGetList(char* ConfigurationList, uint16_t BufferSize);
-uint32_t ConfigurationTableGetMemorySizeForId(ConfigurationEnum Configuration);
+uint32_t ConfigurationTableGetCardMemorySizeForId(ConfigurationEnum Configuration);
+uint32_t ConfigurationTableGetWorkingMemorySizeForId(ConfigurationEnum Configuration);
 
 #endif /* _CM_CONFIGURATION_H_ */

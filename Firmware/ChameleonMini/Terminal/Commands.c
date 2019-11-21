@@ -217,12 +217,12 @@ CommandStatusIdType CommandSetReadOnly(char* OutMessage, const char* InParam)
 }
 
 CommandStatusIdType CommandExecUpload(char* OutMessage) {
-    XModemReceive(AppMemoryUploadXModem);
+    XModemReceive(AppCardMemoryUploadXModem);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
 CommandStatusIdType CommandExecDownload(char* OutMessage) {
-    XModemSend(AppMemoryDownloadXModem);
+    XModemSend(AppCardMemoryDownloadXModem);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
@@ -243,8 +243,61 @@ CommandStatusIdType CommandExecUpgrade(char* OutMessage) {
 #endif
 
 CommandStatusIdType CommandGetMemSize(char* OutParam) {
-    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.MemorySize);
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%lu"), ActiveConfiguration.CardMemorySize);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+void _readAndSendWorkingMemChunk(uint32_t Address, uint16_t Size, uint16_t MaxSize, bool isHex) {
+    if((MaxSize <= TERMINAL_BUFFER_SIZE) && (Size <= MaxSize)) {
+        uint8_t buff[TERMINAL_BUFFER_SIZE];
+        AppWorkingMemoryRead(buff, Address, Size);
+        if(isHex) {
+            char hexbuff[TERMINAL_BUFFER_SIZE*2+3];
+            uint16_t zeroIndex = Size*2;
+            BufferToHexString(hexbuff, TERMINAL_BUFFER_SIZE*2+3, buff, Size);
+            hexbuff[zeroIndex] = '\r';
+            hexbuff[zeroIndex+1] = '\n';
+            hexbuff[zeroIndex+2] = '\0';
+            TerminalSendString(hexbuff);
+        } else {
+            TerminalSendBlock(buff, Size);
+        }
+    }
+}
+
+uint8_t _readAndSendWorkingMem(uint16_t MaxSize, bool isHex) {
+    uint8_t ret = COMMAND_ERR_INVALID_USAGE_ID;
+    uint32_t bytesToWrite = AppWorkingMemorySize();
+    if( (MaxSize <= TERMINAL_BUFFER_SIZE) && bytesToWrite ) {
+        uint32_t rounds = bytesToWrite / MaxSize;
+        uint16_t offset = bytesToWrite % MaxSize;
+        for(uint32_t i=0; i < rounds; i++) {
+            _readAndSendWorkingMemChunk(i*MaxSize, MaxSize, MaxSize, isHex);
+        }
+        if(offset) {
+            _readAndSendWorkingMemChunk(rounds*MaxSize, offset, MaxSize, isHex);
+        }
+        ret = (isHex) ? (COMMAND_INFO_OK_WITH_TEXT_ID) : (COMMAND_INFO_OK_ID);
+    }
+    return ret;
+}
+
+CommandStatusIdType CommandGetWorkingMem(char* OutParam) {
+    return _readAndSendWorkingMem(16, true);
+}
+
+CommandStatusIdType CommandExecWorkingMem(char* OutMessage) {
+    return _readAndSendWorkingMem(TERMINAL_BUFFER_SIZE, false);
+}
+
+CommandStatusIdType CommandExecWorkingMemUpload(char* OutMessage) {
+    XModemReceive(AppWorkingMemoryUploadXModem);
+    return COMMAND_INFO_XMODEM_WAIT_ID;
+}
+
+CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage) {
+    XModemSend(AppWorkingMemoryDownloadXModem);
+    return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
 CommandStatusIdType CommandGetUidSize(char* OutParam) {
@@ -349,20 +402,22 @@ CommandStatusIdType CommandGetRssi(char* OutParam) {
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
+#ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
 CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
-    uint8_t pwd[4];
+    uint8_t pwd[MIFARE_ULTRALIGHT_PWD_SIZE];
     /* Read saved password from authentication */
-    AppMemoryRead(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, sizeof(pwd));
+    AppWorkingMemoryRead(pwd, MIFARE_ULTRALIGHT_PWD_ADDRESS, MIFARE_ULTRALIGHT_PWD_SIZE);
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE,  PSTR("%02x%02x%02x%02x"), pwd[0], pwd[1], pwd[2], pwd[3]);
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+#endif
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 CommandStatusIdType CommandGetDetection(char* OutParam) {
     /* Read UID / s0-b0 */
-    AppMemoryRead(OutParam, MFCLASSIC_MEM_S0B0_ADDRESS, DETECTION_MEM_BLOCK0_SIZE);
+    AppWorkingMemoryRead(OutParam, MFCLASSIC_MEM_S0B0_ADDRESS, DETECTION_MEM_BLOCK0_SIZE);
     /* Read saved nonce data from authentication */
-    AppMemoryRead(OutParam+DETECTION_MEM_BLOCK0_SIZE, DETECTION_MEM_DATA_START_ADDR, DETECTION_MEM_MFKEY_DATA_LEN);
+    AppWorkingMemoryRead(OutParam+DETECTION_MEM_BLOCK0_SIZE, DETECTION_MEM_DATA_START_ADDR, DETECTION_MEM_MFKEY_DATA_LEN);
     /* Add file integrity to byte. This adds 2 bytes (209, 210) to DETECTION_MEM_APP_SIZE */
     ISO14443AAppendCRCA(OutParam, DETECTION_MEM_APP_SIZE);
     /* Send data + CRC */
@@ -370,11 +425,6 @@ CommandStatusIdType CommandGetDetection(char* OutParam) {
        TerminalSendChar(OutParam[num]);
     }
     OutParam[0] = 0;
-    return COMMAND_INFO_OK_ID;
-}
-
-CommandStatusIdType CommandSetDetection(char* OutMessage, const char* InParam) {
-    AppMemoryClear();
     return COMMAND_INFO_OK_ID;
 }
 #endif
@@ -387,7 +437,7 @@ CommandStatusIdType CommandExecClearAll(char* OutMessage) {
         ButtonSetActionById(BUTTON_PRESS_SHORT, DEFAULT_BUTTON_ACTION);
         ButtonSetActionById(BUTTON_PRESS_LONG, DEFAULT_BUTTON_LONG_ACTION);
     }
-    SettingsSetActiveById(SETTINGS_FIRST);
+    SettingsSetActiveById(DEFAULT_SETTING);
     SettingsSave();
     return COMMAND_INFO_OK_ID;
 }
@@ -395,8 +445,8 @@ CommandStatusIdType CommandExecClearAll(char* OutMessage) {
 #ifdef CONFIG_DEBUG_MEMORYINFO_COMMAND
 CommandStatusIdType CommandExecMemoryInfo(char* OutMessage) {
     snprintf_P( OutMessage, TERMINAL_BUFFER_SIZE,
-        PSTR("SPI Flash:\r\n- Bytes Per Setting: %lu\r\n- MDID Bytes: %02X%02X%02X%02X\r\n- Memory size: %u Mbits (%u KBytes)\r\nEEPROM:\r\n- Bytes Per Setting: %u\r\n- Memory size: %u Bytes"),
-        MemoryMappingInfo.maxFlashBytesPerSlot,
+        PSTR("SPI Flash:\r\n- Bytes Per Setting: %lu\r\n- Bytes Per Card Memory: %lu\r\n- MDID Bytes: %02X%02X%02X%02X\r\n- Memory size: %u Mbits (%u KBytes)\r\nEEPROM:\r\n- Bytes Per Setting: %u\r\n- Memory size: %u Bytes"),
+        MemoryMappingInfo.maxFlashBytesPerSlot, MemoryMappingInfo.maxFlashBytesPerCardMemory,
         FlashInfo.manufacturerId, FlashInfo.deviceId1, FlashInfo.deviceId2, FlashInfo.edi,
         FlashInfo.geometry.sizeMbits, FlashInfo.geometry.sizeKbytes,
         MemoryMappingInfo.maxEEPROMBytesPerSlot, EEPROMInfo.bytesTotal );
@@ -407,47 +457,75 @@ CommandStatusIdType CommandExecMemoryInfo(char* OutMessage) {
 #ifdef CONFIG_DEBUG_MEMORYTEST_COMMAND
 CommandStatusIdType CommandExecMemoryTest(char* OutMessage) {
     uint8_t bigbuf[128];
-    uint8_t readbuf[45];
-    uint8_t expected[45];
-    HexStringToBuffer(expected, 45, "11111111AA031111111111111111111100FFFFFFFFAA03FFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF05");
+    uint8_t readbuf[50];
+    uint8_t expected[50];
+    bool retValFail = false;
+    bool retValOK = false;
+    bool tempRetVal = false;
+    HexStringToBuffer(expected, 50,
+        "000111FFAA031111111111111111111100FFFFFFFFFF03FFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFFFFFFFFFF05111111AA02");
     memset(bigbuf, 0x11, 128);
-    memset(readbuf, 0xAA, 45);
+    memset(readbuf, 0xAA, 50);
 
     SettingsSetActiveById(3);
-    ConfigurationSetById(CONFIG_NONE);
+    ConfigurationSetById(CONFIG_MF_CLASSIC_1K);
+    SettingsSave();
+    SettingsSetActiveById(2);
+    ConfigurationSetById(CONFIG_MF_CLASSIC_DETECTION);
     SettingsSave();
     SettingsSetActiveById(0);
     ConfigurationSetById(CONFIG_MF_CLASSIC_4K);
     SettingsSave();
 
-    AppMemoryWriteForSetting(3, bigbuf, 0, 512);
+    tempRetVal = AppCardMemoryWriteForSetting(3, bigbuf, 0, 128);
+    retValOK = tempRetVal;
     for(uint8_t i = 0; i < 32; i++){
-         AppMemoryWrite(bigbuf, i*128, 128);
+         tempRetVal = AppCardMemoryWrite(bigbuf, i*128, 128);
+         retValOK = (retValOK && tempRetVal);
     }
-    FlashUnbufferedBytesRead(readbuf, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
-    AppMemoryReadForSetting(3, readbuf+4, 250, 1);
+    tempRetVal = FlashUnbufferedBytesRead(readbuf+2, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 1);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = AppCardMemoryReadForSetting(3, readbuf+3, 128, 1);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = AppCardMemoryReadForSetting(3, readbuf, MFCLASSIC_1K_MEM_SIZE, 4);
+    retValFail = tempRetVal;
+    tempRetVal = AppWorkingMemoryReadForSetting(3, readbuf, 0, 1);
+    retValFail = (retValFail || tempRetVal);
     readbuf[5] = 0x03;
-    FlashUnbufferedBytesRead(readbuf+6, 1024, 1);
-    FlashUnbufferedBytesRead(readbuf+7, 3118, 2);
-    AppMemoryRead(readbuf+9, 2046, 3);
-    AppMemoryRead(readbuf+12, 12, 4);
+    tempRetVal = FlashUnbufferedBytesRead(readbuf+6, 1024, 1);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = FlashUnbufferedBytesRead(readbuf+7, 3118, 2);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = AppCardMemoryRead(readbuf+9, 2046, 3);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = AppCardMemoryRead(readbuf+12, 12, 4);
+    retValOK = (retValOK && tempRetVal);
     readbuf[16] = 0x00;
-    FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 16);
-    AppMemoryClear();
+    tempRetVal = FlashClearRange(3*MemoryMappingInfo.maxFlashBytesPerSlot, 16);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = AppMemoryClear();
+    retValOK = (retValOK && tempRetVal);
     FlashUnbufferedBytesRead(readbuf+17, 3*MemoryMappingInfo.maxFlashBytesPerSlot, 4);
-    AppMemoryReadForSetting(3, readbuf+21, 250, 1);
+    AppCardMemoryReadForSetting(3, readbuf+21, 128, 1);
     readbuf[22] = 0x03;
     FlashUnbufferedBytesRead(readbuf+23, 1024, 1);
     FlashUnbufferedBytesRead(readbuf+24, 3118, 2);
-    AppMemoryRead(readbuf+26, 2046, 3);
-    AppMemoryRead(readbuf+29, 12, 4);
+    AppCardMemoryRead(readbuf+26, 2046, 3);
+    AppCardMemoryRead(readbuf+29, 12, 4);
     readbuf[33] = 0x00;
     FlashUnbufferedBytesRead(readbuf+34, 5*MemoryMappingInfo.maxFlashBytesPerSlot+11, 10);
     readbuf[44] = 0x05;
-    FlashClearAll();
+    tempRetVal = AppWorkingMemoryWriteForSetting(2, bigbuf, 0, 16);
+    retValOK = (retValOK && tempRetVal);
+    tempRetVal = AppWorkingMemoryReadForSetting(2, readbuf+45, 5, 3);
+    retValOK = (retValOK && tempRetVal);
+    readbuf[49] = 0x02;
+    readbuf[0] = retValFail;
+    readbuf[1] = retValOK;
+    MemoryClearAll();
 
-    if(memcmp(readbuf, expected, 45)) {
-        BufferToHexString(OutMessage, TERMINAL_BUFFER_SIZE, readbuf, 45);
+    if(memcmp(readbuf, expected, 50)) {
+        BufferToHexString(OutMessage, TERMINAL_BUFFER_SIZE, readbuf, 50);
     } else {
         snprintf_P(OutMessage, TERMINAL_BUFFER_SIZE,  PSTR("FINE"), NULL);
     }

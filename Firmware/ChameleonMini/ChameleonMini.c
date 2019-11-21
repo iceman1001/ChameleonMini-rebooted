@@ -1,27 +1,29 @@
 #include "ChameleonMini.h"
 
 int main(void) {
-	SystemInit();
-	MemoryInit();
-	SettingsLoad();
-	LEDInit();
-	ConfigurationInit();
-	TerminalInit();
-	RandomInit();
-	ButtonInit();
-	AntennaLevelInit();
-	SystemInterruptInit();
+    SystemInit();
+    MemoryInit();
+    SettingsLoad();
+    LEDInit();
+    ConfigurationInit();
+    TerminalInit();
+    RandomInit();
+    ButtonInit();
+    AntennaLevelInit();
+    SystemInterruptInit();
 
-	while(1) {
-		TerminalTask();
-		CodecTask();
-		ApplicationTask();
-
-		if (SystemTick100ms()) {
-			RandomTick();
-			TerminalTick();
-			ButtonTick();
-			LEDTick();
-		}
-	}
+    while(1) {
+        if (SystemTick100ms()) {
+            LEDTick();
+            RandomTick();
+            TerminalTick();
+            ButtonTick();
+            ApplicationTick();
+            //CommandLineTick();
+            //AntennaLevelTick();
+        }
+        TerminalTask();
+        CodecTask();
+        //ApplicationTask();
+    }
 }

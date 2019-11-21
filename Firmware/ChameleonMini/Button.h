@@ -28,7 +28,7 @@ typedef enum {
     BUTTON_ACTION_UID_RIGHT_DECREMENT,
     BUTTON_ACTION_CYCLE_SETTINGS,
     BUTTON_ACTION_TOGGLE_READONLY,
-
+    BUTTON_ACTION_FUNCTION,
     /* This has to be last element */
     BUTTON_ACTION_COUNT
 } ButtonActionEnum;

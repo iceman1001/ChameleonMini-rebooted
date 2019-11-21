@@ -222,9 +222,8 @@
             <Value>DEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
             <Value>DEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
             <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
-            <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
-            <Value>CONFIG_MF_CLASSIC_4K_SUPPORT</Value>
-            <Value>CONFIG_MF_DETECTION_SUPPORT</Value>
+            <Value>CONFIG_MF_CLASSIC_SUPPORT</Value>
+            <Value>CONFIG_MF_CLASSIC_DETECTION_SUPPORT</Value>
             <Value>SUPPORT_FIRMWARE_UPGRADE</Value>
           </ListValues>
         </avrgcc.compiler.symbols.DefSymbols>
@@ -281,9 +280,8 @@
             <Value>DEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
             <Value>DEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_CYCLE_SETTINGS</Value>
             <Value>CONFIG_MF_ULTRALIGHT_SUPPORT</Value>
-            <Value>CONFIG_MF_CLASSIC_1K_SUPPORT</Value>
-            <Value>CONFIG_MF_CLASSIC_4K_SUPPORT</Value>
-            <Value>CONFIG_MF_DETECTION_SUPPORT</Value>
+            <Value>CONFIG_MF_CLASSIC_SUPPORT</Value>
+            <Value>CONFIG_MF_CLASSIC_DETECTION_SUPPORT</Value>
             <Value>SUPPORT_FIRMWARE_UPGRADE</Value>
           </ListValues>
         </avrgcc.compiler.symbols.DefSymbols>

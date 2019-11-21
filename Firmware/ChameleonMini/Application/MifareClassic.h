@@ -7,6 +7,10 @@
  *
  */
 
+#if defined(CONFIG_MF_CLASSIC_SUPPORT) || defined(CONFIG_MF_CLASSIC_DETECTION_SUPPORT) \
+    || defined(CONFIG_MF_CLASSIC_BRUTE_SUPPORT) || defined(SUPPORT_MF_CLASSIC_MAGIC_MODE) \
+    || defined(CONFIG_MF_CLASSIC_LOG_SUPPORT)
+
 #ifndef MIFARECLASSIC_H_
 #define MIFARECLASSIC_H_
 
@@ -17,9 +21,7 @@
 #define MFCLASSIC_UID_7B_SIZE                   ISO14443A_UID_SIZE_DOUBLE
 #define MFCLASSIC_1K_MEM_SIZE                   1024
 #define MFCLASSIC_4K_MEM_SIZE                   4096
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 #define MFCLASSIC_MINI_MEM_SIZE                 320
-#endif
 
 #define MFCLASSIC_1K_ATQA_VALUE                 0x0004
 #define MFCLASSIC_1K_7B_ATQA_VALUE              0x0044
@@ -28,10 +30,8 @@
 #define MFCLASSIC_7B_ATQA_MASK                  0x40
 #define MFCLASSIC_1K_SAK_VALUE                  0x08
 #define MFCLASSIC_4K_SAK_VALUE                  0x18
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
 #define MFCLASSIC_MINI_ATQA_VALUE               MFCLASSIC_1K_ATQA_VALUE
 #define MFCLASSIC_MINI_SAK_VALUE                0x09
-#endif
 #define MFCLASSIC_SAK_CL1_VALUE                 ISO14443A_SAK_INCOMPLETE
 
 #define MFCLASSIC_MEM_S0B0_ADDRESS              0x00
@@ -156,7 +156,7 @@ C1 C2 C3    read    write   increment   decrement,
 #define MFCLASSIC_ACC_BLOCK_DECREMENT           0x08
 */
 
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #define DETECTION_BYTES_PER_SAVE                16
 #define DETECTION_READER_AUTH_P1_SIZE           4
 #define DETECTION_READER_AUTH_P2_SIZE           8
@@ -177,10 +177,45 @@ C1 C2 C3    read    write   increment   decrement,
 #define DETECTION_BLOCK0_CANARY_SIZE            8
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+#define BRUTE_MEM_BRUTED_UID_ADDR               8
+#define BRUTE_MEM_BRUTED_STATUS_CANARY          0xB1
+#define BRUTE_MEM_BRUTED_STATUS_RESET           0xB0
+#define BRUTE_MEM_BRUTED_STATUS_ADDR            0
+#define BRUTE_MEM_BRUTED_STATUS_SIZE            1
+#define BRUTE_WORKING_MEM_SIZE                  16
+#define BRUTE_IDLE_MAX_ROUNDS                   3
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+#define MFCLASSIC_LOG_LINE_START                0x3E
+#define MFCLASSIC_LOG_LINE_END                  0x3B
+#define MFCLASSIC_LOG_EOL_CR                    0x0D
+#define MFCLASSIC_LOG_EOL_LF                    0x0A
+#define MFCLASSIC_LOG_EOS                       0x00
+#define MFCLASSIC_LOG_SEPARATOR                 0x21
+#define MFCLASSIC_LOG_READER                    0x52
+#define MFCLASSIC_LOG_TAG                       0x54
+#define MFCLASSIC_LOG_MEM_CHAR_LEN              1
+#define MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR    MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR
+#define MFCLASSIC_LOG_MEM_STATUS_CANARY         0x71
+#define MFCLASSIC_LOG_MEM_STATUS_RESET          0x70
+#define MFCLASSIC_LOG_MEM_STATUS_LEN            1
+#define MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR       12
+#define MFCLASSIC_LOG_MEM_WROTEBYTES_LEN        sizeof(uint32_t)
+#define MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR       0
+#define MFCLASSIC_LOG_MEM_LOG_HEADER_LEN        16
+#define MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN       128
+#define MFCLASSIC_LOG_MEM_LINE_START_ADDR       0
+#define MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN    sizeof(uint16_t)
+#define MFCLASSIC_LOG_LINE_OVERHEAD             (MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN+MFCLASSIC_LOG_MEM_CHAR_LEN*10)
+#define MFCLASSIC_LOG_BUFFER_OVERFLOW           0x0F
+#endif
+
 void MifareClassicAppInit1K(void);
 void MifareClassicAppInit4K(void);
+void MifareClassicAppInitMini(void);
 void MifareClassicAppReset(void);
-void MifareClassicAppTask(void);
 
 uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount);
 
@@ -193,12 +228,22 @@ void MifareClassicSetAtqa(uint16_t Atqa);
 void MifareClassicGetSak(uint8_t * Sak);
 void MifareClassicSetSak(uint8_t Sak);
 
-#ifdef CONFIG_MF_CLASSIC_MINI_SUPPORT
-void MifareClassicAppInitMini(void);
-#endif
-
-#ifdef CONFIG_MF_DETECTION_SUPPORT
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 void MifareClassicAppDetectionInit(void);
 #endif
 
+#ifdef CONFIG_MF_CLASSIC_BRUTE_SUPPORT
+void MifareClassicAppBruteInit(void);
+void MifareClassicAppBruteTick(void);
+void MifareClassicAppBruteToggle(void);
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+void MifareClassicAppLogInit(void);
+void MifareClassicAppLogWriteLines(void);
+void MifareClassicAppLogToggle(void);
+#endif
+
 #endif /* MIFARECLASSIC_H_ */
+
+#endif /* Compilation support */

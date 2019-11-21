@@ -18,42 +18,85 @@
 #include "../Configuration.h"
 #include "../Application/Application.h"
 
-// Set after correct memory init
-static bool isMemoryInit = false;
+memoryMappingInfo_t MemoryMappingInfo = {MEMORY_NO_MEMORY, MEMORY_NO_MEMORY, MEMORY_NO_MEMORY, false};
 
 /* Common helpers for memory operations
 ***************************************************************************************/
 
-// How much memory a setting's application will take. If set to 0 or to more than possible,
-// pretend that max available memory for a setting/slot is used.
-// Otherwise, give what is required by setting's configuration value 'MemorySize'.
-INLINE uint32_t getAppMemSizeForSetting(uint8_t SettingNumber) {
-    uint16_t requiredMem = ConfigurationTableGetMemorySizeForId(GlobalSettings.Settings[SettingNumber].Configuration);
-    if( (requiredMem == MEMORY_NO_MEMORY) || (requiredMem > MemoryMappingInfo.maxFlashBytesPerSlot) ) {
-        requiredMem = MemoryMappingInfo.maxFlashBytesPerSlot;
+// How much memory a setting's application will take. If set to MEMORY_ALL_MEMORY
+// or to more than possible, use max available memory.
+// Otherwise, give what is required by setting's configuration values.
+uint32_t getAppSomeMemorySizeForSetting(uint32_t availMem, uint32_t requiredMem) {
+    if( (requiredMem == MEMORY_ALL_MEMORY) || (requiredMem > availMem) ) {
+        requiredMem = availMem;
     }
     return requiredMem;
 }
 
-INLINE bool checkSettingNumberConsistency(uint8_t SettingNumber) {
-    return ( (SettingNumber >= SETTINGS_FIRST) && (SettingNumber <= SETTINGS_LAST) );
+uint32_t AppCardMemorySizeForSetting(uint8_t SettingNumber) {
+    uint32_t requiredMem = (SettingNumber == GlobalSettings.ActiveSetting) ? (ActiveConfiguration.CardMemorySize) : (ConfigurationTableGetCardMemorySizeForId(GlobalSettings.Settings[SettingNumber].Configuration));
+    return getAppSomeMemorySizeForSetting( MemoryMappingInfo.maxFlashBytesPerCardMemory, requiredMem);
+}
+
+uint32_t AppWorkingMemorySizeForSetting(uint8_t SettingNumber) {
+    uint32_t requiredMem = (SettingNumber == GlobalSettings.ActiveSetting) ? (ActiveConfiguration.WorkingMemorySize) : (ConfigurationTableGetWorkingMemorySizeForId(GlobalSettings.Settings[SettingNumber].Configuration));
+    return getAppSomeMemorySizeForSetting( (MemoryMappingInfo.maxFlashBytesPerSlot - AppCardMemorySizeForSetting(SettingNumber)), requiredMem );
+}
+
+uint32_t AppCardMemorySize(void) {
+    return AppCardMemorySizeForSetting(GlobalSettings.ActiveSetting);
+}
+
+uint32_t AppWorkingMemorySize(void) {
+    return AppWorkingMemorySizeForSetting(GlobalSettings.ActiveSetting);
+}
+
+uint32_t AppMemorySizeForSetting(uint8_t SettingNumber) {
+    return (AppCardMemorySizeForSetting(SettingNumber) + AppWorkingMemorySizeForSetting(SettingNumber));
+}
+
+uint32_t AppMemorySize(void) {
+    return AppMemorySizeForSetting(GlobalSettings.ActiveSetting);
+}
+
+bool checkSettingNumberConsistency(uint8_t SettingNumber) {
+    return ( (SettingNumber == GlobalSettings.ActiveSetting) || ((SettingNumber >= SETTINGS_FIRST) && (SettingNumber <= SETTINGS_LAST)) );
 }
 
 // Is an address start + offset R/W operation valid in setting's application memory space
-INLINE bool checkAddrConsistencyForSetting(uint8_t SettingNumber, uint32_t Address, uint32_t ByteCount) {
-    bool ret = (isMemoryInit && checkSettingNumberConsistency(SettingNumber));
-    if(ret) {
-        ret = (Address <= (getAppMemSizeForSetting(SettingNumber) - ByteCount));
+bool checkAddrConsistencyForSetting(uint32_t availMem, uint8_t SettingNumber, uint32_t Address, uint32_t ByteCount) {
+    bool ret = false;
+    if( MemoryMappingInfo.isMemoryInit && checkSettingNumberConsistency(SettingNumber)
+        && (availMem > MEMORY_NO_MEMORY) && (availMem >= ByteCount)) {
+        ret = (Address <= (availMem - ByteCount));
     }
     return ret;
+}
+
+bool checkCardMemAddrConsistencyForSetting(uint8_t SettingNumber, uint32_t Address, uint32_t ByteCount) {
+    uint32_t availMem = (SettingNumber == GlobalSettings.ActiveSetting) ? (AppCardMemorySize()) : (AppCardMemorySizeForSetting(SettingNumber));
+    return checkAddrConsistencyForSetting(availMem, SettingNumber, Address, ByteCount);
+}
+
+bool checkWorkingMemAddrConsistencyForSetting(uint8_t SettingNumber, uint32_t Address, uint32_t ByteCount) {
+    uint32_t availMem = (SettingNumber == GlobalSettings.ActiveSetting) ? (AppWorkingMemorySize()) : (AppWorkingMemorySizeForSetting(SettingNumber));
+    return checkAddrConsistencyForSetting(availMem, SettingNumber, Address, ByteCount);;
 }
 
 // Returns a byte address in SPI Flash from a byte address relative to application's
 // memory space.
 // Does not check for address validity in application's space (checkSettingAddrConsistency
 // must be used if needed).
-INLINE uint32_t getFlashAddressForSetting(uint8_t SettingNumber, uint32_t Address) {
+uint32_t getFlashAddressForSetting(uint8_t SettingNumber, uint32_t Address) {
     return ((uint32_t)(SettingNumber * MemoryMappingInfo.maxFlashBytesPerSlot) + Address);
+}
+
+uint32_t getCardMemFlashAddressForSetting(uint8_t SettingNumber, uint32_t Address) {
+    return getFlashAddressForSetting(SettingNumber, Address);
+}
+
+uint32_t getWorkingMemFlashAddressForSetting(uint8_t SettingNumber, uint32_t Address) {
+    return getFlashAddressForSetting(SettingNumber, (AppCardMemorySizeForSetting(SettingNumber) + Address));
 }
 
 /* Memory init operations
@@ -65,10 +108,12 @@ bool MemoryInit(void) {
     bool eepromOk = false;
     if( FlashInit() ) {
         MemoryMappingInfo.maxFlashBytesPerSlot = (FlashInfo.geometry.sizeBytes / SETTINGS_COUNT);
-        if( MemoryMappingInfo.maxFlashBytesPerSlot >= MEMORY_MIN_BYTES_PER_APP ) {
+        MemoryMappingInfo.maxFlashBytesPerCardMemory = (MemoryMappingInfo.maxFlashBytesPerSlot / MEMORY_MAX_BYTES_PER_CARD_DIVIDER);
+        if( MemoryMappingInfo.maxFlashBytesPerCardMemory >= MEMORY_MIN_BYTES_PER_APP ) {
             flashOk = true;
         } else {
             MemoryMappingInfo.maxFlashBytesPerSlot = MEMORY_NO_MEMORY;
+            MemoryMappingInfo.maxFlashBytesPerCardMemory = MEMORY_NO_MEMORY;
         }
     }
     if( EEPROMInit() ) {
@@ -79,58 +124,109 @@ bool MemoryInit(void) {
             MemoryMappingInfo.maxFlashBytesPerSlot = MEMORY_NO_MEMORY;
         }
     }
-    isMemoryInit = (flashOk && eepromOk);
-    return isMemoryInit;
+    MemoryMappingInfo.isMemoryInit = (flashOk && eepromOk);
+    return MemoryMappingInfo.isMemoryInit;
 }
+
 
 /* Memory read operations
 ***************************************************************************************/
 
-bool AppMemoryReadForSetting(uint8_t SettingNumber, void* Buffer, uint32_t Address, uint32_t ByteCount) {
+bool AppMemoryReadForSetting( bool (*checkAddr)(uint8_t, uint32_t, uint32_t),
+                              uint32_t (*getAddr)(uint8_t, uint32_t),
+                              uint8_t SettingNumber, void* Buffer, uint32_t Address, uint32_t ByteCount ) {
     bool ret = false;
-    if( checkAddrConsistencyForSetting(SettingNumber, Address, ByteCount) ) {
-        ret = FlashUnbufferedBytesRead(Buffer, getFlashAddressForSetting(SettingNumber, Address), ByteCount);
+    if( (*checkAddr)(SettingNumber, Address, ByteCount) ) {
+        ret = FlashUnbufferedBytesRead(Buffer, (*getAddr)(SettingNumber, Address), ByteCount);
     }
     return ret;
 }
 
-bool AppMemoryRead(void* Buffer, uint32_t Address, uint32_t ByteCount) {
-    return AppMemoryReadForSetting(GlobalSettings.ActiveSetting, Buffer, Address, ByteCount);
+bool AppCardMemoryReadForSetting(uint8_t SettingNumber, void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryReadForSetting( &checkCardMemAddrConsistencyForSetting, &getCardMemFlashAddressForSetting,
+                                    SettingNumber, Buffer, Address, ByteCount );
 }
 
-bool AppMemoryDownloadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+bool AppWorkingMemoryReadForSetting(uint8_t SettingNumber, void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryReadForSetting( &checkWorkingMemAddrConsistencyForSetting, &getWorkingMemFlashAddressForSetting,
+                                    SettingNumber, Buffer, Address, ByteCount );
+}
+
+bool AppCardMemoryRead(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppCardMemoryReadForSetting(GlobalSettings.ActiveSetting, Buffer, Address, ByteCount);
+}
+
+bool AppWorkingMemoryRead(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppWorkingMemoryReadForSetting(GlobalSettings.ActiveSetting, Buffer, Address, ByteCount);
+}
+
+bool AppMemoryDownloadXModem( uint32_t (*getSize)(void), bool (*memRead)(void*, uint32_t, uint32_t),
+                              void* Buffer, uint32_t Address, uint32_t ByteCount ) {
     bool ret = false;
-    uint32_t AvailBytes = getAppMemSizeForSetting(GlobalSettings.ActiveSetting);
+    uint32_t AvailBytes = (*getSize)();
     if(Address < AvailBytes) {
         uint32_t BytesLeft = MIN(ByteCount, AvailBytes - Address);
-        ret = AppMemoryRead(Buffer, Address, BytesLeft);
+        ret = (*memRead)(Buffer, Address, BytesLeft);
     }
     return ret;
+}
+
+bool AppCardMemoryDownloadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryDownloadXModem( &AppCardMemorySize, &AppCardMemoryRead, Buffer, Address, ByteCount);
+}
+
+bool AppWorkingMemoryDownloadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryDownloadXModem( &AppWorkingMemorySize, &AppWorkingMemoryRead, Buffer, Address, ByteCount);
 }
 
 /* Memory write operations
 ***************************************************************************************/
 
-bool AppMemoryWriteForSetting(uint8_t SettingNumber, const void* Buffer, uint32_t Address, uint32_t ByteCount) {
+bool AppMemoryWriteForSetting( bool (*checkAddr)(uint8_t, uint32_t, uint32_t),
+                               uint32_t (*getAddr)(uint8_t, uint32_t),
+                               uint8_t SettingNumber, const void* Buffer, uint32_t Address, uint32_t ByteCount ) {
     bool ret = false;
-    if( checkAddrConsistencyForSetting(SettingNumber, Address, ByteCount) ) {
-        ret = FlashBufferedBytesWrite(Buffer, getFlashAddressForSetting(SettingNumber, Address), ByteCount);
+    if( (*checkAddr)(SettingNumber, Address, ByteCount) ) {
+        ret = FlashBufferedBytesWrite(Buffer, (*getAddr)(SettingNumber, Address), ByteCount);
     }
     return ret;
 }
 
-bool AppMemoryWrite(const void* Buffer, uint32_t Address, uint32_t ByteCount) {
-    return AppMemoryWriteForSetting(GlobalSettings.ActiveSetting, Buffer, Address, ByteCount);
+bool AppCardMemoryWriteForSetting(uint8_t SettingNumber, const void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryWriteForSetting( &checkCardMemAddrConsistencyForSetting, &getCardMemFlashAddressForSetting,
+                                     SettingNumber, Buffer, Address, ByteCount );
 }
 
-bool AppMemoryUploadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+bool AppWorkingMemoryWriteForSetting(uint8_t SettingNumber, const void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryWriteForSetting( &checkWorkingMemAddrConsistencyForSetting, &getWorkingMemFlashAddressForSetting,
+                                     SettingNumber, Buffer, Address, ByteCount );
+}
+
+bool AppCardMemoryWrite(const void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppCardMemoryWriteForSetting(GlobalSettings.ActiveSetting, Buffer, Address, ByteCount);
+}
+
+bool AppWorkingMemoryWrite(const void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppWorkingMemoryWriteForSetting(GlobalSettings.ActiveSetting, Buffer, Address, ByteCount);
+}
+
+bool AppMemoryUploadXModem( uint32_t (*getSize)(void), bool (*memWrite)(const void*, uint32_t, uint32_t),
+                            void* Buffer, uint32_t Address, uint32_t ByteCount ) {
     bool ret = false;
-    uint32_t AvailBytes = getAppMemSizeForSetting(GlobalSettings.ActiveSetting);
+    uint32_t AvailBytes = (*getSize)();
     if(Address < AvailBytes) {
         uint32_t BytesLeft = MIN(ByteCount, AvailBytes - Address);
-        ret = AppMemoryWrite((const void *)Buffer, Address, BytesLeft);
+        ret = (*memWrite)((const void *)Buffer, Address, BytesLeft);
     }
     return ret;
+}
+
+bool AppCardMemoryUploadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryUploadXModem( &AppCardMemorySize, &AppCardMemoryWrite, Buffer, Address, ByteCount);
+}
+
+bool AppWorkingMemoryUploadXModem(void* Buffer, uint32_t Address, uint32_t ByteCount) {
+    return AppMemoryUploadXModem( &AppWorkingMemorySize, &AppWorkingMemoryWrite, Buffer, Address, ByteCount);
 }
 
 /* Memory delete/clear operations
@@ -143,14 +239,34 @@ bool MemoryClearAll(void) {
     return (flashOK && eepromOK);
 }
 
-bool AppMemoryClearForSetting(uint8_t SettingNumber) {
+bool AppSomeMemoryClearForSetting(uint8_t SettingNumber, uint32_t startAddress, uint32_t ByteCount) {
     bool ret = false;
     if( checkSettingNumberConsistency(SettingNumber) ) {
-        ret = FlashClearRange( getFlashAddressForSetting(SettingNumber, MEMORY_NO_ADDR), getAppMemSizeForSetting(SettingNumber) );
+        ret = FlashClearRange( startAddress, ByteCount );
     }
     return ret;
 }
 
+bool AppMemoryClearForSetting(uint8_t SettingNumber) {
+    return AppSomeMemoryClearForSetting(SettingNumber, getFlashAddressForSetting(SettingNumber, MEMORY_NO_ADDR), AppMemorySizeForSetting(SettingNumber));
+}
+
 bool AppMemoryClear(void) {
     return AppMemoryClearForSetting(GlobalSettings.ActiveSetting);
+}
+
+bool AppCardMemoryClearForSetting(uint8_t SettingNumber) {
+    return AppSomeMemoryClearForSetting(SettingNumber, getCardMemFlashAddressForSetting(SettingNumber, MEMORY_NO_ADDR), AppCardMemorySizeForSetting(SettingNumber));
+}
+
+bool AppWorkingMemoryClearForSetting(uint8_t SettingNumber) {
+    return AppSomeMemoryClearForSetting(SettingNumber, getWorkingMemFlashAddressForSetting(SettingNumber, MEMORY_NO_ADDR), AppWorkingMemorySizeForSetting(SettingNumber));
+}
+
+bool AppCardMemoryClear(void) {
+    return AppCardMemoryClearForSetting(GlobalSettings.ActiveSetting);
+}
+
+bool AppWorkingMemoryClear(void) {
+    return AppWorkingMemoryClearForSetting(GlobalSettings.ActiveSetting);
 }
