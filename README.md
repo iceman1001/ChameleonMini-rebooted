@@ -69,7 +69,7 @@ A list of those who contributed to this repo in order to make it work. The commu
 -  @doegox
 -  @ceres-c
 -  @iskuri
--  @shinhub
+-  @shinhub / @securechicken
 -  @McEloff
 
    [store1]: <https://shop.kasper.it/>
