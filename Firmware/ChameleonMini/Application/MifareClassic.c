@@ -702,7 +702,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
                 }
             } else if (Buffer[0] == MFCLASSIC_CMD_HALT) {
-               retSize = mfcHandleHaltCommand(Buffer);
+               mfcHandleHaltCommand(Buffer, &retSize);
             }
             break; /* End of state CHINESE_IDLE */
 
