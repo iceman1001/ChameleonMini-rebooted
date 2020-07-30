@@ -44,6 +44,8 @@ For RevG owners, please visit the [RevG Issues page](https://github.com/emsec/Ch
 
 For RevE Rebooted owners, please visit the [RevE Rebooted Issues page](https://github.com/iceman1001/ChameleonMini-rebooted/issues)
 
+The new Proxmark community discord server is a great place to discuss Chameleon Mini releated stuff. [discord server](https://discord.gg/zjxc8ZB)
+
 ## Repository Structure
 The code repository contains:
 * Drivers: Chameleon drivers for Windows and Linux
