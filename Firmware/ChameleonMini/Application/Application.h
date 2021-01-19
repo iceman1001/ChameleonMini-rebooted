@@ -14,6 +14,7 @@
 /* Applications */
 #include "MifareClassic.h"
 #include "MifareUltralight.h"
+#include "NTAG215.h"
 
 /* Function wrappers */
 INLINE void ApplicationInit(void) {

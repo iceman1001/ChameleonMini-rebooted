@@ -20,6 +20,7 @@ CRYPTO_TOOL	 = ../../Software/Tools/crypt_operations.py
 #BOTH will produce a firmware that is too big for BOOT_LOADER_EXE to handle
 SETTINGS	+= -DCONFIG_MF_CLASSIC_SUPPORT
 #SETTINGS	+= -DCONFIG_MF_ULTRALIGHT_SUPPORT
+#SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
 SETTINGS	+= -DCONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #SETTINGS	+= -DCONFIG_MF_CLASSIC_BRUTE_SUPPORT
 #SETTINGS	+= -DCONFIG_MF_CLASSIC_LOG_SUPPORT
@@ -43,8 +44,11 @@ SETTINGS	+= -DDEFAULT_BUTTON_ACTION=BUTTON_ACTION_CYCLE_SETTINGS
 #Default long button action
 SETTINGS	+= -DDEFAULT_BUTTON_LONG_ACTION=BUTTON_ACTION_NONE
 
+#Define if button action setting should be independent of active setting
+SETTINGS    += -DBUTTON_SETTING_GLOBAL
+
 #Default setting
-SETTINGS	+= -DDEFAULT_SETTING=0
+SETTINGS	+= -DDEFAULT_SETTING=SETTINGS_FIRST
 
 #Default pending task timeout
 SETTINGS	+= -DDEFAULT_PENDING_TASK_TIMEOUT=50 #* 100ms
@@ -62,17 +66,17 @@ ARCH		 = XMEGA
 BOARD		 = NONE
 F_CPU		 = 32000000
 F_USB		 = 48000000
-TARGET		 = ChameleonMini
+TARGET		 = Chameleon-RevE
 OPTIMIZATION = s
-SRC 		+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.c Button.c Settings.c LED.c Map.c AntennaLevel.c
+SRC 		+= ChameleonMini.c LUFADescriptors.c System.c Configuration.c Random.c Common.c Button.c Settings.c LED.c Map.c AntennaLevel.c
 SRC 		+= Memory/EEPROM.c Memory/SPIFlash.c Memory/Memory.c
 SRC 		+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC 		+= Codec/Codec.c Codec/ISO14443-2A.c
 SRC 		+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
+SRC 		+= Application/NTAG215.c 
 SRC 		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA
 CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
-OBJDIR		 = Bin
 
 ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings

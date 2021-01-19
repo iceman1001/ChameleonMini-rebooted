@@ -9,7 +9,6 @@
 #define BUTTON_H_
 
 #include "Common.h"
-#include <avr/io.h>
 #include "Application/Application.h"
 
 #define BUTTON_PORT                     PORTA

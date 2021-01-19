@@ -26,6 +26,9 @@ static const MapEntryType ConfigurationMap[] PROGMEM = {
     { .Id = CONFIG_MF_CLASSIC_4K_7B,         .Text = "MF_CLASSIC_4K_7B" },
     { .Id = CONFIG_MF_CLASSIC_MINI,          .Text = "MF_CLASSIC_MINI" },
 #endif
+#ifdef CONFIG_NTAG215_SUPPORT
+    { .Id = CONFIG_NTAG215,	                  .Text = "NTAG215" },
+#endif
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_DETECTION,     .Text = "MF_CLASSIC_DETECTION" },
 #endif
@@ -237,6 +240,28 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationSetAtqaFunc = MifareClassicSetAtqa,
     .UidSize = MFCLASSIC_UID_SIZE,
     .CardMemorySize = MFCLASSIC_MINI_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
+    .ReadOnly = false
+},
+#endif
+#ifdef CONFIG_NTAG215_SUPPORT
+[CONFIG_NTAG215] = {
+    .CodecInitFunc = ISO14443ACodecInit,
+    .CodecTaskFunc = ISO14443ACodecTask,
+    .ApplicationInitFunc = NTAG215AppInit,
+    .ApplicationResetFunc = NTAG215AppReset,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
+    .ApplicationProcessFunc = NTAG215AppProcess,
+    .ApplicationGetUidFunc = NTAG215GetUid,
+    .ApplicationSetUidFunc = NTAG215SetUid,
+    .ApplicationGetSakFunc = ApplicationGetSakDummy,
+    .ApplicationSetSakFunc = ApplicationSetSakDummy,
+    .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+    .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
+    .UidSize = NTAG215_UID_SIZE,
+    .CardMemorySize = NTAG215_MEM_SIZE,
     .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },

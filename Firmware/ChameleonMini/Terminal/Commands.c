@@ -71,7 +71,6 @@
 #include "../System.h"
 #include "../Button.h"
 #include "../AntennaLevel.h"
-#include "../Application/MifareUltralight.h"
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
