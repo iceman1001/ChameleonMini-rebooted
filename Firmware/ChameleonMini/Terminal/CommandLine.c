@@ -331,6 +331,14 @@ const PROGMEM CommandEntryType CommandTable[] = {
       .GetFunc    = CommandGetDetection,
   },
 #endif
+#ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
+  {
+      .Command    = COMMAND_UIDMOD,
+      .ExecFunc   = NO_FUNCTION,
+      .SetFunc    = CommandSetUidMode,
+      .GetFunc    = CommandGetUidMode,
+  },
+#endif
   {
       .Command    = COMMAND_CLEARALL,
       .ExecFunc   = CommandExecClearAll,

@@ -429,6 +429,25 @@ CommandStatusIdType CommandGetDetection(char* OutParam) {
 }
 #endif
 
+#ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
+CommandStatusIdType CommandGetUidMode(char* OutParam) {
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), GlobalSettings.UidMode);
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+CommandStatusIdType CommandSetUidMode(char* OutMessage, const char* InParam) {
+    if (InParam[1] == '\0') {
+    if (InParam[0] == COMMAND_CHAR_TRUE) {
+      SettingsSetUidMode(true);
+      return COMMAND_INFO_OK_ID;
+    } else if (InParam[0] == COMMAND_CHAR_FALSE) {
+      SettingsSetUidMode(false);
+      return COMMAND_INFO_OK_ID;
+    }
+  }
+  return COMMAND_ERR_INVALID_PARAM_ID;
+}
+#endif
+
 CommandStatusIdType CommandExecClearAll(char* OutMessage) {
     MemoryClearAll();
     for(uint8_t i = SETTINGS_FIRST; i <= SETTINGS_LAST; i++) {
