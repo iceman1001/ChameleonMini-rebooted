@@ -196,9 +196,6 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
 CommandStatusIdType CommandGetDetection(char* OutParam);
 #endif
 
-#define COMMAND_CLONE  "CLONE"
-CommandStatusIdType CommandExecClone(char *OutMessage);
-
 #ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
 #define COMMAND_UIDMOD           "UIDMODE"
 CommandStatusIdType CommandGetUidMode(char* OutParam);
