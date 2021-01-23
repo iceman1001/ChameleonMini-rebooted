@@ -664,7 +664,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             isFromHaltChain = (State == STATE_HALT);
             isCascadeStepOnePassed = false;
 #ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
-            if (Buffer[0] == MFCLASSIC_CMD_CHINESE_UNLOCK) {
+            if (Buffer[0] == MFCLASSIC_CMD_CHINESE_UNLOCK && AppMemoryUidMode()) {
                 State = STATE_CHINESE_IDLE;
                 Buffer[0] = MFCLASSIC_ACK_VALUE;
                 retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
@@ -785,6 +785,14 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
             break; /* End of state READY */
 
         case STATE_ACTIVE:
+#ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
+            if (Buffer[0] == MFCLASSIC_CMD_CHINESE_UNLOCK && AppMemoryUidMode()) {
+                State = STATE_CHINESE_IDLE;
+                Buffer[0] = MFCLASSIC_ACK_VALUE;
+                retSize = MFCLASSIC_ACK_NAK_FRAME_SIZE;
+                break;
+            }
+#endif
             if ( (Buffer[0] == MFCLASSIC_CMD_AUTH_A) || (Buffer[0] == MFCLASSIC_CMD_AUTH_B) ) {
                 if (ISO14443ACheckCRCA(Buffer, MFCLASSIC_CMD_AUTH_FRAME_SIZE)) {
                     mfcHandleAuthenticationRequest(false, Buffer, &retSize);

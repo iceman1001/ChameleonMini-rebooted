@@ -88,4 +88,6 @@ bool AppCardMemoryClear(void);
 bool AppWorkingMemoryClearForSetting(uint8_t SettingNumber);
 bool AppWorkingMemoryClear(void);
 
+bool AppMemoryUidMode(void);
+
 #endif /* _MEM_MEMORY_H_ */

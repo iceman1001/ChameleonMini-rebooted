@@ -270,3 +270,7 @@ bool AppCardMemoryClear(void) {
 bool AppWorkingMemoryClear(void) {
     return AppWorkingMemoryClearForSetting(GlobalSettings.ActiveSetting);
 }
+
+bool AppMemoryUidMode(void) {
+    return GlobalSettings.UidMode;
+}

@@ -14,6 +14,7 @@ SettingsType GlobalSettings;
 SettingsType EEMEM StoredSettings = {
     .ActiveSetting = DEFAULT_SETTING,
     .ActiveSettingPtr = &GlobalSettings.Settings[DEFAULT_SETTING],
+    .UidMode = 0,
 
     .Settings = { [SETTINGS_FIRST ... SETTINGS_LAST] =  {
             .Configuration = DEFAULT_CONFIGURATION,
@@ -81,4 +82,9 @@ bool SettingsSetActiveByName(const char* Setting) {
     } else {
         return false;
     }
+}
+
+void SettingsSetUidMode(bool isActive) {
+    GlobalSettings.UidMode = isActive;
+    SettingsSave();
 }

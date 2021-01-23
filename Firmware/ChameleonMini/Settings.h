@@ -35,6 +35,7 @@ typedef struct {
     uint8_t ActiveSetting;
     SettingsEntryType* ActiveSettingPtr;
     SettingsEntryType Settings[SETTINGS_COUNT];
+    bool UidMode;
 } SettingsType;
 
 extern SettingsType GlobalSettings;
@@ -48,5 +49,7 @@ bool SettingsSetActiveById(uint8_t Setting);
 uint8_t SettingsGetActiveById(void);
 void SettingsGetActiveByName(char* SettingOut, uint16_t BufferSize);
 bool SettingsSetActiveByName(const char* Setting);
+
+void SettingsSetUidMode(bool isActive);
 
 #endif /* SETTINGS_H_ */

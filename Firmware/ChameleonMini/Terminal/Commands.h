@@ -1,4 +1,4 @@
-/* Copyright 2013 Timo Kasper, Simon KŸppers, David Oswald ("ORIGINAL
+/* Copyright 2013 Timo Kasper, Simon KÅ¸ppers, David Oswald ("ORIGINAL
  * AUTHORS"). All rights reserved.
  *
  * DEFINITIONS:
@@ -194,6 +194,12 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam);
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #define COMMAND_DETECTION           "DETECTION"
 CommandStatusIdType CommandGetDetection(char* OutParam);
+#endif
+
+#ifdef SUPPORT_MF_CLASSIC_MAGIC_MODE
+#define COMMAND_UIDMOD           "UIDMODE"
+CommandStatusIdType CommandGetUidMode(char* OutParam);
+CommandStatusIdType CommandSetUidMode(char* OutMessage, const char* InParam);
 #endif
 
 #define COMMAND_CLEARALL            "CLEARALL"

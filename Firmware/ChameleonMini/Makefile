@@ -26,7 +26,7 @@ SETTINGS	+= -DCONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #SETTINGS	+= -DCONFIG_MF_CLASSIC_LOG_SUPPORT
 
 #Support magic mode on mifare classic configuration
-#SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
+SETTINGS	+= -DSUPPORT_MF_CLASSIC_MAGIC_MODE
 
 #Support activating firmware upgrade mode through command-line
 SETTINGS	+= -DSUPPORT_FIRMWARE_UPGRADE
