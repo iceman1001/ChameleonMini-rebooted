@@ -1,5 +1,5 @@
 /*
- * NTAG215.c
+ * NTAG216.c
  *
  *  Created on: 20.02.2019
  *  Author: Giovanni Cammisa (gcammisa)
@@ -32,21 +32,21 @@ static bool ReadAccessProtected;
 static uint8_t Access;
 
 
-void NTAG215AppInit(void) {
+void NTAG216AppInit(void) {
 
     State = STATE_IDLE;
     FromHalt = false;
     ArmedForCompatWrite = false;
     Authenticated = false;
-    PageCount = NTAG215_PAGES;
+    PageCount = NTAG216_PAGES;
 
     /* Fetch some of the configuration into RAM */
-    AppCardMemoryRead(&FirstAuthenticatedPage, NTAG215_CONFIG_AREA_START_ADDRESS + CONF_AUTH0_OFFSET, 1);
-    AppCardMemoryRead(&Access, NTAG215_CONFIG_AREA_START_ADDRESS + CONF_ACCESS_OFFSET, 1);
+    AppCardMemoryRead(&FirstAuthenticatedPage, NTAG216_CONFIG_AREA_START_ADDRESS + CONF_AUTH0_OFFSET, 1);
+    AppCardMemoryRead(&Access, NTAG216_CONFIG_AREA_START_ADDRESS + CONF_ACCESS_OFFSET, 1);
     ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
 }
 
-void NTAG215AppReset(void) {
+void NTAG216AppReset(void) {
     State = STATE_IDLE;
 }
 
@@ -75,14 +75,14 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
     switch (Cmd) {
         case CMD_GET_VERSION: {
-            /* Provide hardcoded version response */ //VERSION RESPONSE FOR NTAG 215
+            /* Provide hardcoded version response */ //VERSION RESPONSE FOR NTAG 213
             Buffer[0] = 0x00;
             Buffer[1] = 0x04;
             Buffer[2] = 0x04;
             Buffer[3] = 0x02;
             Buffer[4] = 0x01;
             Buffer[5] = 0x00;
-            Buffer[6] = 0x11;
+            Buffer[6] = 0x13;
             Buffer[7] = 0x03;
             ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
             return (VERSION_INFO_LENGTH + ISO14443A_CRCA_SIZE) * 8;
@@ -149,7 +149,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             /* TODO: IMPLEMENT COUNTER AUTHLIM */
 
             /* Read and compare the password */
-            AppCardMemoryRead(Password, NTAG215_CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
+            AppCardMemoryRead(Password, NTAG216_CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
             if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
@@ -158,7 +158,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED
             Authenticated = 1;
             /* Send the PACK value back */
-            AppCardMemoryRead(Buffer, NTAG215_CONFIG_AREA_START_ADDRESS + CONF_PACK_OFFSET, 2);
+            AppCardMemoryRead(Buffer, NTAG216_CONFIG_AREA_START_ADDRESS + CONF_PACK_OFFSET, 2);
             ISO14443AAppendCRCA(Buffer, 2);
             return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
@@ -238,7 +238,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
 
 //FINITE STATE MACHINE STUFF, SHOULD BE THE VERY SIMILAR TO Mifare Ultralight
-uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount) {
+uint16_t NTAG216AppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint8_t Cmd = Buffer[0];
     uint16_t ByteCount;
 

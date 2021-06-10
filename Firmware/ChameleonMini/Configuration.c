@@ -26,8 +26,14 @@ static const MapEntryType ConfigurationMap[] PROGMEM = {
     { .Id = CONFIG_MF_CLASSIC_4K_7B,         .Text = "MF_CLASSIC_4K_7B" },
     { .Id = CONFIG_MF_CLASSIC_MINI,          .Text = "MF_CLASSIC_MINI" },
 #endif
+#ifdef CONFIG_NTAG213_SUPPORT
+    { .Id = CONFIG_NTAG213,	                  .Text = "NTAG213" },
+#endif
 #ifdef CONFIG_NTAG215_SUPPORT
     { .Id = CONFIG_NTAG215,	                  .Text = "NTAG215" },
+#endif
+#ifdef CONFIG_NTAG216_SUPPORT
+    { .Id = CONFIG_NTAG216,	                  .Text = "NTAG216" },
 #endif
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
     { .Id = CONFIG_MF_CLASSIC_DETECTION,     .Text = "MF_CLASSIC_DETECTION" },
@@ -244,6 +250,28 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ReadOnly = false
 },
 #endif
+#ifdef CONFIG_NTAG213_SUPPORT
+[CONFIG_NTAG213] = {
+    .CodecInitFunc = ISO14443ACodecInit,
+    .CodecTaskFunc = ISO14443ACodecTask,
+    .ApplicationInitFunc = NTAG213AppInit,
+    .ApplicationResetFunc = NTAG213AppReset,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
+    .ApplicationProcessFunc = NTAG213AppProcess,
+    .ApplicationGetUidFunc = NTAG21xGetUid,
+    .ApplicationSetUidFunc = NTAG21xSetUid,
+    .ApplicationGetSakFunc = ApplicationGetSakDummy,
+    .ApplicationSetSakFunc = ApplicationSetSakDummy,
+    .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+    .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
+    .UidSize = NTAG21x_UID_SIZE,
+    .CardMemorySize = NTAG213_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
+    .ReadOnly = false
+},
+#endif
 #ifdef CONFIG_NTAG215_SUPPORT
 [CONFIG_NTAG215] = {
     .CodecInitFunc = ISO14443ACodecInit,
@@ -254,14 +282,36 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .ApplicationTickFunc = ApplicationTickDummy,
     .ApplicationButtonFunc = ApplicationButtonFuncDummy,
     .ApplicationProcessFunc = NTAG215AppProcess,
-    .ApplicationGetUidFunc = NTAG215GetUid,
-    .ApplicationSetUidFunc = NTAG215SetUid,
+    .ApplicationGetUidFunc = NTAG21xGetUid,
+    .ApplicationSetUidFunc = NTAG21xSetUid,
     .ApplicationGetSakFunc = ApplicationGetSakDummy,
     .ApplicationSetSakFunc = ApplicationSetSakDummy,
     .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
     .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
-    .UidSize = NTAG215_UID_SIZE,
+    .UidSize = NTAG21x_UID_SIZE,
     .CardMemorySize = NTAG215_MEM_SIZE,
+    .WorkingMemorySize = MEMORY_NO_MEMORY,
+    .ReadOnly = false
+},
+#endif
+#ifdef CONFIG_NTAG216_SUPPORT
+[CONFIG_NTAG216] = {
+    .CodecInitFunc = ISO14443ACodecInit,
+    .CodecTaskFunc = ISO14443ACodecTask,
+    .ApplicationInitFunc = NTAG216AppInit,
+    .ApplicationResetFunc = NTAG216AppReset,
+    .ApplicationTaskFunc = ApplicationTaskDummy,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
+    .ApplicationProcessFunc = NTAG216AppProcess,
+    .ApplicationGetUidFunc = NTAG21xGetUid,
+    .ApplicationSetUidFunc = NTAG21xSetUid,
+    .ApplicationGetSakFunc = ApplicationGetSakDummy,
+    .ApplicationSetSakFunc = ApplicationSetSakDummy,
+    .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+    .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
+    .UidSize = NTAG21x_UID_SIZE,
+    .CardMemorySize = NTAG216_MEM_SIZE,
     .WorkingMemorySize = MEMORY_NO_MEMORY,
     .ReadOnly = false
 },

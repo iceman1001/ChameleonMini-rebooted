@@ -19,8 +19,10 @@ CRYPTO_TOOL	 = ../../Software/Tools/crypt_operations.py
 #WARNING. If you flash from Windows original tools, choose either CLASSIC OR ULTRALIGHT
 #BOTH will produce a firmware that is too big for BOOT_LOADER_EXE to handle
 SETTINGS	+= -DCONFIG_MF_CLASSIC_SUPPORT
-#SETTINGS	+= -DCONFIG_MF_ULTRALIGHT_SUPPORT
-#SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
+# SETTINGS	+= -DCONFIG_MF_ULTRALIGHT_SUPPORT
+SETTINGS	+= -DCONFIG_NTAG213_SUPPORT
+# SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
+# SETTINGS	+= -DCONFIG_NTAG216_SUPPORT
 SETTINGS	+= -DCONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #SETTINGS	+= -DCONFIG_MF_CLASSIC_BRUTE_SUPPORT
 #SETTINGS	+= -DCONFIG_MF_CLASSIC_LOG_SUPPORT
@@ -73,7 +75,10 @@ SRC 		+= Memory/EEPROM.c Memory/SPIFlash.c Memory/Memory.c
 SRC 		+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC 		+= Codec/Codec.c Codec/ISO14443-2A.c
 SRC 		+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
+SRC 		+= Application/NTAG21x.c 
+SRC 		+= Application/NTAG213.c 
 SRC 		+= Application/NTAG215.c 
+SRC 		+= Application/NTAG216.c 
 SRC 		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA
 CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
