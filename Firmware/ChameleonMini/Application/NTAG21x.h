@@ -87,17 +87,19 @@
 #define NTAG216_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG216_PAGES )
 
 void NTAG213AppInit(void);
-void NTAG213AppReset(void);
+/* void NTAG213AppReset(void); */
 
 void NTAG215AppInit(void);
-void NTAG215AppReset(void);
+/* void NTAG215AppReset(void); */
 
 void NTAG216AppInit(void);
-void NTAG216AppReset(void);
+/* void NTAG216AppReset(void); */
+void NTAG21xAppReset(void);
 
-uint16_t NTAG213AppProcess(uint8_t *Buffer, uint16_t BitCount);
-uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount);
-uint16_t NTAG216AppProcess(uint8_t *Buffer, uint16_t BitCount);
+uint16_t NTAG21xAppProcess(uint8_t *Buffer, uint16_t BitCount);
+/* uint16_t NTAG213AppProcess(uint8_t *Buffer, uint16_t BitCount); */
+/* uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount); */
+/* uint16_t NTAG216AppProcess(uint8_t *Buffer, uint16_t BitCount); */
 
 void NTAG21xGetUid(ConfigurationUidType Uid);
 void NTAG21xSetUid(ConfigurationUidType Uid);
