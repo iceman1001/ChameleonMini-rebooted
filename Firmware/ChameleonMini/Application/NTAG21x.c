@@ -1,5 +1,5 @@
 /*
- * NTAG215.c
+ * NTAG21x.c
  *
  *  Created on: 20.02.2019
  *  Author: Giovanni Cammisa (gcammisa)
@@ -9,7 +9,7 @@
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
 
-#include "NTAG215.h"
+#include "NTAG21x.h"
 #include "ISO14443-3A.h"
 #include "../Codec/ISO14443-2A.h"
 #include "../Memory/Memory.h"
@@ -56,7 +56,9 @@
 #define STATIC_LOCKBYTE_0_ADDRESS   0x0A
 #define STATIC_LOCKBYTE_1_ADDRESS   0x0B
 //CONFIG stuff
-#define CONFIG_AREA_START_ADDRESS   NTAG215_PAGE_SIZE * 0x83
+#define NTAG213_CONFIG_AREA_START_ADDRESS   NTAG21x_PAGE_SIZE * 0x29
+#define NTAG215_CONFIG_AREA_START_ADDRESS   NTAG21x_PAGE_SIZE * 0x83
+#define NTAG216_CONFIG_AREA_START_ADDRESS   NTAG21x_PAGE_SIZE * 0xE3
 #define CONFIG_AREA_SIZE        8
 //CONFIG offsets, relative to config start address
 #define CONF_AUTH0_OFFSET       0x03
@@ -73,20 +75,36 @@
 
 #define VERSION_INFO_LENGTH 8 //8 bytes info lenght + crc
 
-#define BYTES_PER_READ NTAG215_PAGE_SIZE * 4
-
+#define BYTES_PER_READ NTAG21x_PAGE_SIZE * 4
 //SIGNATURE Lenght
 #define SIGNATURE_LENGTH        32
 
+/* #define NTAG21x_UID_SIZE ISO14443A_UID_SIZE_DOUBLE //7 bytes UID */
+
+/* #define NTAG21x_PAGE_SIZE 4 //bytes per page */
+/* #define NTAG213_PAGES 45 //45 pages total for ntag213, from 0 to 44 */
+/* #define NTAG215_PAGES 135 //135 pages total for ntag215, from 0 to 134 */
+/* #define NTAG216_PAGES 231 //231 pages total for ntag216, from 0 to 230 */
+
+/* #define NTAG213_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG213_PAGES ) */
+/* #define NTAG215_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG215_PAGES ) */
+/* #define NTAG216_MEM_SIZE ( NTAG21x_PAGE_SIZE * NTAG216_PAGES ) */
 
 static enum {
-    STATE_HALT,
-    STATE_IDLE,
-    STATE_READY1,
-    STATE_READY2,
-    STATE_ACTIVE
+    TYPE_NTAG213,
+    TYPE_NTAG215,
+    TYPE_NTAG216
+} Ntag_Type;
+
+static enum {
+  STATE_HALT,
+  STATE_IDLE,
+  STATE_READY1,
+  STATE_READY2,
+  STATE_ACTIVE
 } State;
 
+static uint32_t ConfigStartAddr = NTAG213_CONFIG_AREA_START_ADDRESS;
 static bool FromHalt = false;
 static uint8_t PageCount;
 static bool ArmedForCompatWrite;
@@ -97,23 +115,101 @@ static bool ReadAccessProtected;
 static uint8_t Access;
 
 
-void NTAG215AppInit(void) {
+//Writes a page
+static uint8_t AppWritePage(uint8_t PageAddress, uint8_t *const Buffer) {
+    if (!ActiveConfiguration.ReadOnly) {
+        AppCardMemoryWrite(Buffer, PageAddress * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
+    } else {
+        /* If the chameleon is in read only mode, it silently
+        * ignores any attempt to write data. */
+    }
+    return 0;
+}
 
+//HELPER FUNCTIONS
+void NTAG21xGetUid(ConfigurationUidType Uid) {
+    /* Read UID from memory */
+    AppCardMemoryRead(&Uid[0], UID_CL1_ADDRESS, UID_CL1_SIZE);
+    AppCardMemoryRead(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
+}
+
+void NTAG21xSetUid(ConfigurationUidType Uid) {
+    /* Calculate check bytes and write everything into memory */
+    uint8_t BCC1 = ISO14443A_UID0_CT ^ Uid[0] ^ Uid[1] ^ Uid[2];
+    uint8_t BCC2 = Uid[3] ^ Uid[4] ^ Uid[5] ^ Uid[6];
+
+    AppCardMemoryWrite(&Uid[0], UID_CL1_ADDRESS, UID_CL1_SIZE);
+    AppCardMemoryWrite(&BCC1, UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
+    AppCardMemoryWrite(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
+    AppCardMemoryWrite(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
+}
+
+static void NTAG21xAppInit(void) {
     State = STATE_IDLE;
+    
     FromHalt = false;
     ArmedForCompatWrite = false;
     Authenticated = false;
-    PageCount = NTAG215_PAGES;
 
+    switch (Ntag_Type) {
+    case TYPE_NTAG213: {
+        PageCount = NTAG213_PAGES;
+        break;
+    }
+    case TYPE_NTAG215: {
+        PageCount = NTAG215_PAGES;
+        break;
+    }
+    case TYPE_NTAG216: {
+        PageCount = NTAG216_PAGES;
+        break;
+    }
+    default:
+        break;
+    }
+    
     /* Fetch some of the configuration into RAM */
-    AppCardMemoryRead(&FirstAuthenticatedPage, CONFIG_AREA_START_ADDRESS + CONF_AUTH0_OFFSET, 1);
-    AppCardMemoryRead(&Access, CONFIG_AREA_START_ADDRESS + CONF_ACCESS_OFFSET, 1);
+    AppCardMemoryRead(&FirstAuthenticatedPage, ConfigStartAddr + CONF_AUTH0_OFFSET, 1);
+    AppCardMemoryRead(&Access, ConfigStartAddr + CONF_ACCESS_OFFSET, 1);
     ReadAccessProtected = !!(Access & CONF_ACCESS_PROT);
 }
 
-void NTAG215AppReset(void) {
+void NTAG21xAppReset(void) {
     State = STATE_IDLE;
 }
+
+#if defined(CONFIG_NTAG213_SUPPORT)
+
+void NTAG213AppInit(void) {
+    Ntag_Type = TYPE_NTAG213;
+    PageCount = NTAG213_PAGES;
+    ConfigStartAddr = NTAG213_CONFIG_AREA_START_ADDRESS;
+    NTAG21xAppInit();
+}
+
+#endif // CONIFG_NTAG213_SUPPORT
+
+#ifdef CONFIG_NTAG215_SUPPORT
+
+void NTAG215AppInit(void) {
+    Ntag_Type = TYPE_NTAG215;
+    PageCount = NTAG215_PAGES;
+    ConfigStartAddr = NTAG215_CONFIG_AREA_START_ADDRESS;
+    NTAG21xAppInit();
+}
+
+#endif // CONFIG_NTAG215_SUPPORT
+
+#ifdef CONFIG_NTAG216_SUPPORT
+
+void NTAG216AppInit(void) {
+    Ntag_Type = TYPE_NTAG216;
+    PageCount = NTAG216_PAGES;
+    ConfigStartAddr = NTAG216_CONFIG_AREA_START_ADDRESS;
+    NTAG21xAppInit();
+}
+
+#endif // CONFIG_NTAG216_SUPPORT
 
 //Verify authentication
 static bool VerifyAuthentication(uint8_t PageAddress) {
@@ -123,17 +219,6 @@ static bool VerifyAuthentication(uint8_t PageAddress) {
     }
     /* Otherwise, verify the accessed page is below the limit */
     return PageAddress < FirstAuthenticatedPage;
-}
-
-//Writes a page
-static uint8_t AppWritePage(uint8_t PageAddress, uint8_t *const Buffer) {
-    if (!ActiveConfiguration.ReadOnly) {
-        AppCardMemoryWrite(Buffer, PageAddress * NTAG215_PAGE_SIZE, NTAG215_PAGE_SIZE);
-    } else {
-        /* If the chameleon is in read only mode, it silently
-        * ignores any attempt to write data. */
-    }
-    return 0;
 }
 
 //Basic sketch of the command handling stuff
@@ -151,14 +236,29 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
     switch (Cmd) {
         case CMD_GET_VERSION: {
-            /* Provide hardcoded version response */ //VERSION RESPONSE FOR NTAG 215
+            /* Provide hardcoded version response */ //VERSION RESPONSE FOR NTAG 21x
             Buffer[0] = 0x00;
             Buffer[1] = 0x04;
             Buffer[2] = 0x04;
             Buffer[3] = 0x02;
             Buffer[4] = 0x01;
             Buffer[5] = 0x00;
-            Buffer[6] = 0x11;
+            switch (Ntag_Type) {
+            case TYPE_NTAG213: {
+                Buffer[6] = 0x0F;
+                break;
+            }
+            case TYPE_NTAG215: {
+                Buffer[6] = 0x11;
+                break;
+            }
+            case TYPE_NTAG216: {
+                Buffer[6] = 0x13;
+                break;
+            }
+            default:
+                break;
+            }
             Buffer[7] = 0x03;
             ISO14443AAppendCRCA(Buffer, VERSION_INFO_LENGTH);
             return (VERSION_INFO_LENGTH + ISO14443A_CRCA_SIZE) * 8;
@@ -185,7 +285,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             }
             /* Read out, emulating the wraparound */
             for (Offset = 0; Offset < BYTES_PER_READ; Offset += 4) {
-                AppCardMemoryRead(&Buffer[Offset], PageAddress * NTAG215_PAGE_SIZE, NTAG215_PAGE_SIZE);
+                AppCardMemoryRead(&Buffer[Offset], PageAddress * NTAG21x_PAGE_SIZE, NTAG21x_PAGE_SIZE);
                 PageAddress++;
                 if (PageAddress == PageLimit) { // if arrived ad the last page, start reading from page 0
                     PageAddress = 0;
@@ -212,8 +312,8 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
                 }
             }
 
-            ByteCount = (EndPageAddress - StartPageAddress + 1) * NTAG215_PAGE_SIZE;
-            AppCardMemoryRead(Buffer, StartPageAddress * NTAG215_PAGE_SIZE, ByteCount);
+            ByteCount = (EndPageAddress - StartPageAddress + 1) * NTAG21x_PAGE_SIZE;
+            AppCardMemoryRead(Buffer, StartPageAddress * NTAG21x_PAGE_SIZE, ByteCount);
             ISO14443AAppendCRCA(Buffer, ByteCount);
             return (ByteCount + ISO14443A_CRCA_SIZE) * 8;
         }
@@ -225,7 +325,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             /* TODO: IMPLEMENT COUNTER AUTHLIM */
 
             /* Read and compare the password */
-            AppCardMemoryRead(Password, CONFIG_AREA_START_ADDRESS + CONF_PASSWORD_OFFSET, 4);
+            AppCardMemoryRead(Password, ConfigStartAddr + CONF_PASSWORD_OFFSET, 4);
             if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
@@ -234,7 +334,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED
             Authenticated = 1;
             /* Send the PACK value back */
-            AppCardMemoryRead(Buffer, CONFIG_AREA_START_ADDRESS + CONF_PACK_OFFSET, 2);
+            AppCardMemoryRead(Buffer, ConfigStartAddr + CONF_PACK_OFFSET, 2);
             ISO14443AAppendCRCA(Buffer, 2);
             return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
@@ -312,9 +412,8 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
 }
 
-
 //FINITE STATE MACHINE STUFF, SHOULD BE THE VERY SIMILAR TO Mifare Ultralight
-uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount) {
+uint16_t NTAG21xAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     uint8_t Cmd = Buffer[0];
     uint16_t ByteCount;
 
@@ -404,22 +503,4 @@ uint16_t NTAG215AppProcess(uint8_t *Buffer, uint16_t BitCount) {
 
     /* No response has been sent, when we reach here */
     return ISO14443A_APP_NO_RESPONSE;
-}
-
-//HELPER FUNCTIONS
-void NTAG215GetUid(ConfigurationUidType Uid) {
-    /* Read UID from memory */
-    AppCardMemoryRead(&Uid[0], UID_CL1_ADDRESS, UID_CL1_SIZE);
-    AppCardMemoryRead(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
-}
-
-void NTAG215SetUid(ConfigurationUidType Uid) {
-    /* Calculate check bytes and write everything into memory */
-    uint8_t BCC1 = ISO14443A_UID0_CT ^ Uid[0] ^ Uid[1] ^ Uid[2];
-    uint8_t BCC2 = Uid[3] ^ Uid[4] ^ Uid[5] ^ Uid[6];
-
-    AppCardMemoryWrite(&Uid[0], UID_CL1_ADDRESS, UID_CL1_SIZE);
-    AppCardMemoryWrite(&BCC1, UID_BCC1_ADDRESS, ISO14443A_CL_BCC_SIZE);
-    AppCardMemoryWrite(&Uid[UID_CL1_SIZE], UID_CL2_ADDRESS, UID_CL2_SIZE);
-    AppCardMemoryWrite(&BCC2, UID_BCC2_ADDRESS, ISO14443A_CL_BCC_SIZE);
 }

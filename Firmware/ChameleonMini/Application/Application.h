@@ -14,8 +14,7 @@
 /* Applications */
 #include "MifareClassic.h"
 #include "MifareUltralight.h"
-#include "NTAG215.h"
-
+#include "NTAG21x.h"
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
     ActiveConfiguration.ApplicationInitFunc();
