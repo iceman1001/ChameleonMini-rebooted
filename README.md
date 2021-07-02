@@ -4,7 +4,7 @@ ChameleonMini RevE - Rebooted
 | ------------------- |:-------------------:|
 | [![Build Status](https://travis-ci.org/iceman1001/ChameleonMini-rebooted.svg?branch=master)](https://travis-ci.org/iceman1001/ChameleonMini-rebooted) | [![Latest release](https://img.shields.io/github/release/iceman1001/ChameleonMini-rebooted.svg)](https://github.com/iceman1001/ChameleonMini-rebooted/releases/latest) |
 
-![Image ChameleonMini revE - rebooted](http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg)
+<img src="http://www.icedev.se/chameleon_mini_revE/miniRevE.jpg" width="300">
 
 # Attribution LICENSE
 "Based on the open-source NFC tool ChameleonMini: https://github.com/emsec/ChameleonMini" [License](https://github.com/iceman1001/ChameleonMini-rebooted/blob/master/LICENSE.txt)
@@ -30,39 +30,20 @@ For RevE Rebooted owners, please start with our [Getting Started](https://github
 See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Codecs).
 
 ## GUI
-Based on the partial source code release for the GUI, we created a new GUI: [iceman's ChameleonMini rebootedGUI](https://github.com/iceman1001/ChameleonMini-rebootedGUI)
+Based on the partial source code release for the GUI, we created a new GUI [iceman's ChameleonMini rebootedGUI](https://github.com/iceman1001/ChameleonMini-rebootedGUI)
 It is a windows .net based software and it is really nice to work with.
 Has support for ChameleonMini revE / revG commands, dump management, color templates for dumps, and multilanguage.
 
-Built by @bogition and @iceman1001
-
 ## Questions
 If you have any questions, please start with reading our [Wiki](https://github.com/iceman1001/ChameleonMini-rebooted/wiki).
-If not enough visit the issues page to the related hardware device you own, and ask your questions there so everyone benefits from the answer.
 
-For RevG owners, please visit the [RevG Issues page](https://github.com/emsec/ChameleonMini/issues)
-
-For RevE Rebooted owners, please visit the [RevE Rebooted Issues page](https://github.com/iceman1001/ChameleonMini-rebooted/issues)
-
-The new Proxmark community discord server is a great place to discuss Chameleon Mini releated stuff. [discord server](https://discord.gg/zjxc8ZB)
+The RFID hacking community discord server is a great place to discuss Chameleon Mini releated stuff among others [discord server](https://discord.gg/zjxc8ZB)
 
 ## Repository Structure
 The code repository contains:
 * Drivers: Chameleon drivers for Windows and Linux
 * Firmware: The complete firmware including a modified Atmel DFU bootloader and LUFA
 * Software: Contains a python tool for an easy configuration (and more) of the ChameleonMini, Note that this is currently under construction
-
-## Where to buy?
-| Shop | URL | Device |
-| ------ | ------ | ------ |
-| Kaos | [https://shop.kasper.it/][store1] | Rev G |
-| sneaktech | [https://sneaktechnology.com/][store2] | Rev E Rebooted |
-| Lab401 | [https://lab401.com/][store3] | Rev E Rebooted |
-
-## Donate
-If you feel the love,  do feel free to become a iceman patron. For some tiers it comes with rewards https://www.patreon.com/iceman1001
-
-All support is welcome.
 
 
 ## Perpetual glory!
@@ -74,7 +55,8 @@ A list of those who contributed to this repo in order to make it work. The commu
 -  @shinhub / @securechicken
 -  @McEloff
 
-   [store1]: <https://shop.kasper.it/>
-   [store2]: <https://sneaktechnology.com/>
-   [store3]: <https://lab401.com/>
 
+## Donate
+If you feel the love,  do feel free to become a Iceman patron. For some tiers it comes with rewards https://www.patreon.com/iceman1001
+
+All support is welcome.
