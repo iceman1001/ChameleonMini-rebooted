@@ -17,12 +17,14 @@ Since this firmware isn't in the official ChameleonMini repo,  I decided to make
 ## Notice
 Let us make this fork awesome to play with. Do please play with it. Get excited and experiment with your enhanced ChameleonMini device!
 
+*This firmware is solely for the ChameleonMini Rev.E hardware, it does not work on the Chameleon Rev.G (RDV2.0) hardware!*
+
 ## First Steps
 This repo is focused on RevE Rebooted. Start with reading our [Wiki](https://github.com/iceman1001/ChameleonMini-rebooted/wiki).
 
 ### To upgrade the firmware of your ChameleonMini
 
-For RevG owners, please visit the [Getting Started page](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html).
+For RevG owners, please visit the [Getting Started page](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/_page__getting_started.html) from the [doxygen documentation](https://rawgit.com/emsec/ChameleonMini/master/Doc/Doxygen/html/index.html). This firmware is solely for the ChameleonMini Rev.E hardware, it does not work on the Chameleon Rev.G (RDV2.0) hardware!
 
 For RevE Rebooted owners, please start with our [Getting Started](https://github.com/iceman1001/ChameleonMini-rebooted/wiki/Getting-started)
 
@@ -32,7 +34,7 @@ See [here](https://github.com/emsec/ChameleonMini/wiki/Supported-Cards-and--Code
 ## GUI
 Based on the partial source code release for the GUI, we created a new GUI [iceman's ChameleonMini rebootedGUI](https://github.com/iceman1001/ChameleonMini-rebootedGUI)
 It is a windows .net based software and it is really nice to work with.
-Has support for ChameleonMini revE / revG commands, dump management, color templates for dumps, and multilanguage.
+Has support for ChameleonMini revE / commands, dump management, color templates for dumps, and multilanguage.
 
 ## Questions
 If you have any questions, please start with reading our [Wiki](https://github.com/iceman1001/ChameleonMini-rebooted/wiki).
