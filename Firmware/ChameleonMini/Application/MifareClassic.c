@@ -538,8 +538,17 @@ bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t * Buffer, uint16_t BitCou
         /* Set response buffer */
         ISO14443ASetWakeUpResponse(Buffer, ATQAValue);
         ret = true;
-        State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
-        *RetValue = ISO14443A_APP_NO_RESPONSE;
+        /* If valid WUPA or REQA, go to READY state */
+        if ( (State == STATE_IDLE) || (State == STATE_HALT) ) {
+            /* Not implemented yet. AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; */
+            State = STATE_READY;
+            *RetValue = ISO14443A_ATQA_FRAME_SIZE;
+        /* Else we go back to IDLE or HALT, depending on where
+         * we come from, as per ISO 14443-3 */
+        } else {
+            State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
+            *RetValue = ISO14443A_APP_NO_RESPONSE;
+        }
     }
     return ret;
 }
