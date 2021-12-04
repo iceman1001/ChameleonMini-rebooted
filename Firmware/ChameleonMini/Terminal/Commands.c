@@ -248,12 +248,12 @@ CommandStatusIdType CommandGetMemSize(char* OutParam) {
 
 void _readAndSendWorkingMemChunk(uint32_t Address, uint16_t Size, uint16_t MaxSize, bool isHex) {
     if((MaxSize <= TERMINAL_BUFFER_SIZE) && (Size <= MaxSize)) {
-        uint8_t buff[TERMINAL_BUFFER_SIZE];
+        uint8_t buff[Size];
         AppWorkingMemoryRead(buff, Address, Size);
         if(isHex) {
-            char hexbuff[TERMINAL_BUFFER_SIZE*2+3];
+            char hexbuff[Size*2+3];
             uint16_t zeroIndex = Size*2;
-            BufferToHexString(hexbuff, TERMINAL_BUFFER_SIZE*2+3, buff, Size);
+            BufferToHexString(hexbuff, Size*2+3, buff, Size);
             hexbuff[zeroIndex] = '\r';
             hexbuff[zeroIndex+1] = '\n';
             hexbuff[zeroIndex+2] = '\0';
