@@ -538,6 +538,12 @@ bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t * Buffer, uint16_t BitCou
         /* Set response buffer */
         ISO14443ASetWakeUpResponse(Buffer, ATQAValue);
         ret = true;
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+        if(isLogEnabled) {
+            State = STATE_READY;
+            *RetValue = ISO14443A_ATQA_FRAME_SIZE;
+        }else{
+#endif
         /* If valid WUPA or REQA, go to READY state */
         if ( (State == STATE_IDLE) || (State == STATE_HALT) ) {
             /* Not implemented yet. AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; */
@@ -549,6 +555,9 @@ bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t * Buffer, uint16_t BitCou
             State = isFromHaltChain ? STATE_HALT : STATE_IDLE;
             *RetValue = ISO14443A_APP_NO_RESPONSE;
         }
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+		}
+#endif
     }
     return ret;
 }
