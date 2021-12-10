@@ -8,6 +8,8 @@
  *      -Bruteforce protection (AUTHLIM COUNTER)
  *  Thanks to skuser for the MifareUltralight code used as a starting point
  */
+ 
+#if ((defined CONFIG_NTAG213_SUPPORT) || (defined CONFIG_NTAG215_SUPPORT) || (defined CONFIG_NTAG216_SUPPORT))
 
 #include "NTAG21x.h"
 #include "ISO14443-3A.h"
@@ -504,3 +506,5 @@ uint16_t NTAG21xAppProcess(uint8_t *Buffer, uint16_t BitCount) {
     /* No response has been sent, when we reach here */
     return ISO14443A_APP_NO_RESPONSE;
 }
+
+#endif

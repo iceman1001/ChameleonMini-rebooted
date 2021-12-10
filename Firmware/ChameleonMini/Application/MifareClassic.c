@@ -450,9 +450,9 @@ void MifareClassicAppLogWriteHeader(void) {
 
 void MifareClassicAppLogBufferLine(const uint8_t * Data, uint16_t BitCount, uint8_t Source) {
     uint16_t dataBytesToBuffer = (BitCount / BITS_PER_BYTE);
-    if( !(BitCount % BITS_PER_BYTE) ) dataBytesToBuffer++;
-	uint16_t logStateStrLen = strlen(estate_str[State]);
-	uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
+    if(BitCount % BITS_PER_BYTE) dataBytesToBuffer++;
+	  uint16_t logStateStrLen = strlen(estate_str[State]);
+	  uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
     if( (idx + dataBytesToBuffer*2 + logStateStrLen + 14) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
         LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_START;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
@@ -1017,7 +1017,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 #ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
     /* Log what goes from tag if logging enabled */
     if(isLogEnabled) {
-        MifareClassicAppLogBufferLine(Buffer, retSize, MFCLASSIC_LOG_TAG);
+        MifareClassicAppLogBufferLine(Buffer, (retSize & ISO14443A_APP_CUSTOM_PARITY) ? (retSize & ~ISO14443A_APP_CUSTOM_PARITY) : (retSize), MFCLASSIC_LOG_TAG);
     }
 #endif
     return retSize;
