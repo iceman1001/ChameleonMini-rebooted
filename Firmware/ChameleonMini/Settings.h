@@ -4,7 +4,7 @@
  *  Created on: 21.12.2013
  *      Author: skuser
  */
-
+/** @file */
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
@@ -20,6 +20,9 @@
 #define SETTINGS_TIMEOUT                50 // *100ms
 #endif
 
+#define SETTING_TO_INDEX(S) (S - SETTINGS_FIRST)
+#define INDEX_TO_SETTING(I) (I + SETTINGS_FIRST)
+
 /** Defines one setting.
  *
  * \note Some properties may change globally if this is defined in the Makefile.
@@ -32,7 +35,7 @@ typedef struct {
 } SettingsEntryType;
 
 typedef struct {
-    uint8_t ActiveSetting;
+    uint8_t ActiveSettingIdx;
     SettingsEntryType* ActiveSettingPtr;
     SettingsEntryType Settings[SETTINGS_COUNT];
     bool UidMode;
