@@ -23,7 +23,7 @@ INLINE void LEDAllOff(void) {
 
 INLINE void LEDMode(void) {
     LEDAllOff();
-    LEDSetOn(GlobalSettings.ActiveSetting);
+    LEDSetOn(GlobalSettings.ActiveSettingIdx);
 }
 
 void LEDTick(void) {

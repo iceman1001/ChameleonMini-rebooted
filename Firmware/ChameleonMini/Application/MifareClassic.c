@@ -21,130 +21,127 @@
 #include "System.h"
 #endif
 
-/* TODO: Access control not implemented yet
-// Decoding table for Access conditions of a data block
-static const uint8_t abBlockAccessConditions[8][2] =
-{
-    //C1C2C3
-    // 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B   transport configuration
+// UNUSED
+// /* Decoding table for Access conditions of a data block */
+// static const uint8_t abBlockAccessConditions[8][2] = {
+//     /*C1C2C3 */
+//     /* 0 0 0 R:key A|B W: key A|B I:key A|B D:key A|B     transport configuration */
+//     {
+//         /* Access with Key A */
+//         MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE | MFCLASSIC_ACC_BLOCK_INCREMENT | MFCLASSIC_ACC_BLOCK_DECREMENT,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE | MFCLASSIC_ACC_BLOCK_INCREMENT | MFCLASSIC_ACC_BLOCK_DECREMENT
+//     },
+//     /* 1 0 0 R:key A|B W:key B I:never D:never     read/write block */
+//     {
+//         /* Access with Key A */
+//         MFCLASSIC_ACC_BLOCK_READ,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE
+//     },
+//     /* 0 1 0 R:key A|B W:never I:never D:never     read/write block */
+//     {
+//         /* Access with Key A */
+//         MFCLASSIC_ACC_BLOCK_READ,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ
+//     },
+//     /* 1 1 0 R:key A|B W:key B I:key B D:key A|B     value block */
+//     {
+//         /* Access with Key A */
+//         MFCLASSIC_ACC_BLOCK_READ  |  MFCLASSIC_ACC_BLOCK_DECREMENT,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE | MFCLASSIC_ACC_BLOCK_INCREMENT | MFCLASSIC_ACC_BLOCK_DECREMENT
+//     },
+//     /* 0 0 1 R:key A|B W:never I:never D:key A|B     value block */
+//     {
+//         /* Access with Key A */
+//         MFCLASSIC_ACC_BLOCK_READ  |  MFCLASSIC_ACC_BLOCK_DECREMENT,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ  |  MFCLASSIC_ACC_BLOCK_DECREMENT
+//     },
+//     /* 1 0 1 R:key B W:never I:never D:never     read/write block */
+//     {
+//         /* Access with Key A */
+//         0,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ
+//     },
+//     /* 0 1 1 R:key B W:key B I:never D:never    read/write block */
+//     {
+//         /* Access with Key A */
+//         0,
+//         /* Access with Key B */
+//         MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE
+//     },
+//     /* 1 1 1 R:never W:never I:never D:never    read/write block */
+//     {
+//         /* Access with Key A */
+//         0,
+//         /* Access with Key B */
+//         0
+//     }
+// 
+// };
+/* Decoding table for Access conditions of the sector trailor */
+static const uint8_t abTrailorAccessConditions[8][2] = {
+    /* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A      Key B may be read[1] */
     {
-        // Access with Key A
-        MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE | MFCLASSIC_ACC_BLOCK_INCREMENT | MFCLASSIC_ACC_BLOCK_DECREMENT,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE | MFCLASSIC_ACC_BLOCK_INCREMENT | MFCLASSIC_ACC_BLOCK_DECREMENT
-    },
-    // 1 0 0 R:key A|B W:key B I:never D:never  read/write block
-    {
-        // Access with Key A
-        MFCLASSIC_ACC_BLOCK_READ,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE
-    },
-    // 0 1 0 R:key A|B W:never I:never D:never  read/write block
-    {
-        // Access with Key A
-        MFCLASSIC_ACC_BLOCK_READ,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ
-    },
-    // 1 1 0 R:key A|B W:key B I:key B D:key A|B    value block
-    {
-        // Access with Key A
-        MFCLASSIC_ACC_BLOCK_READ  |  MFCLASSIC_ACC_BLOCK_DECREMENT,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE | MFCLASSIC_ACC_BLOCK_INCREMENT | MFCLASSIC_ACC_BLOCK_DECREMENT
-    },
-    // 0 0 1 R:key A|B W:never I:never D:key A|B    value block
-    {
-        // Access with Key A
-        MFCLASSIC_ACC_BLOCK_READ  |  MFCLASSIC_ACC_BLOCK_DECREMENT,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ  |  MFCLASSIC_ACC_BLOCK_DECREMENT
-    },
-    // 1 0 1 R:key B W:never I:never D:never    read/write block
-    {
-        // Access with Key A
-        0,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ
-    },
-    // 0 1 1 R:key B W:key B I:never D:never    read/write block
-    {
-        // Access with Key A
-        0,
-        // Access with Key B
-        MFCLASSIC_ACC_BLOCK_READ | MFCLASSIC_ACC_BLOCK_WRITE
-    },
-    // 1 1 1 R:never W:never I:never D:never    read/write block
-    {
-        // Access with Key A
-        0,
-        // Access with Key B
-        0
-    }
-
-};
-// Decoding table for Access conditions of the sector trailor
-static const uint8_t abTrailorAccessConditions[8][2] =
-{
-    // 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A    Key B may be read[1]
-    {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_WRITE_KEYA | MFCLASSIC_ACC_TRAILOR_READ_ACC | MFCLASSIC_ACC_TRAILOR_WRITE_ACC | MFCLASSIC_ACC_TRAILOR_READ_KEYB | MFCLASSIC_ACC_TRAILOR_WRITE_KEYB,
-        // Access with Key B
+        /* Access with Key B */
         0
     },
-    // 1  0  0 RdKA:never WrKA:key B  RdAcc:keyA|B WrAcc:never RdKB:never WrKB:key B
+    /* 1  0  0 RdKA:never WrKA:key B  RdAcc:keyA|B WrAcc:never RdKB:never WrKB:key B */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_READ_ACC,
-        // Access with Key B
+        /* Access with Key B */
         MFCLASSIC_ACC_TRAILOR_WRITE_KEYA | MFCLASSIC_ACC_TRAILOR_READ_ACC |  MFCLASSIC_ACC_TRAILOR_WRITE_KEYB
     },
-    // 0  1  0 RdKA:never WrKA:never  RdAcc:key A WrAcc:never  RdKB:key A WrKB:never  Key B may be read[1]
+    /* 0  1  0 RdKA:never WrKA:never  RdAcc:key A WrAcc:never  RdKB:key A WrKB:never  Key B may be read[1] */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_READ_ACC | MFCLASSIC_ACC_TRAILOR_READ_KEYB,
-        // Access with Key B
+        /* Access with Key B */
         0
     },
-    // 1  1  0         never never  keyA|B never never never
+    /* 1  1  0         never never  keyA|B never never never */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_READ_ACC,
-        // Access with Key B
+        /* Access with Key B */
         MFCLASSIC_ACC_TRAILOR_READ_ACC
     },
-    // 0  0  1         never key A  key A  key A key A key A  Key B may be read,transport configuration[1]
+    /* 0  0  1         never key A  key A  key A key A key A  Key B may be read,transport configuration[1] */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_WRITE_KEYA | MFCLASSIC_ACC_TRAILOR_READ_ACC | MFCLASSIC_ACC_TRAILOR_WRITE_ACC | MFCLASSIC_ACC_TRAILOR_READ_KEYB | MFCLASSIC_ACC_TRAILOR_WRITE_KEYB,
-        // Access with Key B
+        /* Access with Key B */
         0
     },
-    // 0  1  1         never key B  keyA|B key B never key B
+    /* 0  1  1         never key B  keyA|B key B never key B */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_READ_ACC,
-        // Access with Key B
+        /* Access with Key B */
         MFCLASSIC_ACC_TRAILOR_WRITE_KEYA | MFCLASSIC_ACC_TRAILOR_READ_ACC | MFCLASSIC_ACC_TRAILOR_WRITE_ACC | MFCLASSIC_ACC_TRAILOR_WRITE_KEYB
     },
-    // 1  0  1         never never  keyA|B key B never never
+    /* 1  0  1         never never  keyA|B key B never never */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_READ_ACC,
-        // Access with Key B
+        /* Access with Key B */
         MFCLASSIC_ACC_TRAILOR_READ_ACC | MFCLASSIC_ACC_TRAILOR_WRITE_ACC
     },
-    // 1  1  1         never never  keyA|B never never never
+    /* 1  1  1         never never  keyA|B never never never */
     {
-        // Access with Key A
+        /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_READ_ACC,
-        // Access with Key B
+        /* Access with Key B */
         MFCLASSIC_ACC_TRAILOR_READ_ACC
     },
 };
-*/
 
 enum estate {
     STATE_HALT,
@@ -160,17 +157,34 @@ enum estate {
     STATE_DECREMENT,
     STATE_RESTORE
 };
+
 /* Init to get sure we have a controlled value wherever we start */
 static enum estate State = STATE_IDLE;
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+char *estate_str[] = {
+    "HALT",
+    "IDLE",
+    "CHINESE_IDLE",
+    "CHINESE_WRITE",
+    "READY",
+    "ACTIVE",
+    "AUTHING",
+    "AUTHED_IDLE",
+    "WRITE",
+    "INCREMENT",
+    "DECREMENT",
+    "RESTORE"
+};
+#endif
 
 static uint8_t CardResponse[MFCLASSIC_MEM_NONCE_SIZE];
 static uint8_t ReaderResponse[MFCLASSIC_MEM_NONCE_SIZE];
 static uint8_t CurrentAddress;
+static uint8_t KeyInUse;
 static uint8_t BlockBuffer[MFCLASSIC_MEM_BYTES_PER_BLOCK];
-/* TODO: Access control not implemented yet
 static uint8_t AccessConditions[MFCLASSIC_MEM_ACC_GPB_SIZE]; // Access Conditions + General purpose Byte
 static uint8_t AccessAddress;
-*/
 static uint16_t CardATQAValue;
 static uint8_t CardSAKValue;
 static bool is7BytesUID = false;
@@ -197,13 +211,14 @@ static bool isLogEnabled = false;
 static uint32_t LogBytesWrote = 0;
 static uint16_t LogBytesBuffered = 0;
 static uint32_t LogMaxBytes = 0;
-static uint8_t LogLineBuffer[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
+static uint8_t LogLineBufferA[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
+static uint8_t LogLineBufferB[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
+static uint8_t * LogLineBuffer = LogLineBufferA;
+static bool LogLineBufferFirst = true;
 #endif
 
-/* TODO: Access control not implemented yet
-* Decode Access conditions for a block
-INLINE uint8_t GetAccessCondition(uint8_t Block)
-{
+/* decode Access conditions for a block */
+INLINE uint8_t GetAccessCondition(uint8_t Block) {
     uint8_t  InvSAcc0;
     uint8_t  InvSAcc1;
     uint8_t  Acc0 = AccessConditions[0];
@@ -214,46 +229,42 @@ INLINE uint8_t GetAccessCondition(uint8_t Block)
     InvSAcc0 = ~MFCLASSIC_BYTE_SWAP(Acc0);
     InvSAcc1 = ~MFCLASSIC_BYTE_SWAP(Acc1);
 
-    // Check
-    if ( ((InvSAcc0 ^ Acc1) & 0xf0) ||   // C1x
-         ((InvSAcc0 ^ Acc2) & 0x0f) ||   // C2x
-         ((InvSAcc1 ^ Acc2) & 0xf0))     // C3x
-    {
-      return(ACC_NO_ACCESS);
+    /* Check */
+    if (((InvSAcc0 ^ Acc1) & 0xf0) ||    /* C1x */
+            ((InvSAcc0 ^ Acc2) & 0x0f) ||   /* C2x */
+            ((InvSAcc1 ^ Acc2) & 0xf0)) {   /* C3x */
+        return (MFCLASSIC_ACC_NO_ACCESS);
     }
-    // Fix for MFClassic 4K cards
-    if(Block<128)
+    /* Fix for MFClassic 4K cards */
+    if (Block < 128)
         Block &= 3;
     else {
         Block &= 15;
-        if (Block& 15)
-            Block=3;
-        else if (Block<=4)
-            Block=0;
-        else if (Block<=9)
-            Block=1;
+        if (Block & 15)
+            Block = 3;
+        else if (Block <= 4)
+            Block = 0;
+        else if (Block <= 9)
+            Block = 1;
         else
-            Block=2;
+            Block = 2;
     }
 
-    Acc0 = ~Acc0;       // C1x Bits to bit 0..3
-    Acc1 =  Acc2;       // C2x Bits to bit 0..3
-    Acc2 =  Acc2 >> 4;  // C3x Bits to bit 0..3
+    Acc0 = ~Acc0;       /* C1x Bits to bit 0..3 */
+    Acc1 =  Acc2;       /* C2x Bits to bit 0..3 */
+    Acc2 =  Acc2 >> 4;  /* C3x Bits to bit 0..3 */
 
-    if(Block)
-    {
+    if (Block) {
         Acc0 >>= Block;
         Acc1 >>= Block;
         Acc2 >>= Block;
     }
-    // Combine the bits
+    /* combine the bits */
     ResultForBlock = ((Acc2 & 1) << 2) |
                      ((Acc1 & 1) << 1) |
                      (Acc0 & 1);
-    return(ResultForBlock);
+    return (ResultForBlock);
 }
-*/
-
 
 INLINE bool CheckValueIntegrity(uint8_t* Block) {
     // Value Blocks contain a value stored three times, with
@@ -432,47 +443,46 @@ void MifareClassicAppLogWriteHeader(void) {
 }
 
 void MifareClassicAppLogBufferLine(const uint8_t * Data, uint16_t BitCount, uint8_t Source) {
-    uint16_t timeNow = SystemGetSysTick();
     uint16_t dataBytesToBuffer = (BitCount / BITS_PER_BYTE);
     if(BitCount % BITS_PER_BYTE) dataBytesToBuffer++;
-    if( (LogBytesBuffered + MFCLASSIC_LOG_LINE_OVERHEAD) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
-        uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_START;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        Uint16ToBytes(timeNow, &LogLineBuffer[idx]);
-        idx += MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = Source;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = State;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        memcpy(&LogLineBuffer[idx], Data, dataBytesToBuffer);
-        idx += dataBytesToBuffer;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_END;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_CR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_LF;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOS;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogBytesBuffered = idx;
+
+    uint16_t logStateStrLen = strlen(estate_str[State]);
+    uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
+
+    if( (idx + dataBytesToBuffer*2 + logStateStrLen + 14) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
+        idx += sprintf((char *)&LogLineBuffer[idx],"[%05u] %c:\t%s\t| ",SystemGetSysTick(),Source,estate_str[State]);
+	BufferToHexString((char *)&LogLineBuffer[idx],dataBytesToBuffer*2+1,Data,dataBytesToBuffer);
+        idx += dataBytesToBuffer*2;
+        idx += sprintf((char *)&LogLineBuffer[idx]," ;");
     }
+    if(MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN - idx > 2){
+        idx += sprintf((char *)&LogLineBuffer[idx],"\r\n");
+    }
+	LogBytesBuffered = idx;
 }
 
 void MifareClassicAppLogWriteLines(void) {
-    if( isLogEnabled && (LogBytesBuffered > 0) ) {
-        if( (LogBytesWrote + LogBytesBuffered) >= LogMaxBytes) {
+    uint16_t LogBytesToWrite = LogBytesBuffered;
+    uint8_t * LogLineBufferToWrite = LogLineBuffer;
+    /* swap buffers */
+    if ( LogLineBufferFirst ) {
+        LogLineBuffer = LogLineBufferA;
+	LogLineBufferFirst = true;
+    } else {
+        LogLineBuffer = LogLineBufferB;
+	LogLineBufferFirst = false;
+    }
+    LogBytesBuffered = 0;
+
+    if( isLogEnabled && (LogBytesToWrite > 0) ) {
+	/* circular log */
+        if( (LogBytesWrote + LogBytesToWrite) >= LogMaxBytes) {
             LogBytesWrote = 0;
         }
-        AppWorkingMemoryWrite(LogLineBuffer, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesBuffered);
-        LogBytesWrote += LogBytesBuffered;
-        LogBytesBuffered = 0;
+        /* write log */
+        AppWorkingMemoryWrite(LogLineBufferToWrite, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesToWrite);
+	/* update header */
+        LogBytesWrote += LogBytesToWrite;
         MifareClassicAppLogWriteHeader();
     }
 }
@@ -540,7 +550,7 @@ bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t * Buffer, uint16_t BitCou
         ret = true;
         /* If valid WUPA or REQA, go to READY state */
         if ( (State == STATE_IDLE) || (State == STATE_HALT) ) {
-            /* Not implemented yet. AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; */
+            AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS;
             State = STATE_READY;
             *RetValue = ISO14443A_ATQA_FRAME_SIZE;
         /* Else we go back to IDLE or HALT, depending on where
@@ -556,11 +566,14 @@ bool mfcHandleWUPCommand(bool isFromHaltState, uint8_t * Buffer, uint16_t BitCou
 /* Handle an authentication request.
 * Sets State, response buffer and response size. */
 void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * RetValue) {
-    uint8_t SectorAddress;
+    uint16_t SectorAddress = MFCLASSIC_MEM_INVALID_ADDRESS;
     uint8_t Key[MFCLASSIC_MEM_KEY_SIZE];
     uint8_t Uid[MFCLASSIC_UID_SIZE];
-    uint8_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
+    uint16_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
+    uint16_t AccessOffset = MFCLASSIC_MEM_KEY_A_OFFSET + MFCLASSIC_MEM_KEY_SIZE;
     uint16_t KeyAddress;
+    //uint8_t Sector = Buffer[1];
+
     /* Save Nonce in detection mode */
     if(isDetectionEnabled && !isNested) {
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
@@ -574,20 +587,32 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     } else {
         /* Fix for MFClassic 4k cards */
         if(Buffer[1] >= 128) {
-            SectorAddress = Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK;
+            SectorAddress = (Buffer[1] & MFCLASSIC_MEM_BIGSECTOR_ADDR_MASK) * MFCLASSIC_MEM_BYTES_PER_BLOCK;
             KeyOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
+            AccessOffset += MFCLASSIC_MEM_KEY_BIGSECTOR_OFFSET;
         } else {
-            SectorAddress = Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK;
+            SectorAddress = (Buffer[1] & MFCLASSIC_MEM_SECTOR_ADDR_MASK) * MFCLASSIC_MEM_BYTES_PER_BLOCK;
         }
-        KeyAddress = (uint16_t) SectorAddress * MFCLASSIC_MEM_BYTES_PER_BLOCK + KeyOffset;
+        KeyAddress = (uint16_t) SectorAddress + KeyOffset;
     }
-    AppCardMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
-    /* Load UID */
+
+    /* set KeyInUse for global use to keep info about authentication */
+    KeyInUse = Buffer[0] & 1;
+    CurrentAddress = SectorAddress / MFCLASSIC_MEM_BYTES_PER_BLOCK;
+    //if (!AccessConditions[MEM_ACC_GPB_SIZE-1] ||(CurrentAddress != AccessAddress)) {
+    /* Get access conditions from the sector trailor */
+    AppCardMemoryRead(AccessConditions, SectorAddress + AccessOffset, MFCLASSIC_MEM_ACC_GPB_SIZE);
+    AccessAddress = CurrentAddress;
+    //}
+
+    /* Read UID and key from memory */
     if (is7BytesUID) {
         AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL2_ADDRESS, MFCLASSIC_MEM_UID_CL2_SIZE);
     } else {
         AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
     }
+    AppCardMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+
     /* Proceed with nested or regular authent */
     if(isNested) {
         uint8_t CardNonce[MFCLASSIC_MEM_NONCE_SIZE] = {0x01};
@@ -746,8 +771,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 }
                 AppCardMemoryRead(UidCLReadBuffer, UidMemAddr, UidReadSize);
                 if (ISO14443ASelect(Buffer, &BitCount, UidCL, SAK)) {
-                    /* TODO: Access control not implemented yet
-                     * AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS; // invalid, force reload */
+                    AccessAddress = MFCLASSIC_MEM_INVALID_ADDRESS;
                     State = NextState;
                     isCascadeStepOnePassed = true;
                 }
@@ -843,8 +867,12 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     State = STATE_AUTHED_IDLE;
                     retSize = (MFCLASSIC_CMD_AUTH_BA_FRAME_SIZE * BITS_PER_BYTE) | ISO14443A_APP_CUSTOM_PARITY;
                 } else {
-                    /* Unknown command. Goes back to ACTIVE */
-                    State = STATE_ACTIVE;
+		    /* Just reset on authentication error. */
+                    State = STATE_IDLE;
+		    /* In detection mode, communication can continue. */
+                    if(isDetectionEnabled)
+                        State = STATE_ACTIVE;
+
                 }
             }
             break; /* End of state AUTHING */
@@ -865,7 +893,39 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                 } else {
                     if (Buffer[0] == MFCLASSIC_CMD_READ) {
                         /* Read command. Read data from memory and append CRCA. */
-                        AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                        /* Sector trailor? Use access conditions! */
+
+			if ((Buffer[1] < 128 && (Buffer[1] & 3) == 3) || ((Buffer[1] & 15) == 15)) {
+			    uint8_t Acc;
+			    CurrentAddress = Buffer[1];
+			    /* Decode the access conditions */
+                            Acc = abTrailorAccessConditions[ GetAccessCondition(CurrentAddress) ][ KeyInUse ];
+
+                            /* Prepare empty Block */
+                            for (uint8_t i = 0; i < MFCLASSIC_MEM_BYTES_PER_BLOCK; i++)
+                                Buffer[i] = 0;
+
+                            /* Allways copy the GPB */
+                            /* Key A can never be read! */
+                            /* Access conditions were already read during authentication! */
+                            Buffer[MFCLASSIC_MEM_KEY_SIZE + MFCLASSIC_MEM_ACC_GPB_SIZE - 1] = AccessConditions[MFCLASSIC_MEM_ACC_GPB_SIZE - 1];
+
+			    /* Access conditions are already known */
+                            if (Acc & MFCLASSIC_ACC_TRAILOR_READ_ACC) {
+                                Buffer[MFCLASSIC_MEM_KEY_SIZE]     = AccessConditions[0];
+                                Buffer[MFCLASSIC_MEM_KEY_SIZE + 1] = AccessConditions[1];
+                                Buffer[MFCLASSIC_MEM_KEY_SIZE + 2] = AccessConditions[2];
+                            }
+
+                            /* Key B is readable in some rare cases */
+                            if (Acc & MFCLASSIC_ACC_TRAILOR_READ_KEYB) {
+                                AppCardMemoryRead(Buffer + MFCLASSIC_MEM_BYTES_PER_BLOCK - MFCLASSIC_MEM_KEY_SIZE,
+                                            (uint16_t)(CurrentAddress | 3) * MFCLASSIC_MEM_BYTES_PER_BLOCK + MFCLASSIC_MEM_BYTES_PER_BLOCK - MFCLASSIC_MEM_KEY_SIZE,
+                                            MFCLASSIC_MEM_KEY_SIZE);
+                            }
+                        } else {
+			    AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+                        }
                         ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         /* Encrypt and calculate parity bits. */
                         mfcEncryptBuffer(Buffer, Buffer, (ISO14443A_CRCA_SIZE + MFCLASSIC_MEM_BYTES_PER_BLOCK));
