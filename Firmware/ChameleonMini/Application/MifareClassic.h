@@ -131,33 +131,34 @@ C1 C2 C3        read  write  read  write  read  write
 
 [1] For this access condition key B is readable and may be used for data
 */
-#define MFCLASSIC_ACC_TRAILOR_READ_KEYA         0x01
-#define MFCLASSIC_ACC_TRAILOR_WRITE_KEYA        0x02
-#define MFCLASSIC_ACC_TRAILOR_READ_ACC          0x04
-#define MFCLASSIC_ACC_TRAILOR_WRITE_ACC         0x08
-#define MFCLASSIC_ACC_TRAILOR_READ_KEYB         0x10
-#define MFCLASSIC_ACC_TRAILOR_WRITE_KEYB        0x20
+#define MFCLASSIC_ACC_TRAILOR_READ_KEYA   0x01
+#define MFCLASSIC_ACC_TRAILOR_WRITE_KEYA  0x02
+#define MFCLASSIC_ACC_TRAILOR_READ_ACC    0x04
+#define MFCLASSIC_ACC_TRAILOR_WRITE_ACC   0x08
+#define MFCLASSIC_ACC_TRAILOR_READ_KEYB   0x10
+#define MFCLASSIC_ACC_TRAILOR_WRITE_KEYB  0x20
 
 /*
 Access conditions for data blocks
-Access bits Access condition for                Application
-C1 C2 C3    read    write   increment   decrement,
+Access bits Access condition for                 Application
+C1 C2 C3     read     write     increment     decrement,
                                                 transfer,
                                                 restore
-0 0 0       key A|B key A|B key A|B     key A|B     transport configuration
-0 1 0       key A|B never   never       never       read/write block
-1 0 0       key A|B key B   never       never       read/write block
-1 1 0       key A|B key B   key B       key A|B     value block
-0 0 1       key A|B never   never       key A|B     value block
-0 1 1       key B   key B   never       never       read/write block
-1 0 1       key B   never   never       never       read/write block
-1 1 1       never   never   never       never       read/write block
+
+0 0 0         key A|B key A|B key A|B     key A|B     transport configuration
+0 1 0         key A|B never     never         never         read/write block
+1 0 0         key A|B key B     never         never         read/write block
+1 1 0         key A|B key B     key B         key A|B     value block
+0 0 1         key A|B never     never         key A|B     value block
+0 1 1         key B     key B     never         never         read/write block
+1 0 1         key B     never     never         never         read/write block
+1 1 1         never     never     never         never         read/write block
 
 */
-#define MFCLASSIC_ACC_BLOCK_READ                0x01
-#define MFCLASSIC_ACC_BLOCK_WRITE               0x02
-#define MFCLASSIC_ACC_BLOCK_INCREMENT           0x04
-#define MFCLASSIC_ACC_BLOCK_DECREMENT           0x08
+#define MFCLASSIC_ACC_BLOCK_READ      0x01
+#define MFCLASSIC_ACC_BLOCK_WRITE     0x02
+#define MFCLASSIC_ACC_BLOCK_INCREMENT 0x04
+#define MFCLASSIC_ACC_BLOCK_DECREMENT 0x08
 
 #define MFCLASSIC_KEY_A 0
 #define MFCLASSIC_KEY_B 1
@@ -215,7 +216,7 @@ C1 C2 C3    read    write   increment   decrement,
 #define MFCLASSIC_LOG_MEM_WROTEBYTES_LEN        sizeof(uint32_t)
 #define MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR       0
 #define MFCLASSIC_LOG_MEM_LOG_HEADER_LEN        16
-#define MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN       128
+#define MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN       256
 #define MFCLASSIC_LOG_MEM_LINE_START_ADDR       0
 #define MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN    sizeof(uint16_t)
 #define MFCLASSIC_LOG_LINE_OVERHEAD             (MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN+MFCLASSIC_LOG_MEM_CHAR_LEN*10)

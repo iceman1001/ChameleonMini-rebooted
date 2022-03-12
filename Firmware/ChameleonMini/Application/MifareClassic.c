@@ -86,7 +86,7 @@
 /* Decoding table for Access conditions of the sector trailor */
 static const uint8_t abTrailorAccessConditions[8][2] = {
     /* 0  0  0 RdKA:never WrKA:key A  RdAcc:key A WrAcc:never  RdKB:key A WrKB:key A      Key B may be read[1] */
-{
+    {
         /* Access with Key A */
         MFCLASSIC_ACC_TRAILOR_WRITE_KEYA | MFCLASSIC_ACC_TRAILOR_READ_ACC | MFCLASSIC_ACC_TRAILOR_WRITE_ACC | MFCLASSIC_ACC_TRAILOR_READ_KEYB | MFCLASSIC_ACC_TRAILOR_WRITE_KEYB,
         /* Access with Key B */
@@ -211,7 +211,10 @@ static bool isLogEnabled = false;
 static uint32_t LogBytesWrote = 0;
 static uint16_t LogBytesBuffered = 0;
 static uint32_t LogMaxBytes = 0;
-static uint8_t LogLineBuffer[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
+static uint8_t LogLineBufferA[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
+static uint8_t LogLineBufferB[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
+static uint8_t * LogLineBuffer = LogLineBufferA;
+static bool LogLineBufferFirst = true;
 #endif
 
 /* decode Access conditions for a block */
@@ -233,18 +236,18 @@ INLINE uint8_t GetAccessCondition(uint8_t Block) {
         return (MFCLASSIC_ACC_NO_ACCESS);
     }
     /* Fix for MFClassic 4K cards */
-    if(Block<128)
+    if (Block < 128)
         Block &= 3;
     else {
         Block &= 15;
-        if (Block& 15)
-            Block=3;
-        else if (Block<=4)
-            Block=0;
-        else if (Block<=9)
-            Block=1;
+        if (Block & 15)
+            Block = 3;
+        else if (Block <= 4)
+            Block = 0;
+        else if (Block <= 9)
+            Block = 1;
         else
-            Block=2;
+            Block = 2;
     }
 
     Acc0 = ~Acc0;       /* C1x Bits to bit 0..3 */
@@ -260,7 +263,7 @@ INLINE uint8_t GetAccessCondition(uint8_t Block) {
     ResultForBlock = ((Acc2 & 1) << 2) |
                      ((Acc1 & 1) << 1) |
                      (Acc0 & 1);
-    return(ResultForBlock);
+    return (ResultForBlock);
 }
 
 INLINE bool CheckValueIntegrity(uint8_t* Block) {
@@ -444,66 +447,42 @@ void MifareClassicAppLogBufferLine(const uint8_t * Data, uint16_t BitCount, uint
     if(BitCount % BITS_PER_BYTE) dataBytesToBuffer++;
 
     uint16_t logStateStrLen = strlen(estate_str[State]);
-        uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
+    uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
 
     if( (idx + dataBytesToBuffer*2 + logStateStrLen + 14) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
-        LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_START;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-
-        sprintf((char *)&LogLineBuffer[idx],"%05u",SystemGetSysTick());
-        idx += 5;
-
-        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-        LogLineBuffer[idx] = Source;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-	memcpy(&LogLineBuffer[idx], estate_str[State], logStateStrLen);
-        idx += logStateStrLen;
-        
-	LogLineBuffer[idx] = MFCLASSIC_LOG_TAB;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-        LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
+        idx += sprintf((char *)&LogLineBuffer[idx],"[%05u] %c:\t%s\t| ",SystemGetSysTick(),Source,estate_str[State]);
 	BufferToHexString((char *)&LogLineBuffer[idx],dataBytesToBuffer*2+1,Data,dataBytesToBuffer);
         idx += dataBytesToBuffer*2;
-        
-        LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_END;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_CR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_LF;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        
-	LogBytesBuffered = idx;
-    }else if(MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN - idx > 2){
-	/*drop log and leave a blank line when buff is full*/
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_CR;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-	
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_LF;
-        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-
-        LogBytesBuffered = idx;
+        idx += sprintf((char *)&LogLineBuffer[idx]," ;");
     }
+    if(MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN - idx > 2){
+        idx += sprintf((char *)&LogLineBuffer[idx],"\r\n");
+    }
+	LogBytesBuffered = idx;
 }
 
 void MifareClassicAppLogWriteLines(void) {
-    if( isLogEnabled && (LogBytesBuffered > 0) ) {
-        if( (LogBytesWrote + LogBytesBuffered) >= LogMaxBytes) {
+    uint16_t LogBytesToWrite = LogBytesBuffered;
+    uint8_t * LogLineBufferToWrite = LogLineBuffer;
+    /* swap buffers */
+    if ( LogLineBufferFirst ) {
+        LogLineBuffer = LogLineBufferA;
+	LogLineBufferFirst = true;
+    } else {
+        LogLineBuffer = LogLineBufferB;
+	LogLineBufferFirst = false;
+    }
+    LogBytesBuffered = 0;
+
+    if( isLogEnabled && (LogBytesToWrite > 0) ) {
+	/* circular log */
+        if( (LogBytesWrote + LogBytesToWrite) >= LogMaxBytes) {
             LogBytesWrote = 0;
         }
-        AppWorkingMemoryWrite(LogLineBuffer, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesBuffered);
-        LogBytesWrote += LogBytesBuffered;
-        LogBytesBuffered = 0;
+        /* write log */
+        AppWorkingMemoryWrite(LogLineBufferToWrite, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesToWrite);
+	/* update header */
+        LogBytesWrote += LogBytesToWrite;
         MifareClassicAppLogWriteHeader();
     }
 }
@@ -892,7 +871,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                     State = STATE_IDLE;
 		    /* In detection mode, communication can continue. */
                     if(isDetectionEnabled)
-                    State = STATE_ACTIVE;
+                        State = STATE_ACTIVE;
 
                 }
             }
@@ -945,7 +924,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
                                             MFCLASSIC_MEM_KEY_SIZE);
                             }
                         } else {
-                        AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
+			    AppCardMemoryRead(Buffer, (uint16_t) Buffer[1] * MFCLASSIC_MEM_BYTES_PER_BLOCK, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         }
                         ISO14443AAppendCRCA(Buffer, MFCLASSIC_MEM_BYTES_PER_BLOCK);
                         /* Encrypt and calculate parity bits. */
