@@ -63,9 +63,9 @@
 
 // Firmware version details.
 #define FIRMWARE_VERSION_MAJOR          1
-#define FIRMWARE_VERSION_MINOR          3
+#define FIRMWARE_VERSION_MINOR          4
 #define FIRMWARE_NAME                   "rebooted"
-#define FIRMWARE_FORK_AUTHOR            "Iceman"
+#define FIRMWARE_FORK_AUTHOR            "Nitro"
 #ifdef  COMMIT_ID
 #define FIRMWARE_COMMIT_STRING          COMMIT_ID
 #else
