@@ -199,6 +199,7 @@ C1 C2 C3    read    write   increment   decrement,
 #ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
 #define MFCLASSIC_LOG_LINE_START                0x3E
 #define MFCLASSIC_LOG_LINE_END                  0x3B
+#define MFCLASSIC_LOG_TAB                       0x09
 #define MFCLASSIC_LOG_EOL_CR                    0x0D
 #define MFCLASSIC_LOG_EOL_LF                    0x0A
 #define MFCLASSIC_LOG_EOS                       0x00

@@ -157,8 +157,26 @@ enum estate {
     STATE_DECREMENT,
     STATE_RESTORE
 };
+
 /* Init to get sure we have a controlled value wherever we start */
 static enum estate State = STATE_IDLE;
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+char *estate_str[] = {
+    "HALT",
+    "IDLE",
+    "CHINESE_IDLE",
+    "CHINESE_WRITE",
+    "READY",
+    "ACTIVE",
+    "AUTHING",
+    "AUTHED_IDLE",
+    "WRITE",
+    "INCREMENT",
+    "DECREMENT",
+    "RESTORE"
+};
+#endif
 
 static uint8_t CardResponse[MFCLASSIC_MEM_NONCE_SIZE];
 static uint8_t ReaderResponse[MFCLASSIC_MEM_NONCE_SIZE];
@@ -422,35 +440,58 @@ void MifareClassicAppLogWriteHeader(void) {
 }
 
 void MifareClassicAppLogBufferLine(const uint8_t * Data, uint16_t BitCount, uint8_t Source) {
-    uint16_t timeNow = SystemGetSysTick();
     uint16_t dataBytesToBuffer = (BitCount / BITS_PER_BYTE);
     if(BitCount % BITS_PER_BYTE) dataBytesToBuffer++;
-    if( (LogBytesBuffered + MFCLASSIC_LOG_LINE_OVERHEAD) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
+
+    uint16_t logStateStrLen = strlen(estate_str[State]);
         uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
+
+    if( (idx + dataBytesToBuffer*2 + logStateStrLen + 14) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
         LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_START;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        Uint16ToBytes(timeNow, &LogLineBuffer[idx]);
-        idx += MFCLASSIC_LOG_MEM_LINE_TIMESTAMP_LEN;
+
+        sprintf((char *)&LogLineBuffer[idx],"%05u",SystemGetSysTick());
+        idx += 5;
+
         LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        
         LogLineBuffer[idx] = Source;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        
         LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = State;
+        
+	memcpy(&LogLineBuffer[idx], estate_str[State], logStateStrLen);
+        idx += logStateStrLen;
+        
+	LogLineBuffer[idx] = MFCLASSIC_LOG_TAB;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        
         LogLineBuffer[idx] = MFCLASSIC_LOG_SEPARATOR;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        memcpy(&LogLineBuffer[idx], Data, dataBytesToBuffer);
-        idx += dataBytesToBuffer;
+        
+	BufferToHexString((char *)&LogLineBuffer[idx],dataBytesToBuffer*2+1,Data,dataBytesToBuffer);
+        idx += dataBytesToBuffer*2;
+        
         LogLineBuffer[idx] = MFCLASSIC_LOG_LINE_END;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        
         LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_CR;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        
         LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_LF;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
-        LogLineBuffer[idx] = MFCLASSIC_LOG_EOS;
+        
+	LogBytesBuffered = idx;
+    }else if(MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN - idx > 2){
+	/*drop log and leave a blank line when buff is full*/
+        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_CR;
         idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+	
+        LogLineBuffer[idx] = MFCLASSIC_LOG_EOL_LF;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+
         LogBytesBuffered = idx;
     }
 }
