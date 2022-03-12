@@ -466,11 +466,11 @@ void MifareClassicAppLogWriteLines(void) {
     uint8_t * LogLineBufferToWrite = LogLineBuffer;
     /* swap buffers */
     if ( LogLineBufferFirst ) {
-        LogLineBuffer = LogLineBufferA;
-	LogLineBufferFirst = true;
-    } else {
         LogLineBuffer = LogLineBufferB;
 	LogLineBufferFirst = false;
+    } else {
+        LogLineBuffer = LogLineBufferA;
+	LogLineBufferFirst = true;
     }
     LogBytesBuffered = 0;
 
