@@ -119,6 +119,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = CommandGetMemSize
   },
+#ifdef CONFIG_ENABLE_WORKMEM_COMMANDS
   {
     .Command    = COMMAND_WORKMEM,
     .ExecFunc   = CommandExecWorkingMem,
@@ -140,6 +141,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = NO_FUNCTION
   },
+#endif
   {
     .Command    = COMMAND_UIDSIZE,
     .ExecFunc   = NO_FUNCTION,
@@ -161,14 +163,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = CommandSetButtonLong,
     .GetFunc    = CommandGetButtonLong
   },
-  /*
-  {
-    .Command    = COMMAND_LOGMODE,
-    .ExecFunc   = NO_FUNCTION,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = CommandSetLogMode,
-    .GetFunc    = CommandGetLogMode
-  },
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
   {
     .Command    = COMMAND_LOGMEM,
     .ExecFunc   = NO_FUNCTION,
@@ -178,14 +173,7 @@ const PROGMEM CommandEntryType CommandTable[] = {
   },
   {
     .Command    = COMMAND_LOGDOWNLOAD,
-    .ExecFunc   = CommandExecLogDownload,
-    .ExecParamFunc = NO_FUNCTION,
-    .SetFunc    = NO_FUNCTION,
-    .GetFunc    = NO_FUNCTION
-  },
-  {
-    .Command    = COMMAND_STORELOG,
-    .ExecFunc   = CommandExecStoreLog,
+    .ExecFunc   = CommandExecWorkingMemDownload,
     .ExecParamFunc = NO_FUNCTION,
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = NO_FUNCTION
@@ -193,6 +181,31 @@ const PROGMEM CommandEntryType CommandTable[] = {
   {
     .Command    = COMMAND_LOGCLEAR,
     .ExecFunc   = CommandExecLogClear,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
+  },
+#ifdef CONFIG_MF_CLASSIC_LOGPRINT_COMMAND
+  {
+    .Command    = COMMAND_LOGPRINT,
+    .ExecFunc   = NO_FUNCTION,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = CommandGetLog
+  },
+#endif
+#endif
+  /*
+  {
+    .Command    = COMMAND_LOGMODE,
+    .ExecFunc   = NO_FUNCTION,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = CommandSetLogMode,
+    .GetFunc    = CommandGetLogMode
+  },
+  {
+    .Command    = COMMAND_STORELOG,
+    .ExecFunc   = CommandExecStoreLog,
     .ExecParamFunc = NO_FUNCTION,
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = NO_FUNCTION

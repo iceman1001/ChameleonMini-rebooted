@@ -1,0 +1,49 @@
+#define MFCLASSIC_LOG_READER                    0x52
+#define MFCLASSIC_LOG_TAG                       0x54
+#define MFCLASSIC_LOG_MEM_CHAR_LEN              1
+#define MFCLASSIC_LOG_MEM_STATUS_CANARY_ADDR    MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR
+#define MFCLASSIC_LOG_MEM_STATUS_CANARY         0x71
+#define MFCLASSIC_LOG_MEM_STATUS_RESET          0x70
+#define MFCLASSIC_LOG_MEM_STATUS_LEN            1
+#define MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR       12
+#define MFCLASSIC_LOG_MEM_WROTEBYTES_LEN        4 /* sizeof(uint32_t) */
+#define MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR       0
+#define MFCLASSIC_LOG_MEM_LOG_HEADER_LEN        16
+#define MFCLASSIC_LOG_MEM_BUFFER_LEN            1400
+#define MFCLASSIC_LOG_MEM_RECORD_START_ADDR     0
+#define MFCLASSIC_LOG_MEM_RECORD_TIMESTAMP_LEN  2 /* sizeof(uint16_t) */
+#define MFCLASSIC_LOG_RECORD_HEADER_LEN         5 /* (MFCLASSIC_LOG_MEM_RECORD_TIMESTAMP_LEN+MFCLASSIC_LOG_MEM_CHAR_LEN*3) */
+#define MFCLASSIC_LOG_BUFFER_OVERFLOW           0x0F
+#define MFCLASSIC_LOG_MIN_RECORD_LENGHT		5
+#define MFCLASSIC_LOG_MAX_RECORD_LENGHT		23
+#define MFCLASSIC_LOG_MAX_TICK_UNWRITTEN	5
+
+#define MFCLASSIC_LOG_TRIM_NONE			0
+#define MFCLASSIC_LOG_TRIM_TAG_LONG_DATA	1
+#define MFCLASSIC_LOG_TRIM_ALL_TAG_DATA		2
+#define MFCLASSIC_LOG_TRIM_ALL_TAG_RECORDS	3
+#define MFCLASSIC_LOG_MAX_TRIM_LEVEL		3
+#define MFCLASSIC_LOG_ADAPTIVE_TICK_INT		5
+#define MFCLASSIC_LOG_ADAPTIVE_TICK_RST		20
+
+static char *estate_str[] = {
+    "HALT       ",
+    "IDLE       ",
+    "CHINA IDLE ",
+    "CHINA WRITE",
+    "READY      ",
+    "ACTIVE     ",
+    "AUTHING    ",
+    "AUTH IDLE  ",
+    "WRITE      ",
+    "INCREMENT  ",
+    "DECREMENT  ",
+    "RESTORE    "
+};
+
+typedef struct{
+	uint8_t isLogEnabled;
+	uint8_t padding[11];
+	uint32_t LogBytesWrote;
+} logheader_t;
+

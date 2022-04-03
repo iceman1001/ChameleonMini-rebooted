@@ -150,6 +150,7 @@ CommandStatusIdType CommandExecUpgrade(char* OutMessage);
 #define COMMAND_MEMSIZE             "MEMSIZE"
 CommandStatusIdType CommandGetMemSize(char* OutParam);
 
+#ifdef CONFIG_ENABLE_WORKMEM_COMMANDS
 #define COMMAND_WORKMEM             "WORKMEM"
 CommandStatusIdType CommandGetWorkingMem(char* OutParam);
 CommandStatusIdType CommandExecWorkingMem(char* OutMessage);
@@ -159,6 +160,7 @@ CommandStatusIdType CommandExecWorkingMemUpload(char* OutMessage);
 
 #define COMMAND_WORKMEMDOWNLOAD     "WORKMEMDOWNLOAD"
 CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage);
+#endif
 
 #define COMMAND_UIDSIZE             "UIDSIZE"
 CommandStatusIdType CommandGetUidSize(char* OutParam);
@@ -172,6 +174,24 @@ CommandStatusIdType CommandSetButton(char* OutMessage, const char* InParam);
 CommandStatusIdType CommandExecButtonLong(char* OutMessage);
 CommandStatusIdType CommandGetButtonLong(char* OutParam);
 CommandStatusIdType CommandSetButtonLong(char* OutMessage, const char* InParam);
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+#define COMMAND_LOGDOWNLOAD         "LOGDOWNLOAD"
+#ifndef CONFIG_ENABLE_WORKMEM_COMMANDS
+CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage);
+#endif
+
+#define COMMAND_LOGMEM              "LOGMEM"
+CommandStatusIdType CommandGetLogMem(char *OutParam);
+
+#define COMMAND_LOGCLEAR            "LOGCLEAR"
+CommandStatusIdType CommandExecLogClear(char *OutMessage);
+
+#ifdef CONFIG_MF_CLASSIC_LOGPRINT_COMMAND
+#define COMMAND_LOGPRINT            "LOGPRINT"
+CommandStatusIdType CommandGetLog(char* OutParam);
+#endif
+#endif
 
 #define COMMAND_SETTING             "SETTING"
 CommandStatusIdType CommandGetSetting(char* OutParam);
