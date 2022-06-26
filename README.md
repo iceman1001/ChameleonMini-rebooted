@@ -37,7 +37,7 @@ Has support for ChameleonMini revE / revG commands, dump management, color templ
 ## Questions
 If you have any questions, please start with reading our [Wiki](https://github.com/iceman1001/ChameleonMini-rebooted/wiki).
 
-The RFID hacking community discord server is a great place to discuss Chameleon Mini releated stuff among others [discord server](https://discord.gg/zjxc8ZB)
+The RFID hacking community discord server is a great place to discuss Chameleon Mini releated stuff among others [discord server](https://discord.gg/QfPvGFRQxH)
 
 ## Repository Structure
 The code repository contains:
