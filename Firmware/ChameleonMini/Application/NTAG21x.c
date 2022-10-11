@@ -328,15 +328,24 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
 
             /* Read and compare the password */
             AppCardMemoryRead(Password, ConfigStartAddr + CONF_PASSWORD_OFFSET, 4);
+
+         /* ack like a magic backdoor if uidMode is true, ignore the pwd */
+         if(!AppMemoryUidMode()) {
             if (Password[0] != Buffer[1] || Password[1] != Buffer[2] || Password[2] != Buffer[3] || Password[3] != Buffer[4]) {
                 Buffer[0] = NAK_NOT_AUTHED;
                 return NAK_FRAME_SIZE;
             }
+         }
             /* Authenticate the user */
             //RESET AUTHLIM COUNTER, CURRENTLY NOT IMPLEMENTED
             Authenticated = 1;
             /* Send the PACK value back */
             AppCardMemoryRead(Buffer, ConfigStartAddr + CONF_PACK_OFFSET, 2);
+         /*  resp pck should hardcoded as 0x8080 */
+         if(AppMemoryUidMode()) {
+          Buffer[0] = 0x80;
+          Buffer[1] = 0x80;
+         }
             ISO14443AAppendCRCA(Buffer, 2);
             return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
