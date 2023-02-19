@@ -341,11 +341,7 @@ static uint16_t AppProcess(uint8_t *const Buffer, uint16_t ByteCount) {
             Authenticated = 1;
             /* Send the PACK value back */
             AppCardMemoryRead(Buffer, ConfigStartAddr + CONF_PACK_OFFSET, 2);
-         /*  resp pck should hardcoded as 0x8080 */
-         if(AppMemoryUidMode()) {
-          Buffer[0] = 0x80;
-          Buffer[1] = 0x80;
-         }
+
             ISO14443AAppendCRCA(Buffer, 2);
             return (2 + ISO14443A_CRCA_SIZE) * 8;
         }
