@@ -71,6 +71,24 @@
 #include "../System.h"
 #include "../Button.h"
 #include "../AntennaLevel.h"
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+#include "../Application/MifareClassic.h"
+
+char *estate_str[] = {
+    "HALT       ",
+    "IDLE       ",
+    "CHINA IDLE ",
+    "CHINA WRITE",
+    "READY      ",
+    "ACTIVE     ",
+    "AUTHING    ",
+    "AUTH IDLE  ",
+    "WRITE      ",
+    "INCREMENT  ",
+    "DECREMENT  ",
+    "RESTORE    "
+};
+#endif
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
@@ -246,6 +264,7 @@ CommandStatusIdType CommandGetMemSize(char* OutParam) {
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 
+#ifdef CONFIG_ENABLE_WORKMEM_COMMANDS
 void _readAndSendWorkingMemChunk(uint32_t Address, uint16_t Size, uint16_t MaxSize, bool isHex) {
     if((MaxSize <= TERMINAL_BUFFER_SIZE) && (Size <= MaxSize)) {
         uint8_t buff[Size];
@@ -293,11 +312,14 @@ CommandStatusIdType CommandExecWorkingMemUpload(char* OutMessage) {
     XModemReceive(AppWorkingMemoryUploadXModem);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
+#endif
 
+#if defined CONFIG_ENABLE_WORKMEM_COMMANDS || defined CONFIG_MF_CLASSIC_LOG_SUPPORT
 CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage) {
     XModemSend(AppWorkingMemoryDownloadXModem);
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
+#endif
 
 CommandStatusIdType CommandGetUidSize(char* OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.UidSize);
@@ -435,15 +457,15 @@ CommandStatusIdType CommandGetUidMode(char* OutParam) {
 }
 CommandStatusIdType CommandSetUidMode(char* OutMessage, const char* InParam) {
     if (InParam[1] == '\0') {
-    if (InParam[0] == COMMAND_CHAR_TRUE) {
-      SettingsSetUidMode(true);
-      return COMMAND_INFO_OK_ID;
-    } else if (InParam[0] == COMMAND_CHAR_FALSE) {
-      SettingsSetUidMode(false);
-      return COMMAND_INFO_OK_ID;
+        if (InParam[0] == COMMAND_CHAR_TRUE) {
+            SettingsSetUidMode(true);
+            return COMMAND_INFO_OK_ID;
+        } else if (InParam[0] == COMMAND_CHAR_FALSE) {
+            SettingsSetUidMode(false);
+            return COMMAND_INFO_OK_ID;
+        }
     }
-  }
-  return COMMAND_ERR_INVALID_PARAM_ID;
+    return COMMAND_ERR_INVALID_PARAM_ID;
 }
 #endif
 
@@ -550,4 +572,60 @@ CommandStatusIdType CommandExecMemoryTest(char* OutMessage) {
 
     return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
+#endif
+
+#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
+CommandStatusIdType CommandGetLogMem(char *OutParam) {
+    uint8_t binBuffer[MFCLASSIC_LOG_MEM_LOG_HEADER_LEN];
+    uint32_t totalWorkMem = AppWorkingMemorySize();
+    AppWorkingMemoryRead(&binBuffer, MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN);
+    snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%lu (free out of %lu)"),
+                 totalWorkMem - MFCLASSIC_LOG_MEM_LOG_HEADER_LEN - BytesToUint32(&binBuffer[MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR]), totalWorkMem);
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+
+CommandStatusIdType CommandExecLogClear(char *OutMessage) {
+    AppWorkingMemoryClear();
+    MifareClassicAppLogCheck();
+    MifareClassicAppLogWriteHeader();
+    return COMMAND_INFO_OK_ID;
+}
+
+#ifdef CONFIG_MF_CLASSIC_LOGPRINT_COMMAND
+CommandStatusIdType CommandGetLog(char* OutParam) {
+    uint8_t binBuffer[24];
+    char strBuffer[128];
+    uint32_t logFlashLen;
+    /* The first record starts exactly at the end of header */
+    uint32_t logFlashRecordAdrr = MFCLASSIC_LOG_MEM_LOG_HEADER_LEN;
+    uint8_t logBuffLenAddr = MFCLASSIC_LOG_MEM_LOG_HEADER_LEN;
+    uint8_t logRecordLen;
+    uint8_t logRecordIdx;
+
+    /* Read Log Header */
+    AppWorkingMemoryRead(&binBuffer, MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN + MFCLASSIC_LOG_MEM_CHAR_LEN);
+    logFlashLen = BytesToUint32(&binBuffer[MFCLASSIC_LOG_MEM_WROTEBYTES_ADDR]) + MFCLASSIC_LOG_MEM_LOG_HEADER_LEN;
+
+    while ( logFlashRecordAdrr < logFlashLen ){
+        /* Buffer contains previous read */
+        logRecordLen = binBuffer[logBuffLenAddr];
+
+	if (logRecordLen > MFCLASSIC_LOG_MAX_RECORD_LENGHT) return COMMAND_INFO_OK_WITH_TEXT_ID;
+
+        /* Read current record in the buffer from flash*/
+        AppWorkingMemoryRead(&binBuffer, logFlashRecordAdrr, logRecordLen + MFCLASSIC_LOG_MEM_CHAR_LEN);
+
+        logRecordIdx = sprintf(strBuffer, "%05lu/%05lu: [%05u] %c | %s | ", logFlashRecordAdrr, logFlashLen, BytesToUint16(&binBuffer[1]), binBuffer[3], estate_str[binBuffer[4]]);
+	logRecordIdx += BufferToHexString(&strBuffer[logRecordIdx], (logRecordLen - MFCLASSIC_LOG_RECORD_HEADER_LEN)*2+1, 
+			                  &binBuffer[MFCLASSIC_LOG_RECORD_HEADER_LEN], logRecordLen - MFCLASSIC_LOG_RECORD_HEADER_LEN);
+	sprintf(&strBuffer[logRecordIdx],"\r\n");
+
+        TerminalSendString(strBuffer);
+
+        logBuffLenAddr = logRecordLen;
+        logFlashRecordAdrr += logRecordLen;
+    }
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
+}
+#endif
 #endif

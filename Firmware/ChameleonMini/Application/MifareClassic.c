@@ -161,23 +161,6 @@ enum estate {
 /* Init to get sure we have a controlled value wherever we start */
 static enum estate State = STATE_IDLE;
 
-#ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
-char *estate_str[] = {
-    "HALT",
-    "IDLE",
-    "CHINESE_IDLE",
-    "CHINESE_WRITE",
-    "READY",
-    "ACTIVE",
-    "AUTHING",
-    "AUTHED_IDLE",
-    "WRITE",
-    "INCREMENT",
-    "DECREMENT",
-    "RESTORE"
-};
-#endif
-
 static uint8_t CardResponse[MFCLASSIC_MEM_NONCE_SIZE];
 static uint8_t ReaderResponse[MFCLASSIC_MEM_NONCE_SIZE];
 static uint8_t CurrentAddress;
@@ -208,13 +191,15 @@ static uint32_t BruteCurrentUid = 0;
 #endif
 #ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
 static bool isLogEnabled = false;
-static uint32_t LogBytesWrote = 0;
 static uint16_t LogBytesBuffered = 0;
-static uint32_t LogMaxBytes = 0;
-static uint8_t LogLineBufferA[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
-static uint8_t LogLineBufferB[MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN] = { 0 };
-static uint8_t * LogLineBuffer = LogLineBufferA;
-static bool LogLineBufferFirst = true;
+static uint32_t LogBytesWrote = 0;
+static uint8_t LogRecordBuffer[MFCLASSIC_LOG_MEM_BUFFER_LEN] = { 0 };
+static uint8_t LogUnwrittendTicks = 0;
+#ifdef CONFIG_MF_CLASSIC_LOG_ADAPTIVE_TRIM
+static uint16_t LogTickCounter = 0;
+static uint16_t PreviousLogTick = 0;
+static uint8_t LogTrimLevel = MFCLASSIC_LOG_TRIM_NONE;
+#endif
 #endif
 
 /* decode Access conditions for a block */
@@ -314,7 +299,8 @@ uint32_t BytesToUint32(uint8_t * Buffer) {
 }
 
 uint16_t BytesToUint16(uint8_t * Buffer) {
-    return ( (((uint16_t)(Buffer[0])) << 8) | ((uint16_t)(Buffer[1])) );
+    return ( (((uint16_t)(Buffer[0])) << 8)
+            | ((uint16_t)(Buffer[1])) );
 }
 
 void Uint32ToBytes(uint32_t Uint32, uint8_t * Buffer) {
@@ -442,74 +428,94 @@ void MifareClassicAppLogWriteHeader(void) {
     AppWorkingMemoryWrite(headerLine, MFCLASSIC_LOG_MEM_LOG_HEADER_ADDR, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN);
 }
 
-void MifareClassicAppLogBufferLine(const uint8_t * Data, uint16_t BitCount, uint8_t Source) {
-    uint16_t dataBytesToBuffer = (BitCount / BITS_PER_BYTE);
-    if(BitCount % BITS_PER_BYTE) dataBytesToBuffer++;
-
-    uint16_t logStateStrLen = strlen(estate_str[State]);
-    uint16_t idx = LogBytesBuffered+MFCLASSIC_LOG_MEM_LINE_START_ADDR;
-
-    if( (idx + dataBytesToBuffer*2 + logStateStrLen + 14) < MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN) {
-        idx += sprintf((char *)&LogLineBuffer[idx],"[%05u] %c:\t%s\t| ",SystemGetSysTick(),Source,estate_str[State]);
-	BufferToHexString((char *)&LogLineBuffer[idx],dataBytesToBuffer*2+1,Data,dataBytesToBuffer);
-        idx += dataBytesToBuffer*2;
-        idx += sprintf((char *)&LogLineBuffer[idx]," ;");
+void MifareClassicAppLogBufferFlush(void){
+    /* circular log */
+    if( (LogBytesWrote + LogBytesBuffered) >= (AppWorkingMemorySize() - MFCLASSIC_LOG_MEM_LOG_HEADER_LEN)) {
+        LogBytesWrote = 0;
     }
-    if(MFCLASSIC_LOG_MEM_LINE_BUFFER_LEN - idx > 2){
-        idx += sprintf((char *)&LogLineBuffer[idx],"\r\n");
-    }
-	LogBytesBuffered = idx;
-}
-
-void MifareClassicAppLogWriteLines(void) {
-    uint16_t LogBytesToWrite = LogBytesBuffered;
-    uint8_t * LogLineBufferToWrite = LogLineBuffer;
-    /* swap buffers */
-    if ( LogLineBufferFirst ) {
-        LogLineBuffer = LogLineBufferB;
-	LogLineBufferFirst = false;
-    } else {
-        LogLineBuffer = LogLineBufferA;
-	LogLineBufferFirst = true;
-    }
+    /* write log */
+    AppWorkingMemoryWrite(LogRecordBuffer, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesBuffered);
+    LogBytesWrote += LogBytesBuffered;
     LogBytesBuffered = 0;
+    /* update header */
+    MifareClassicAppLogWriteHeader();
+    LogUnwrittendTicks = 0;
+#ifdef CONFIG_MF_CLASSIC_LOG_ADAPTIVE_TRIM
+    if ((LogTickCounter - PreviousLogTick) <= MFCLASSIC_LOG_ADAPTIVE_TICK_INT && LogTrimLevel <= MFCLASSIC_LOG_MAX_TRIM_LEVEL) {
+        LogTrimLevel++;
+    }
+    PreviousLogTick = LogTickCounter;
+#endif
+}
 
-    if( isLogEnabled && (LogBytesToWrite > 0) ) {
-	/* circular log */
-        if( (LogBytesWrote + LogBytesToWrite) >= LogMaxBytes) {
-            LogBytesWrote = 0;
-        }
-        /* write log */
-        AppWorkingMemoryWrite(LogLineBufferToWrite, MFCLASSIC_LOG_MEM_LOG_HEADER_LEN+LogBytesWrote, LogBytesToWrite);
-	/* update header */
-        LogBytesWrote += LogBytesToWrite;
-        MifareClassicAppLogWriteHeader();
+void MifareClassicAppLogBufferedRecordWrite(const uint8_t * Data, uint16_t BitCount, uint8_t Source) {
+    uint16_t timeNow = SystemGetSysTick();
+    uint8_t dataBytesToBuffer = (BitCount / BITS_PER_BYTE);
+    if(BitCount % BITS_PER_BYTE) dataBytesToBuffer++;
+    uint16_t idx = LogBytesBuffered;
+
+#ifdef CONFIG_MF_CLASSIC_LOG_ADAPTIVE_TRIM
+    if (LogTrimLevel == MFCLASSIC_LOG_TRIM_ALL_TAG_RECORDS && Source == MFCLASSIC_LOG_TAG) return;
+#endif
+    if( (LogBytesBuffered + MFCLASSIC_LOG_RECORD_HEADER_LEN) < MFCLASSIC_LOG_MEM_BUFFER_LEN) {
+#ifdef CONFIG_MF_CLASSIC_LOG_ADAPTIVE_TRIM
+        if( (LogTrimLevel == MFCLASSIC_LOG_TRIM_TAG_LONG_DATA && Source == MFCLASSIC_LOG_TAG && dataBytesToBuffer >= 9)
+           || (LogTrimLevel == MFCLASSIC_LOG_TRIM_ALL_TAG_DATA && Source == MFCLASSIC_LOG_TAG)) {
+            Source = '+';
+	    dataBytesToBuffer=0;
+	}
+#endif
+	LogRecordBuffer[idx] = dataBytesToBuffer + MFCLASSIC_LOG_RECORD_HEADER_LEN;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        Uint16ToBytes(timeNow, &LogRecordBuffer[idx]);
+        idx += MFCLASSIC_LOG_MEM_RECORD_TIMESTAMP_LEN;
+        LogRecordBuffer[idx] = Source;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        LogRecordBuffer[idx] = State;
+        idx += MFCLASSIC_LOG_MEM_CHAR_LEN;
+        memcpy(&LogRecordBuffer[idx], Data, dataBytesToBuffer);
+	idx += dataBytesToBuffer;
+    }
+    LogBytesBuffered = idx;
+    /* if there is no space left for another record, let's flush the buffer */
+    if ((MFCLASSIC_LOG_MEM_BUFFER_LEN - LogBytesBuffered) < MFCLASSIC_LOG_MAX_RECORD_LENGHT){
+        MifareClassicAppLogBufferFlush();
     }
 }
 
-void MifareClassicAppLogStop(void) {
-    isLogEnabled = false;
-    MifareClassicAppLogWriteHeader();
-}
-
-void MifareClassicAppLogStart(void) {
-    isLogEnabled = true;
-    MifareClassicAppLogWriteHeader();
+void MifareClassicAppLogTick(void) {
+    /* Flush buffer if there is still some data after a while since last log */
+    if (LogBytesBuffered > 0){
+        if (LogUnwrittendTicks >= MFCLASSIC_LOG_MAX_TICK_UNWRITTEN){
+	    MifareClassicAppLogBufferFlush();
+        }else{
+            LogUnwrittendTicks++;
+        }
+    }
+#ifdef CONFIG_MF_CLASSIC_LOG_ADAPTIVE_TRIM
+    else if ((LogTickCounter - PreviousLogTick) >= MFCLASSIC_LOG_ADAPTIVE_TICK_RST){
+        LogTrimLevel = MFCLASSIC_LOG_TRIM_NONE;
+        PreviousLogTick = 0;
+        LogTickCounter = 0;
+    }
+    LogTickCounter++;
+#endif
 }
 
 void MifareClassicAppLogInit(void) {
     MifareClassicAppInit(MFCLASSIC_1K_ATQA_VALUE, MFCLASSIC_1K_SAK_VALUE, false);
     MifareClassicAppLogCheck();
-    LogMaxBytes = ( AppWorkingMemorySize() - MFCLASSIC_LOG_MEM_LOG_HEADER_LEN );
     LogBytesBuffered = 0;
+#ifdef CONFIG_MF_CLASSIC_LOG_ADAPTIVE_TRIM
+    LogTrimLevel = MFCLASSIC_LOG_TRIM_NONE;
+    PreviousLogTick = 0;
+    LogTickCounter = 0;
+#endif
 }
 
 void MifareClassicAppLogToggle(void) {
-    if(isLogEnabled) {
-        MifareClassicAppLogStop();
-    } else {
-        MifareClassicAppLogStart();
-    }
+    isLogEnabled ^= true;
+    MifareClassicAppLogWriteHeader();
 }
 #endif
 
@@ -674,7 +680,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 #ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
     /* Log what comes from reader if logging enabled */
     if(isLogEnabled) {
-        MifareClassicAppLogBufferLine(Buffer, BitCount, MFCLASSIC_LOG_READER);
+        MifareClassicAppLogBufferedRecordWrite(Buffer, BitCount, MFCLASSIC_LOG_READER);
     }
 #endif
     /* Size of data (byte) we will send back to reader. Is main process return value */
@@ -1053,7 +1059,7 @@ uint16_t MifareClassicAppProcess(uint8_t* Buffer, uint16_t BitCount) {
 #ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
     /* Log what goes from tag if logging enabled */
     if(isLogEnabled) {
-        MifareClassicAppLogBufferLine(Buffer, (retSize & ISO14443A_APP_CUSTOM_PARITY) ? (retSize & ~ISO14443A_APP_CUSTOM_PARITY) : (retSize), MFCLASSIC_LOG_TAG);
+        MifareClassicAppLogBufferedRecordWrite(Buffer, (retSize & ISO14443A_APP_CUSTOM_PARITY) ? (retSize & ~ISO14443A_APP_CUSTOM_PARITY) : (retSize), MFCLASSIC_LOG_TAG);
     }
 #endif
     return retSize;
