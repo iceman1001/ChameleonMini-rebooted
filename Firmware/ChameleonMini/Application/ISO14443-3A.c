@@ -162,6 +162,11 @@ bool ISO14443ASelect(void* Buffer, uint16_t* BitCount, uint8_t* UidCL, uint8_t S
         if (CollisionBitCount == 0) {
             /* Full-byte anticollision frame supports */
             uint8_t CollisionByteCount = ((NVB >> 4) & 0x0f) - 2;
+            /* Validate CollisionByteCount to prevent integer underflow in memcpy */
+            if (CollisionByteCount > 4) {
+                *BitCount = 0;
+                break;
+            }
             /* Check for our UID is selecting */
             if (memcmp(UidCL, &DataPtr[2], CollisionByteCount) != 0) {
                 *BitCount = 0;
