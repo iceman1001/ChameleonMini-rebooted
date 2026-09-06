@@ -394,6 +394,13 @@ void ConfigurationInit(void)
 
 void ConfigurationSetById( ConfigurationEnum Configuration )
 {
+    /* Configuration arrives from EEPROM, which survives a firmware change that
+     * may define fewer configs than the one that wrote it. Out of range would
+     * read PROGMEM past the table and call garbage function pointers. */
+    if (Configuration >= CONFIG_COUNT) {
+        Configuration = CONFIG_NONE;
+    }
+
     GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
     /* Copy struct from PROGMEM to RAM */
