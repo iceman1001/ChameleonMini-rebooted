@@ -81,8 +81,10 @@ LUFA_PATH	 = ./LUFA
 #-Wno-error=array-bounds and -fcommon work around pre-existing issues that
 #only surface on GCC 12+: a false-positive array-bounds warning in LUFA, and
 #globals defined in Memory/SPIFlash.h and Memory/EEPROM.h, which relied on
-#-fcommon being the default.
-CC_FLAGS	 = -Werror -Wno-error=array-bounds -fcommon -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+#-fcommon being the default. -Wno-misspelled-isr is required by the shared
+#interrupt trampolines in Codec.c, whose handlers are named functions carrying
+#__attribute__((signal)) rather than ISR() macros.
+CC_FLAGS	 = -Werror -Wno-error=array-bounds -Wno-misspelled-isr -fcommon -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 
 ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings
