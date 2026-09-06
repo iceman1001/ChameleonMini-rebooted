@@ -7,6 +7,7 @@
 
 #include <avr/pgmspace.h>
 #include "Memory/Memory.h"
+#include <string.h>
 #include "Configuration.h"
 #include "Settings.h"
 #include "Map.h"

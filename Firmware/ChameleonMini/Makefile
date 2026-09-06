@@ -78,7 +78,11 @@ SRC 		+= Application/MifareUltralight.c Application/MifareClassic.c Application/
 SRC 		+= Application/NTAG21x.c 
 SRC 		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA
-CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+#-Wno-error=array-bounds and -fcommon work around pre-existing issues that
+#only surface on GCC 12+: a false-positive array-bounds warning in LUFA, and
+#globals defined in Memory/SPIFlash.h and Memory/EEPROM.h, which relied on
+#-fcommon being the default.
+CC_FLAGS	 = -Werror -Wno-error=array-bounds -fcommon -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 
 ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings
