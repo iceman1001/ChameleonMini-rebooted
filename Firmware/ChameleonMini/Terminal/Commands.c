@@ -299,6 +299,13 @@ CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage) {
     return COMMAND_INFO_XMODEM_WAIT_ID;
 }
 
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+CommandStatusIdType CommandExecLegicLoad(char* OutMessage) {
+    LegicPrimeLoadDefaultImage();
+    return COMMAND_INFO_OK_ID;
+}
+#endif
+
 CommandStatusIdType CommandGetUidSize(char* OutParam) {
     snprintf_P(OutParam, TERMINAL_BUFFER_SIZE, PSTR("%u"), ActiveConfiguration.UidSize);
     return COMMAND_INFO_OK_WITH_TEXT_ID;

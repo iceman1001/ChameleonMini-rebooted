@@ -346,6 +346,12 @@
     <Compile Include="Application\ISO14443-3A.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Application\LegicPrime.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Application\LegicPrime.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Application\MifareClassic.c">
       <SubType>compile</SubType>
     </Compile>
@@ -356,6 +362,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Codec\ISO14443-2A.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Codec\ISO14443-2F.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Codec\ISO14443-2F.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Map.c">

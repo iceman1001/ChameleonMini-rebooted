@@ -54,6 +54,11 @@ typedef enum  {
 #ifdef CONFIG_MF_CLASSIC_LOG_SUPPORT
     CONFIG_MF_CLASSIC_LOG,
 #endif
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+    CONFIG_LEGIC_PRIME_22,
+    CONFIG_LEGIC_PRIME_256,
+    CONFIG_LEGIC_PRIME_1024,
+#endif
     /* This HAS to be the last element */
     CONFIG_COUNT
 } ConfigurationEnum;
