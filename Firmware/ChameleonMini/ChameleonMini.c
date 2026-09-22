@@ -24,6 +24,8 @@ int main(void) {
         }
         TerminalTask();
         CodecTask();
-        //ApplicationTask();
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+        ApplicationTask();
+#endif
     }
 }

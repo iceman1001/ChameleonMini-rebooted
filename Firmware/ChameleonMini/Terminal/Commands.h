@@ -163,6 +163,12 @@ CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage);
 #define COMMAND_UIDSIZE             "UIDSIZE"
 CommandStatusIdType CommandGetUidSize(char* OutParam);
 
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+/* Reload the built-in reference card image into the active slot. */
+#define COMMAND_LEGICLOAD           "LEGICLOAD"
+CommandStatusIdType CommandExecLegicLoad(char* OutMessage);
+#endif
+
 #define COMMAND_BUTTON              "BUTTON"
 CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);

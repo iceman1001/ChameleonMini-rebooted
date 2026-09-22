@@ -140,6 +140,15 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .SetFunc    = NO_FUNCTION,
     .GetFunc    = NO_FUNCTION
   },
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+  {
+    .Command    = COMMAND_LEGICLOAD,
+    .ExecFunc   = CommandExecLegicLoad,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = NO_FUNCTION
+  },
+#endif
   {
     .Command    = COMMAND_UIDSIZE,
     .ExecFunc   = NO_FUNCTION,

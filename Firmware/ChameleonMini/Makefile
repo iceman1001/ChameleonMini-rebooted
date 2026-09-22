@@ -24,6 +24,10 @@ SETTINGS	+= -DCONFIG_NTAG213_SUPPORT
 SETTINGS	+= -DCONFIG_NTAG215_SUPPORT
 SETTINGS	+= -DCONFIG_NTAG216_SUPPORT
 SETTINGS	+= -DCONFIG_MF_CLASSIC_DETECTION_SUPPORT
+#LEGIC Prime card emulation (MIM22 / MIM256 / MIM1024). Off by default: the
+#region BOOT_LOADER_EXE can write is 28672 bytes, and LEGIC only fits there
+#with the card types above switched off. LEGIC alone builds to 25738 bytes.
+#SETTINGS	+= -DCONFIG_LEGIC_PRIME_SUPPORT
 # SETTINGS	+= -DCONFIG_MF_CLASSIC_BRUTE_SUPPORT
 # SETTINGS	+= -DCONFIG_MF_CLASSIC_LOG_SUPPORT
 
@@ -74,11 +78,31 @@ SRC 		+= $(TARGET).c LUFADescriptors.c System.c Configuration.c Random.c Common.
 SRC 		+= Memory/EEPROM.c Memory/SPIFlash.c Memory/Memory.c
 SRC 		+= Terminal/Terminal.c Terminal/Commands.c Terminal/XModem.c Terminal/CommandLine.c
 SRC 		+= Codec/Codec.c Codec/ISO14443-2A.c
-SRC 		+= Application/MifareUltralight.c Application/MifareClassic.c Application/ISO14443-3A.c Application/Crypto1.c
-SRC 		+= Application/NTAG21x.c 
+#Card-type sources follow their SETTINGS above. The application flash region is
+#small enough that an unused card type has to be kept out of the link, not just
+#compiled away to nothing.
+ifneq (,$(findstring CONFIG_MF_ULTRALIGHT_SUPPORT,$(SETTINGS)))
+SRC 		+= Application/MifareUltralight.c
+endif
+ifneq (,$(findstring CONFIG_MF_CLASSIC,$(SETTINGS)))
+SRC 		+= Application/MifareClassic.c
+endif
+SRC 		+= Application/ISO14443-3A.c Application/Crypto1.c
+ifneq (,$(findstring CONFIG_NTAG2,$(SETTINGS)))
+SRC 		+= Application/NTAG21x.c
+endif
+ifneq (,$(findstring CONFIG_LEGIC_PRIME_SUPPORT,$(SETTINGS)))
+SRC 		+= Codec/ISO14443-2F.c Application/LegicPrime.c
+endif
 SRC 		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA
-CC_FLAGS	 = -Werror -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
+#-Wno-error=array-bounds and -fcommon work around pre-existing issues that
+#only surface on GCC 12+: a false-positive array-bounds warning in LUFA, and
+#globals defined in Memory/SPIFlash.h and Memory/EEPROM.h, which relied on
+#-fcommon being the default. -Wno-misspelled-isr is required by the shared
+#interrupt trampolines in Codec.c, whose handlers are named functions carrying
+#__attribute__((signal)) rather than ISR() macros.
+CC_FLAGS	 = -Werror -Wno-error=array-bounds -Wno-misspelled-isr -fcommon -DUSE_LUFA_CONFIG_HEADER -DBUILD_DATE=$(BUILD_DATE) -DCOMMIT_ID=\"$(COMMIT_ID)\" $(SETTINGS)
 
 ifeq ($(UNLOCKED_F),True)
 #AVRDUDE settings
