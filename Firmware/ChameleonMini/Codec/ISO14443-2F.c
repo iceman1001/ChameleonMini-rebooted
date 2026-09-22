@@ -26,6 +26,13 @@
 /* fc/64 subcarrier, 50% duty via the OOK compare channel. */
 #define LEGIC_SUBCARRIER_DIVIDER    64
 
+/* Free-running stopwatch (TCD0, otherwise unused) for measuring reader
+ * turnaround gaps, so the keystream can track the reader's real timing rather
+ * than a fixed count. DIV64 of 32MHz = 2us/tick; gaps are < 1ms. */
+#define CODEC_TIMER_GAP             TCD0
+#define GAP_TICK_gc                 TC_CLKSEL_DIV64_gc
+#define GAP_TICK_US                 2
+
 /* Receive timebase: CODEC_TIMER_SAMPLING (TCC1) at DIV8 of F_CPU=32MHz
  * -> 4MHz, 0.25us/tick. A 0 bit measures 232-245 ticks, a 1 bit 393-408. */
 #define RX_TICK_gc              TC_CLKSEL_DIV8_gc
@@ -108,6 +115,15 @@ static volatile bool FirstEdge;
 static volatile TxStateType TxState;
 static volatile bool TxReady;
 
+/* Turnaround gap measurement. GapAnchor holds the end of the previous frame
+ * (our TX_DONE, or a reader frame's last edge); LegicRxGapMicros is the gap
+ * before the frame currently being processed, read by LegicPrime.c. */
+static volatile uint16_t GapAnchor;
+static volatile uint16_t LastEdgeStamp;
+volatile uint16_t LegicRxGapMicros;
+volatile uint16_t LegicFrameSeq;      /* ++ at each frame's first edge */
+volatile uint16_t LegicGapRing[8];    /* per-frame gaps, indexed by LegicFrameSeq */
+
 static void SetBit(uint8_t *buf, uint16_t pos, bool v) {
     if (v) {
         buf[pos / 8] |= (1 << (pos % 8));
@@ -151,6 +167,13 @@ static void Initialize(void) {
     CODEC_SUBCARRIER_TIMER.CNT = 0;
     CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_EVCH6_gc; /* free-run */
 
+    /* Turnaround-gap stopwatch: free-run for the whole session. */
+    CODEC_TIMER_GAP.PER = 0xFFFF;
+    CODEC_TIMER_GAP.CNT = 0;
+    CODEC_TIMER_GAP.CTRLA = GAP_TICK_gc;
+    GapAnchor = 0;
+    LastEdgeStamp = 0;
+    LegicRxGapMicros = 0;
 }
 
 static void StartDemod(void) {
@@ -176,6 +199,13 @@ void isr_ISO14443_2F_DEMOD_IN_INT0(void) {
         CODEC_TIMER_SAMPLING.INTFLAGS = TC0_OVFIF_bm;
         CODEC_TIMER_SAMPLING.INTCTRLA = TC_OVFINTLVL_HI_gc;
         CODEC_TIMER_SAMPLING.CTRLA = RX_TICK_gc;
+        /* Bit timer is armed; now latch the turnaround gap (does not affect
+         * bit timing). */
+        uint16_t gnow = CODEC_TIMER_GAP.CNT;
+        LegicRxGapMicros = (uint16_t)((gnow - GapAnchor) * GAP_TICK_US);
+        LastEdgeStamp = gnow;
+        LegicFrameSeq++;
+        LegicGapRing[LegicFrameSeq & 7] = LegicRxGapMicros;
         return;
     }
 
@@ -188,6 +218,7 @@ void isr_ISO14443_2F_DEMOD_IN_INT0(void) {
         return;
     }
     CODEC_TIMER_SAMPLING.CNT = 0;
+    LastEdgeStamp = CODEC_TIMER_GAP.CNT;
 
     /* Record the raw interval; bits are classified once the frame is in. */
     if (BitCount < RX_MAX_BITS) {
@@ -234,6 +265,10 @@ ISR(CODEC_TIMER_SAMPLING_OVF_VECT) {
     CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
     CODEC_TIMER_SAMPLING.INTCTRLA = TC_OVFINTLVL_OFF_gc;
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
+
+    /* Anchor the next turnaround at this frame's end; TX_DONE overrides it if
+     * we answer. */
+    GapAnchor = LastEdgeStamp;
 
     if (BitCount > 0) {
         CodecSetDemodPower(false);
@@ -318,6 +353,7 @@ void isr_ISO14443_2F_TIMER_LOADMOD_OVF(void) {
             CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
             CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
             CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
+            GapAnchor = CODEC_TIMER_GAP.CNT;   /* our answer end: anchor next gap */
             StartDemod();   /* immediate RX restart from the ISR */
             break;
     }

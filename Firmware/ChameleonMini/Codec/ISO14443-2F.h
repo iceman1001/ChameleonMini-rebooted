@@ -9,6 +9,12 @@
 
 #include <stdint.h>
 
+/* Reader turnaround (us) before the frame currently being processed, and a
+ * counter that increments at each frame's first edge. */
+extern volatile uint16_t LegicRxGapMicros;
+extern volatile uint16_t LegicFrameSeq;
+extern volatile uint16_t LegicGapRing[8];
+
 void ISO14443FCodecInit(void);
 void ISO14443FCodecTask(void);
 

@@ -79,6 +79,16 @@ static LegicProfileType Profile;
  * read_byte). Not part of any frame -- purely a post-read adjustment. */
 #define LEGIC_READ_TRAILER_TICKS  1
 
+/* Turnaround timing: a reader whose turnaround exceeds its own minimum advances
+ * one extra keystream tick per 99.1us of the excess (armsrc/legicrfsim.c). The
+ * minimum (baseline) is learned at runtime from the first turnaround (type->ack),
+ * so nothing is tied to one reader; a proxmark gets 0 extra and is unchanged. */
+#define LEGIC_GAP_TICK_US         99
+#define LEGIC_GAP_BASELINE_US     220
+#define LEGIC_GAP_BASELINE_MIN_US 150
+#define LEGIC_GAP_BASELINE_MAX_US 320
+#define LEGIC_GAP_MAX_EXTRA       8
+
 /* ---- Keystream generator (ported from common/legic_prng.c, unchanged) ---- */
 static struct {
     uint8_t a; /* 7-bit LFSR, seeded with RAND */
@@ -182,8 +192,27 @@ static volatile uint16_t RingFilled;  /* absolute count of responses computed */
 static volatile uint8_t  SessIv;
 static volatile bool     SessReset;   /* ISR asks the main loop to (re)start fill */
 static LfsrState         SessKs;      /* main-loop-owned keystream */
+static LfsrState         SessKsSetup; /* checkpoint after setup, for re-fills */
 static uint16_t          FillIdx;
 static volatile int16_t PendingWriteAddr = -1;
+
+/* Turnaround timing, learned per session from the codec's measured gaps.
+ * BaselineUs is the reader's own minimum turnaround (from type->ack); GapExtra0
+ * / GapExtra are the extra ticks for the first command (ack->cmd) and each later
+ * one (answer->cmd). All zero for a proxmark, so the fill matches the base. */
+static volatile uint16_t SessSeqStart;   /* LegicFrameSeq at the RAND frame */
+static uint16_t BaselineUs = LEGIC_GAP_BASELINE_US;
+static uint8_t  GapExtra0, GapExtra;
+static uint8_t  CalibStage;   /* 0=baseline,1=E0,2=E,3=latched */
+
+static uint8_t LegicGapExtra(uint16_t gap) {
+    if (gap <= BaselineUs) {
+        return 0;
+    }
+    uint8_t e = (uint8_t)((gap - BaselineUs + LEGIC_GAP_TICK_US / 2) / LEGIC_GAP_TICK_US);
+    return e > LEGIC_GAP_MAX_EXTRA ? LEGIC_GAP_MAX_EXTRA : e;
+}
+
 
 /* Card contents live in the Chameleon's own card memory, so the standard
  * UPLOAD / DOWNLOAD terminal commands load and save dumps -- the equivalent of
@@ -229,11 +258,45 @@ void LegicPrimeAppTask(void) {
         ks_xor(&SessKs, Profile.TypeFrame, 6);
         ks_fwd(&SessKs, LEGIC_RX_AFTER_TX_TICKS);
         ks_xor(&SessKs, 0, 6);
+        SessKsSetup = SessKs;          /* checkpoint after setup */
+        FillIdx = 0;
+        RingFilled = 0;
+        BaselineUs = LEGIC_GAP_BASELINE_US;
+        GapExtra0 = 0;
+        GapExtra = 0;
+        CalibStage = 0;
+    }
+
+    /* Calibrate the turnaround extras from the codec's per-frame gaps, each once
+     * as its frame first arrives: frame 1 after the RAND is the ack (learns the
+     * baseline), frame 2 the first command (ack->cmd), frame 3 a later command
+     * (answer->cmd). Latched at stage 3 so the 8-entry gap ring wrapping during a
+     * long read never re-triggers calibration. On a change, re-fill from the
+     * post-setup checkpoint; a proxmark keeps every extra 0 (fixed-count fill). */
+    uint16_t nframes = (uint16_t)(LegicFrameSeq - SessSeqStart);
+    bool changed = false;
+    while (CalibStage < 3 && nframes > CalibStage) {
+        uint16_t g = LegicGapRing[(SessSeqStart + CalibStage + 1) & 7];
+        if (CalibStage == 0) {
+            if (g >= LEGIC_GAP_BASELINE_MIN_US && g <= LEGIC_GAP_BASELINE_MAX_US) {
+                BaselineUs = g;
+            }
+        } else if (CalibStage == 1) {
+            GapExtra0 = LegicGapExtra(g);
+        } else {
+            GapExtra = LegicGapExtra(g);
+        }
+        CalibStage++;
+        changed = true;
+    }
+    if (changed) {
+        SessKs = SessKsSetup;
         FillIdx = 0;
         RingFilled = 0;
     }
+
     while (FillIdx < Profile.CardSize && FillIdx < (uint16_t)(ReadCounter + LEGIC_RING_SIZE)) {
-        ks_fwd(&SessKs, LEGIC_RX_GAP_TICKS);
+        ks_fwd(&SessKs, LEGIC_RX_GAP_TICKS + (FillIdx == 0 ? GapExtra0 : GapExtra));
         ks_xor(&SessKs, 0, Profile.CmdSize);
         uint8_t  data = LegicMem[FillIdx];
         uint8_t  crc  = calc_crc4((uint16_t)((FillIdx << 1) | 1), Profile.CmdSize, data);
@@ -286,6 +349,7 @@ uint16_t LegicPrimeAppProcess(uint8_t *Buffer, uint16_t BitCount) {
         RingFilled = 0;
         AckSeen = false;
         SessIv = iv;
+        SessSeqStart = LegicFrameSeq;   /* frame counter baseline for calibration */
         SessReset = true;       /* main loop starts streaming this session */
         legic_prng_forward(LEGIC_TX_GAP_TICKS);
         uint32_t obf = legic_xor_bits(Profile.TypeFrame, 6);
