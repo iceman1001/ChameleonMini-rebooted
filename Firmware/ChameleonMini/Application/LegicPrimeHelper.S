@@ -2,9 +2,6 @@
  * LegicPrimeHelper.S
  * This is part of the Chameleon project
  * https://github.com/iceman1001/ChameleonMini-rebooted
- *
- * Created: 2024-10-05
- *  Author: Andreas Fiedler <smartsmurf@shared-files.de>
 */
 
     ; offsts of the Lfsr struct members

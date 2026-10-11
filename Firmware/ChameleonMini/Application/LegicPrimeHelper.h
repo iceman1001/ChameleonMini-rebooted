@@ -2,9 +2,6 @@
  * LegicPrimeHelper.h
  * This is part of the Chameleon project
  * https://github.com/iceman1001/ChameleonMini-rebooted
- *
- * Created: 2024-10-05
- *  Author: Andreas Fiedler <smartsmurf@shared-files.de>
 */
 
 #ifndef __LEGIC_PRIME_HELPER_H__
