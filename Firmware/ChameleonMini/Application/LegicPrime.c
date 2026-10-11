@@ -23,6 +23,9 @@
  *   UID=11223344                MCC (byte 4) is recomputed automatically
  *   LEGICLOAD                   write a blank card into this slot
  *
+ * Reading with a proxmark when field-powered: use hf legic reader -@ (continuous);
+ * a single-shot read can come back silent before the card has powered up.
+ *
  * Card contents live in the slot's card memory, so the standard UPLOAD and
  * DOWNLOAD commands load and save dumps, the equivalent of the proxmark's
  * hf legic sim -f <file>. A slot is never auto-seeded.
