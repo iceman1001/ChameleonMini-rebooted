@@ -28,6 +28,8 @@ SETTINGS	+= -DCONFIG_MF_CLASSIC_DETECTION_SUPPORT
 #region BOOT_LOADER_EXE can write is 28672 bytes, and LEGIC only fits there
 #with the card types above switched off. LEGIC alone builds to 25738 bytes.
 #SETTINGS	+= -DCONFIG_LEGIC_PRIME_SUPPORT
+# Log the raw LEGIC inter-frame gaps in RX ticks (0.25us) and add the LEGICGAPS command
+# SETTINGS	+= -DLEGIC_GAP_DEBUG
 # SETTINGS	+= -DCONFIG_MF_CLASSIC_BRUTE_SUPPORT
 # SETTINGS	+= -DCONFIG_MF_CLASSIC_LOG_SUPPORT
 
@@ -93,6 +95,9 @@ SRC 		+= Application/NTAG21x.c
 endif
 ifneq (,$(findstring CONFIG_LEGIC_PRIME_SUPPORT,$(SETTINGS)))
 SRC 		+= Codec/ISO14443-2F.c Application/LegicPrime.c
+endif
+ifneq (,$(findstring CONFIG_LEGIC_PRIME_SUPPORT,$(SETTINGS)))
+SRC 		+= Application/LegicPrimeHelper.S
 endif
 SRC 		+= $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH	 = ./LUFA

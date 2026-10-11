@@ -12,6 +12,12 @@
 #include "../Common.h"
 #include "../Configuration.h"
 
+/* ---- Keystream generator (ported from common/legic_prng.c, unchanged) ---- */
+typedef struct {
+    uint8_t a; /* 7-bit LFSR, seeded with RAND */
+    uint8_t b; /* 8-bit LFSR, seeded with (RAND<<1)|1 */
+} Lfsr_t;
+
 #define LEGIC_PRIME_UID_SIZE   4
 /* The three card geometries proxmark3 knows (legicrfsim.c init_card):
  *   MIM22   cmdsize  6, addrsize 5,   22 bytes, type 0x0D, ack 0x19
@@ -29,6 +35,10 @@ void LegicPrimeAppInit22(void);
 void LegicPrimeAppInit256(void);
 void LegicPrimeAppInit1024(void);
 void LegicPrimeAppTask(void);
+/* Called by ISO14443-2F.c during frame reception to advance the keystream over
+ * the gap that preceded the frame, in bounded instalments. Kept out of
+ * LegicPrimeAppProcess() so it does not run against the response deadline. */
+void LegicPrimeAppGapForward(uint8_t Ticks);
 void LegicPrimeLoadDefaultImage(void);
 void LegicPrimeAppReset(void);
 uint16_t LegicPrimeAppProcess(uint8_t *ByteBuffer, uint16_t BitCount);

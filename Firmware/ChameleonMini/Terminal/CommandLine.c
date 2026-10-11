@@ -149,6 +149,15 @@ const PROGMEM CommandEntryType CommandTable[] = {
     .GetFunc    = NO_FUNCTION
   },
 #endif
+#ifdef LEGIC_GAP_DEBUG
+  {
+    .Command    = COMMAND_LEGICGAPS,
+    .ExecFunc   = NO_FUNCTION,
+    .ExecParamFunc = NO_FUNCTION,
+    .SetFunc    = NO_FUNCTION,
+    .GetFunc    = CommandGetLegicGaps
+  },
+#endif
   {
     .Command    = COMMAND_UIDSIZE,
     .ExecFunc   = NO_FUNCTION,

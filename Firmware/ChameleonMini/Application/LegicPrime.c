@@ -6,13 +6,14 @@
  * Implements the setup and main phases of the protocol described in
  * SAR-PR-2011-03 (Ploetz & Nohl, "Peeling Away Layers of an RFID Security
  * System"): a 7-bit RAND from the reader, a 6-bit card type, a 6-bit ack,
- * then 9- or 11-bit read commands answered with 12-bit responses. Every frame
- * is obfuscated with the LFSR+mux keystream seeded from that RAND, and read
+ * then read and write commands addressed by byte index. Every frame is
+ * obfuscated with the LFSR+mux keystream seeded from that RAND, and read
  * responses carry a transport CRC-4.
  *
- * The keystream, the tick schedule and the CRC-4 are ported from proxmark3
- * armsrc/legicrfsim.c and armsrc/legicrf.c, which are the reference for both
- * ends of the exchange. ISO14443-2F.c owns the physical layer.
+ * The keystream and the CRC-4 are ported from proxmark3 armsrc/legicrfsim.c
+ * and armsrc/legicrf.c, which are the reference for both ends of the
+ * exchange. ISO14443-2F.c owns the physical layer and measures the
+ * reader-controlled inter-frame gaps the keystream schedule depends on.
  *
  * MIM22, MIM256 and MIM1024 are all supported, selected by the active
  * configuration in the same way proxmark3 selects with hf legic sim --22 /
@@ -32,6 +33,7 @@
 #include <string.h>
 #include <avr/pgmspace.h>
 #include "../Memory/Memory.h"
+#include "LegicPrimeHelper.h"
 
 /* The three geometries proxmark3 simulates (`hf legic sim --22/--256/--1024`),
  * taken from legicrfsim.c init_card() and setup_phase(). Selected at runtime by
@@ -49,80 +51,41 @@ static const LegicProfileType ProfileMIM1024 = { 0x3D, 0x39, 11, LEGIC_PRIME_MEM
 
 static LegicProfileType Profile;
 
-/* Keystream tick budget between frames.
- *
- * The generator does not free-run in real time: both sides advance it by a
- * fixed, frame-dependent number of ticks, one per bit sent or received plus a
- * fixed gap per turnaround. The schedule is stated literally by the reader in
- * armsrc/legicrf.c:
- *
- *   setup: prng_init(iv); forward(2); rx_frame(6);  forward(3); tx_frame(ack,6)
- *   read:  forward(2); tx_frame(cmd,9);  forward(2); rx_frame(12)
- *   write: forward(2); tx_frame(cmd,21); forward(3); rx_ack()
- *
- * From the card's side: forward 2 before answering, 3 before de-obfuscating
- * the ack that follows our answer, and 2 before de-obfuscating a command.
- * legicrfsim.c reaches the same positions with a real-time wait loop; these
- * fixed counts are the exact equivalent.
- *
- * These are prng ticks, not hardware time; ISO14443-2F.c owns the physical
- * delays. */
-#define LEGIC_TX_GAP_TICKS        2   /* RX end -> our answer */
-#define LEGIC_RX_AFTER_TX_TICKS   3   /* our answer -> reader's ack */
-#define LEGIC_RX_GAP_TICKS        2   /* reader frame -> next reader frame */
-/* Write-ACK gap: legicrfsim.c tx_ack() forwards TAG_ACK_WAIT/TAG_BIT_PERIOD-1
- * = 758/21-1 = 35. The reader's rx_ack() polls once per bit period forwarding
- * one tick each until it sees the ack, so this count and ISO14443-2F.c's
- * physical 3.57ms delay have to agree or the two ends desync after a write. */
-#define LEGIC_WRITE_ACK_GAP_TICKS 35
-/* Extra tick the reader takes at the end of a successful read (legicrf.c
- * read_byte). Not part of any frame -- purely a post-read adjustment. */
-#define LEGIC_READ_TRAILER_TICKS  1
+/* Bit 0 of a command word: set = read, clear = write. Address is the rest. */
+#define LEGIC_CMD_READ            0x01
 
-/* Turnaround timing: a reader whose turnaround exceeds its own minimum advances
- * one extra keystream tick per 99.1us of the excess (armsrc/legicrfsim.c). The
- * minimum (baseline) is learned at runtime from the first turnaround (type->ack),
- * so nothing is tied to one reader; a proxmark gets 0 extra and is unchanged. */
-#define LEGIC_GAP_TICK_US         99
-#define LEGIC_GAP_BASELINE_US     220
-#define LEGIC_GAP_BASELINE_MIN_US 150
-#define LEGIC_GAP_BASELINE_MAX_US 320
-#define LEGIC_GAP_MAX_EXTRA       8
+/* Keystream tick budget.
+ *
+ * Two kinds of interval have to be accounted for:
+ *
+ *  - Frame bits. Exactly one tick each, regardless of whether the bit is
+ *    physically 60us (a 0) or 100us (a 1) on the reader's side.
+ *    legic_xor_bits() consumes them as it goes.
+ *
+ *  - Turnarounds. The generator runs on with elapsed time, so this is
+ *    whole bit periods measured by the codec (LegicRxGapPeriods), plus one
+ *    extra tick when the frame before the turnaround was our own.
+ *
+ * The bias is not guesswork: it is what makes a proxmark3 and a real LEGIC
+ * lock agree, across six turnarounds taken from two hf sniff captures. See the
+ * table in ISO14443-2F.c. It also explains why fixed counts appeared to work
+ * -- a proxmark3 paces every turnaround at 220us, which always truncates to 2
+ * periods, so 2 and 2+1 look like constants. A lock that takes 355us and 523us
+ * needs 3 and 5+1 instead, and fixed counts put the keystream one tick out on
+ * the very first read command.
+ *
+ * Our own two slots stay constant because we control their length. */
+#define LEGIC_TX_GAP_TICKS        2   /* our 330us response slot   (70/21 - 1) */
+#define LEGIC_WRITE_ACK_GAP_TICKS 35  /* our 3.57ms ack slot      (758/21 - 1) */
+#define LEGIC_GAP_AFTER_TX_BIAS   1   /* our frame came last */
 
-/* ---- Keystream generator (ported from common/legic_prng.c, unchanged) ---- */
-static struct {
-    uint8_t a; /* 7-bit LFSR, seeded with RAND */
-    uint8_t b; /* 8-bit LFSR, seeded with (RAND<<1)|1 */
-} Lfsr;
+Lfsr_t Lfsr;
 
 static void legic_prng_init(uint8_t iv) {
     Lfsr.a = iv;
     Lfsr.b = iv ? ((iv << 1) | 1) : 0; /* iv==0: force an all-zero stream */
 }
 
-static void legic_prng_forward(uint8_t count) {
-    while (count--) {
-        Lfsr.a = (Lfsr.a >> 1 | (Lfsr.a ^ Lfsr.a >> 6) << 6) & 0x7F;
-        Lfsr.b = Lfsr.b >> 1 | (Lfsr.b ^ Lfsr.b >> 2 ^ Lfsr.b >> 3 ^ Lfsr.b >> 7) << 7;
-    }
-}
-
-static uint8_t legic_prng_get_bit(void) {
-    uint8_t idx = 7 - ((Lfsr.a & 4) | (Lfsr.a >> 2 & 2) | (Lfsr.a >> 4 & 1));
-    return Lfsr.b >> idx & 1;
-}
-
-/* XOR the low `n` bits of `value` against the next `n` keystream bits,
- * consuming (advancing) exactly one tick per bit -- symmetric, so this is
- * used for both de-obfuscating received frames and obfuscating replies. */
-static uint32_t legic_xor_bits(uint32_t value, uint8_t n) {
-    uint32_t out = 0;
-    for (uint8_t i = 0; i < n; i++) {
-        out |= (uint32_t)(((value >> i) & 1) ^ legic_prng_get_bit()) << i;
-        legic_prng_forward(1);
-    }
-    return out;
-}
 
 /* ---- Transport CRC-4: width 4, poly 0xC, init 0x5, not reflected. Ported
  * from armsrc/legicrfsim.c calc_crc4(), not from common/crc.c CRC4Legic(),
@@ -141,23 +104,39 @@ static uint8_t calc_crc4(uint16_t cmd, uint8_t cmd_sz, uint8_t value) {
     return state & 0xF;
 }
 
-/* ---- Bit-packed buffer helpers (LSBit-first, matches CodecBuffer layout) */
+/* ---- Bit-packed buffer helpers (LSBit-first, matches CodecBuffer layout).
+ * A walking byte pointer and a rotating mask, for the reason given above. */
 static uint32_t GetBits(const uint8_t *buf, uint8_t n) {
     uint32_t v = 0;
-    for (uint8_t i = 0; i < n; i++) {
-        if (buf[i / 8] & (1 << (i % 8))) {
-            v |= (uint32_t)1 << i;
+    uint32_t bit = 1;
+    uint8_t mask = 1;
+
+    while (n--) {
+        if (*buf & mask) {
+            v |= bit;
+        }
+        bit <<= 1;
+        if ((mask <<= 1) == 0) {
+            mask = 1;
+            buf++;
         }
     }
     return v;
 }
 
 static void SetBits(uint8_t *buf, uint32_t v, uint8_t n) {
-    for (uint8_t i = 0; i < n; i++) {
-        if ((v >> i) & 1) {
-            buf[i / 8] |= (1 << (i % 8));
+    uint8_t mask = 1;
+
+    while (n--) {
+        if (v & 1) {
+            *buf |= mask;
         } else {
-            buf[i / 8] &= ~(1 << (i % 8));
+            *buf &= (uint8_t)~mask;
+        }
+        v >>= 1;
+        if ((mask <<= 1) == 0) {
+            mask = 1;
+            buf++;
         }
     }
 }
@@ -166,53 +145,18 @@ static void SetBits(uint8_t *buf, uint32_t v, uint8_t n) {
 static uint8_t LegicMem[LEGIC_PRIME_MEM_SIZE];
 
 typedef enum {
-    LEGIC_STATE_WAIT_IV,
-    LEGIC_STATE_WAIT_ACK,
-    LEGIC_STATE_CONNECTED
+    LEGIC_STATE_WAIT_IV,    /* no session: waiting for a 7-bit RAND */
+    LEGIC_STATE_WAIT_ACK,   /* type frame sent, reader's ack due next */
+    LEGIC_STATE_CONNECTED   /* serving read and write commands */
 } LegicStateType;
 
-static LegicStateType State;
-typedef struct { uint8_t a, b; } LfsrState;
-static void ks_init(LfsrState *st, uint8_t iv);
-static void ks_fwd(LfsrState *st, uint8_t n);
-static uint8_t ks_bit(LfsrState *st);
-static uint32_t ks_xor(LfsrState *st, uint32_t v, uint8_t n);
+static volatile LegicStateType State;
+static volatile int16_t PendingWriteAddr = -1;
 static uint8_t  Crc8Legic(const uint8_t *data, uint8_t len);
 
-static volatile uint16_t ReadCounter;   /* next read index the reader will ask for */
-static volatile bool     AckSeen;        /* MIM22's 6-bit read == ACK width; the ACK is the first 6-bit frame, reads follow */
-/* The reader reads sequentially, so rather than precomputing a response per
- * card byte, keep the session keystream state and compute each 12-bit response
- * just-in-time into a small ring buffer that the main loop keeps ahead of
- * ReadCounter. That is O(ring) RAM instead of O(cardsize), which is what lets
- * MIM1024 fit in 4KB of SRAM. The interrupt path only serves the ring. */
-#define LEGIC_RING_SIZE 32           /* power of 2; window ahead of the reader */
-static volatile uint16_t Ring[LEGIC_RING_SIZE];
-static volatile uint16_t RingFilled;  /* absolute count of responses computed */
-static volatile uint8_t  SessIv;
-static volatile bool     SessReset;   /* ISR asks the main loop to (re)start fill */
-static LfsrState         SessKs;      /* main-loop-owned keystream */
-static LfsrState         SessKsSetup; /* checkpoint after setup, for re-fills */
-static uint16_t          FillIdx;
-static volatile int16_t PendingWriteAddr = -1;
-
-/* Turnaround timing, learned per session from the codec's measured gaps.
- * BaselineUs is the reader's own minimum turnaround (from type->ack); GapExtra0
- * / GapExtra are the extra ticks for the first command (ack->cmd) and each later
- * one (answer->cmd). All zero for a proxmark, so the fill matches the base. */
-static volatile uint16_t SessSeqStart;   /* LegicFrameSeq at the RAND frame */
-static uint16_t BaselineUs = LEGIC_GAP_BASELINE_US;
-static uint8_t  GapExtra0, GapExtra;
-static uint8_t  CalibStage;   /* 0=baseline,1=E0,2=E,3=latched */
-
-static uint8_t LegicGapExtra(uint16_t gap) {
-    if (gap <= BaselineUs) {
-        return 0;
-    }
-    uint8_t e = (uint8_t)((gap - BaselineUs + LEGIC_GAP_TICK_US / 2) / LEGIC_GAP_TICK_US);
-    return e > LEGIC_GAP_MAX_EXTRA ? LEGIC_GAP_MAX_EXTRA : e;
-}
-
+/* Last de-obfuscated setup ack, for diagnosing a reader whose ack differs from
+ * the profile's expectation. Not acted on; see the WAIT_ACK branch. */
+static volatile uint8_t LastAck;
 
 /* Card contents live in the Chameleon's own card memory, so the standard
  * UPLOAD / DOWNLOAD terminal commands load and save dumps -- the equivalent of
@@ -251,62 +195,6 @@ void LegicPrimeAppInit1024(void) { LegicPrimeAppInitCommon(&ProfileMIM1024); }
 /* Written bytes are flushed here rather than from LegicPrimeAppProcess, which
  * runs inside the RX-end interrupt and must not block on SPI flash. */
 void LegicPrimeAppTask(void) {
-    if (SessReset) {
-        SessReset = false;
-        ks_init(&SessKs, SessIv);
-        ks_fwd(&SessKs, LEGIC_TX_GAP_TICKS);
-        ks_xor(&SessKs, Profile.TypeFrame, 6);
-        ks_fwd(&SessKs, LEGIC_RX_AFTER_TX_TICKS);
-        ks_xor(&SessKs, 0, 6);
-        SessKsSetup = SessKs;          /* checkpoint after setup */
-        FillIdx = 0;
-        RingFilled = 0;
-        BaselineUs = LEGIC_GAP_BASELINE_US;
-        GapExtra0 = 0;
-        GapExtra = 0;
-        CalibStage = 0;
-    }
-
-    /* Calibrate the turnaround extras from the codec's per-frame gaps, each once
-     * as its frame first arrives: frame 1 after the RAND is the ack (learns the
-     * baseline), frame 2 the first command (ack->cmd), frame 3 a later command
-     * (answer->cmd). Latched at stage 3 so the 8-entry gap ring wrapping during a
-     * long read never re-triggers calibration. On a change, re-fill from the
-     * post-setup checkpoint; a proxmark keeps every extra 0 (fixed-count fill). */
-    uint16_t nframes = (uint16_t)(LegicFrameSeq - SessSeqStart);
-    bool changed = false;
-    while (CalibStage < 3 && nframes > CalibStage) {
-        uint16_t g = LegicGapRing[(SessSeqStart + CalibStage + 1) & 7];
-        if (CalibStage == 0) {
-            if (g >= LEGIC_GAP_BASELINE_MIN_US && g <= LEGIC_GAP_BASELINE_MAX_US) {
-                BaselineUs = g;
-            }
-        } else if (CalibStage == 1) {
-            GapExtra0 = LegicGapExtra(g);
-        } else {
-            GapExtra = LegicGapExtra(g);
-        }
-        CalibStage++;
-        changed = true;
-    }
-    if (changed) {
-        SessKs = SessKsSetup;
-        FillIdx = 0;
-        RingFilled = 0;
-    }
-
-    while (FillIdx < Profile.CardSize && FillIdx < (uint16_t)(ReadCounter + LEGIC_RING_SIZE)) {
-        ks_fwd(&SessKs, LEGIC_RX_GAP_TICKS + (FillIdx == 0 ? GapExtra0 : GapExtra));
-        ks_xor(&SessKs, 0, Profile.CmdSize);
-        uint8_t  data = LegicMem[FillIdx];
-        uint8_t  crc  = calc_crc4((uint16_t)((FillIdx << 1) | 1), Profile.CmdSize, data);
-        uint32_t plain = ((uint32_t)crc << 8) | data;
-        ks_fwd(&SessKs, LEGIC_TX_GAP_TICKS);
-        Ring[FillIdx & (LEGIC_RING_SIZE - 1)] = (uint16_t)ks_xor(&SessKs, plain, 12);
-        ks_fwd(&SessKs, LEGIC_READ_TRAILER_TICKS);
-        FillIdx++;
-        RingFilled = FillIdx;
-    }
     if (PendingWriteAddr >= 0) {
         uint16_t Addr = (uint16_t)PendingWriteAddr;
         PendingWriteAddr = -1;
@@ -318,64 +206,96 @@ void LegicPrimeAppReset(void) {
     State = LEGIC_STATE_WAIT_IV;
 }
 
-/* Local-state keystream (same LFSR+mux as above) for the main-loop precompute,
- * so it never races the ISR's global Lfsr. */
-static void ks_init(LfsrState *st, uint8_t iv) { st->a = iv; st->b = iv ? ((iv << 1) | 1) : 0; }
-static void ks_fwd(LfsrState *st, uint8_t n) {
-    while (n--) {
-        st->a = (st->a >> 1 | (st->a ^ st->a >> 6) << 6) & 0x7F;
-        st->b = st->b >> 1 | (st->b ^ st->b >> 2 ^ st->b >> 3 ^ st->b >> 7) << 7;
-    }
-}
-static uint8_t ks_bit(LfsrState *st) {
-    uint8_t idx = 7 - ((st->a & 4) | (st->a >> 2 & 2) | (st->a >> 4 & 1));
-    return st->b >> idx & 1;
-}
-static uint32_t ks_xor(LfsrState *st, uint32_t v, uint8_t n) {
-    uint32_t o = 0;
-    for (uint8_t i = 0; i < n; i++) { o |= (uint32_t)(((v >> i) & 1) ^ ks_bit(st)) << i; ks_fwd(st, 1); }
-    return o;
-}
 
+/* Called from the RX-end interrupt, with roughly 190us before the response
+ * slot opens (see LEGIC_GAP_MAX_TICKS in ISO14443-2F.c). Everything here is
+ * computed just in time for this one frame: the reader addresses bytes in
+ * whatever order it likes, and the gap it just took is only knowable after the
+ * fact, so neither the data nor the keystream position can be precomputed. */
 uint16_t LegicPrimeAppProcess(uint8_t *Buffer, uint16_t BitCount) {
-
-    /* 7-bit RAND: start of a session. Send the type from the ISR (fast) and
-     * ask the main loop to precompute all read responses for this IV. */
+    /* 7-bit RAND: start of a session. Nothing preceded it that the keystream
+     * cares about, so the measured gap is deliberately ignored here. */
     if (BitCount == 7) {
-        uint8_t iv = (uint8_t)GetBits(Buffer, 7);
-        legic_prng_init(iv);
-        State = LEGIC_STATE_CONNECTED;
-        ReadCounter = 0;
-        RingFilled = 0;
-        AckSeen = false;
-        SessIv = iv;
-        SessSeqStart = LegicFrameSeq;   /* frame counter baseline for calibration */
-        SessReset = true;       /* main loop starts streaming this session */
+        legic_prng_init((uint8_t)GetBits(Buffer, 7));
+        State = LEGIC_STATE_WAIT_ACK;
         legic_prng_forward(LEGIC_TX_GAP_TICKS);
-        uint32_t obf = legic_xor_bits(Profile.TypeFrame, 6);
-        SetBits(Buffer, obf, 6);
+        SetBits(Buffer, legic_xor_bits(Profile.TypeFrame, 6), 6);
         return 6;
     }
 
-    if (BitCount == 6 && !AckSeen) { /* the ACK (once, after the type) */
-        AckSeen = true;
+    if (State == LEGIC_STATE_WAIT_IV) {
         return LEGICPRIME_APP_NO_RESPONSE;
     }
 
-    if (State != LEGIC_STATE_CONNECTED) {
+    /* A reader that went quiet for a long stretch cannot be assumed to have
+     * kept count; carrying on would emit plausible-looking garbage. */
+    if (LegicRxGapPeriods == LEGIC_GAP_DESYNC) {
+        State = LEGIC_STATE_WAIT_IV;
         return LEGICPRIME_APP_NO_RESPONSE;
     }
 
-    /* Read command: serve the precomputed response by sequential index. If the
-     * buffer is not ready yet (main loop still computing), stay silent; the
-     * reader simply retries the session. */
-    if (BitCount == Profile.CmdSize) {
-        if (ReadCounter < RingFilled) {
-            SetBits(Buffer, Ring[ReadCounter & (LEGIC_RING_SIZE - 1)], 12);
-            ReadCounter++;
-            return 12;
+    /* Pay for the turnaround that preceded this frame. */
+    legic_prng_forward(LegicRxGapPeriods
+                       + (LegicGapAfterOurFrame ? LEGIC_GAP_AFTER_TX_BIAS : 0));
+
+    if (State == LEGIC_STATE_WAIT_ACK) {
+        if (BitCount != 6) {
+            State = LEGIC_STATE_WAIT_IV;
+            return LEGICPRIME_APP_NO_RESPONSE;
         }
-        return LEGICPRIME_APP_NO_RESPONSE;   /* fill fell behind (should not) */
+        /* De-obfuscated for the keystream's sake, and recorded, but a mismatch
+         * is not treated as fatal: the ack values in the profiles come from
+         * proxmark3's table and an unknown reader may legitimately use another
+         * one. Rejecting on it would trade a wrong byte for no session at all. */
+        LastAck = (uint8_t)legic_xor_bits(GetBits(Buffer, 6), 6);
+        State = LEGIC_STATE_CONNECTED;
+        return LEGICPRIME_APP_NO_RESPONSE;
+    }
+
+    /* Read: one command bit plus the address. */
+    if (BitCount == Profile.CmdSize) {
+        uint16_t Cmd = (uint16_t)legic_xor_bits(GetBits(Buffer, Profile.CmdSize),
+                                                Profile.CmdSize);
+        uint16_t Addr = Cmd >> 1;
+        uint8_t  Data;
+        uint32_t Plain;
+
+        if (!(Cmd & LEGIC_CMD_READ) || Addr >= Profile.CardSize) {
+            return LEGICPRIME_APP_NO_RESPONSE;
+        }
+        Data  = LegicMem[Addr];
+        /* The CRC-4 covers the command word as sent, so it is only right if
+         * the address really is the one the reader asked for. */
+        Plain = ((uint32_t)calc_crc4(Cmd, Profile.CmdSize, Data) << 8) | Data;
+        legic_prng_forward(LEGIC_TX_GAP_TICKS);
+        SetBits(Buffer, legic_xor_bits(Plain, 12), 12);
+        return 12;
+    }
+
+    /* Write: the same command word, then 8 data bits and a CRC-4 over both.
+     * 18 bits on MIM22, 21 on MIM256, 23 on MIM1024 -- all within the codec's
+     * RX_MAX_BITS. Unverified against a real reader; see the notes in the
+     * commit. Answered with a single ack bit in the 3.57ms slot, which the
+     * codec stretches on seeing a one-bit answer. */
+    if (BitCount == (uint16_t)Profile.CmdSize + 12) {
+        uint32_t Frame = legic_xor_bits(GetBits(Buffer, (uint8_t)BitCount),
+                                        (uint8_t)BitCount);
+        uint16_t Cmd  = (uint16_t)(Frame & (((uint32_t)1 << Profile.CmdSize) - 1));
+        uint8_t  Data = (uint8_t)(Frame >> Profile.CmdSize);
+        uint8_t  Crc  = (uint8_t)((Frame >> (Profile.CmdSize + 8)) & 0x0F);
+        uint16_t Addr = Cmd >> 1;
+
+        if ((Cmd & LEGIC_CMD_READ) || Addr >= Profile.CardSize ||
+                calc_crc4(Cmd, Profile.CmdSize, Data) != Crc) {
+            return LEGICPRIME_APP_NO_RESPONSE;
+        }
+        LegicMem[Addr] = Data;
+        PendingWriteAddr = (int16_t)Addr;   /* flushed to flash by the task */
+
+        legic_prng_forward(LEGIC_WRITE_ACK_GAP_TICKS);
+        SetBits(Buffer, 1, 1);      /* the ack bit itself is not obfuscated */
+        legic_prng_forward(1);      /* but it still occupies a bit period */
+        return 1;
     }
 
     return LEGICPRIME_APP_NO_RESPONSE;

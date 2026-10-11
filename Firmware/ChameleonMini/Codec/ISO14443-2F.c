@@ -26,13 +26,6 @@
 /* fc/64 subcarrier, 50% duty via the OOK compare channel. */
 #define LEGIC_SUBCARRIER_DIVIDER    64
 
-/* Free-running stopwatch (TCD0, otherwise unused) for measuring reader
- * turnaround gaps, so the keystream can track the reader's real timing rather
- * than a fixed count. DIV64 of 32MHz = 2us/tick; gaps are < 1ms. */
-#define CODEC_TIMER_GAP             TCD0
-#define GAP_TICK_gc                 TC_CLKSEL_DIV64_gc
-#define GAP_TICK_US                 2
-
 /* Receive timebase: CODEC_TIMER_SAMPLING (TCC1) at DIV8 of F_CPU=32MHz
  * -> 4MHz, 0.25us/tick. A 0 bit measures 232-245 ticks, a 1 bit 393-408. */
 #define RX_TICK_gc              TC_CLKSEL_DIV8_gc
@@ -96,7 +89,49 @@
 #define TX_DAMP_CYCLES      407     /* ~30us   */
 
 #define TX_ACK_GAP_CYCLES   (TAG_ACK_WAIT_CYCLES + RWD_PAUSE_CYCLES \
-                             - RX_TICKS_TO_CARRIER(RX_TIMEOUT_TICKS))
+                               - RX_TICKS_TO_CARRIER(RX_TIMEOUT_TICKS))
+
+/* ---- Inter-frame gap measurement (see ISO14443-2F.h) ----
+ *
+ * One bit period is TAG_BIT_PERIOD = 1344 carrier cycles = 99.115us, which at
+ * 0.25us/tick is 396.5 RX ticks.
+ *
+ * The keystream does advance with elapsed time across a turnaround, so this
+ * has to be measured rather than assumed. Truncated, not rounded, and with no
+ * offset here -- LegicPrime.c adds the one-tick bias that applies after our
+ * own frames. Derived from two hf sniff captures, one against a proxmark3 and
+ * one against a real LEGIC lock, six turnarounds in total, all six fitting:
+ *
+ *   turnaround                     gap us   floor  bias  ticks
+ *   pm3   after our type frame       220.0      2     1      3
+ *   pm3   ack -> command             220.0      2     0      2
+ *   pm3   after our read answer      220.0      2     1      3
+ *   lock  after our type frame       221.9      2     1      3
+ *   lock  ack -> command             355.2      3     0      3
+ *   lock  after our read answer      523.5      5     1      6
+ *
+ * proxmark3 paces every turnaround at 220us, which is why its trace alone
+ * looks like fixed counts of 2 and 3 and cannot tell the two models apart.
+ * The lock's 355us and 523us are what separate them.
+ *
+ * Truncating against 396 rather than 396.5 overstates the quotient by 0.12%,
+ * which cannot reach a whole period below ~800 of them. The tightest margin to
+ * a floor() boundary in the data above is 21.8us, against a measurement good
+ * to a few microseconds. */
+#define RX_TICKS_PER_BIT_PERIOD 396
+
+/* Generous on purpose -- a false positive drops a working session, while a
+ * false negative only delays the reader's own retry by one frame. */
+#define LEGIC_GAP_STALE_PERIODS 96
+
+/* The RX-end interrupt runs RX_TIMEOUT_TICKS after the reader's last pause
+ * edge, but the frame itself ended one pause earlier than that -- the same
+ * correction TX_GAP_CYCLES makes, in the other direction. */
+#define CARRIER_TO_RX_TICKS(c)  ((uint16_t)(((uint32_t)(c) * 64UL) / 217UL))
+#define RX_END_LATENCY_TICKS    (RX_TIMEOUT_TICKS - CARRIER_TO_RX_TICKS(RWD_PAUSE_CYCLES))
+
+/* Sentinel origin: there is no meaningful previous frame to measure from. */
+#define GAP_ORIGIN_INVALID      0xFFFF
 
 typedef enum {
     TX_GAP,
@@ -115,22 +150,25 @@ static volatile bool FirstEdge;
 static volatile TxStateType TxState;
 static volatile bool TxReady;
 
-/* Turnaround gap measurement. GapAnchor holds the end of the previous frame
- * (our TX_DONE, or a reader frame's last edge); LegicRxGapMicros is the gap
- * before the frame currently being processed, read by LegicPrime.c. */
-static volatile uint16_t GapAnchor;
-static volatile uint16_t LastEdgeStamp;
-volatile uint16_t LegicRxGapMicros;
-volatile uint16_t LegicFrameSeq;      /* ++ at each frame's first edge */
-volatile uint16_t LegicGapRing[8];    /* per-frame gaps, indexed by LegicFrameSeq */
+/* Gap stopwatch: the raw RX-tick reading at this frame's first edge and the
+ * length it converts to, plus which side sent the frame before this one. */
+static volatile uint16_t RxGapRawTicks;
+static volatile bool     GapValid;
+/* Who sent the frame before the *next* one. Latched into
+ * LegicGapAfterOurFrame at that frame's first edge, never written later:
+ * GapRestart() runs before BuildResponse(), so writing the exported flag
+ * directly would clobber it while ApplicationProcess() still needs it for the
+ * frame in hand -- which silently dropped the one-tick bias. */
+static volatile bool     GapPendingAfterOurFrame;
+volatile uint8_t         LegicRxGapPeriods;
+volatile bool            LegicGapAfterOurFrame;
 
-static void SetBit(uint8_t *buf, uint16_t pos, bool v) {
-    if (v) {
-        buf[pos / 8] |= (1 << (pos % 8));
-    } else {
-        buf[pos / 8] &= ~(1 << (pos % 8));
-    }
-}
+#ifdef LEGIC_GAP_DEBUG
+volatile uint16_t LegicGapLog[LEGIC_GAP_LOG_SIZE];
+volatile uint8_t  LegicGapLogInfo[LEGIC_GAP_LOG_SIZE];
+volatile uint8_t  LegicGapLogNext;
+volatile uint8_t  LegicGapLogCount;
+#endif
 
 static bool GetBit(const uint8_t *buf, uint16_t pos) {
     return (buf[pos / 8] & (1 << (pos % 8))) != 0;
@@ -167,26 +205,61 @@ static void Initialize(void) {
     CODEC_SUBCARRIER_TIMER.CNT = 0;
     CODEC_SUBCARRIER_TIMER.CTRLA = TC_CLKSEL_EVCH6_gc; /* free-run */
 
-    /* Turnaround-gap stopwatch: free-run for the whole session. */
-    CODEC_TIMER_GAP.PER = 0xFFFF;
-    CODEC_TIMER_GAP.CNT = 0;
-    CODEC_TIMER_GAP.CTRLA = GAP_TICK_gc;
-    GapAnchor = 0;
-    LastEdgeStamp = 0;
-    LegicRxGapMicros = 0;
 }
 
+/* Re-origin the gap stopwatch. Origin is how much time has already passed
+ * since the previous frame ended, in RX ticks, so that CODEC_TIMER_SAMPLING
+ * reads the whole turnaround when the next frame's first edge arrives.
+ * GAP_ORIGIN_INVALID means there is nothing meaningful to measure from.
+ * AfterOurFrame records who sent that previous frame; the application needs it
+ * for the turnaround's one-tick bias.
+ *
+ * Kept separate from StartDemod() because it has to run at a *fixed* offset
+ * from the frame end. StartDemod() runs after BuildResponse(), and those ~27us
+ * of keystream work would otherwise be subtracted from the measurement -- with
+ * a proxmark3's 220us turnaround sitting only 21.8us above a floor() boundary,
+ * that lost one whole tick and desynced on the first read command. A lock
+ * pacing at 355us happened to survive it, which is why the two readers
+ * disagreed. */
+static void GapRestart(uint16_t Origin, bool AfterOurFrame) {
+    GapPendingAfterOurFrame = AfterOurFrame;
+    GapValid = (Origin != GAP_ORIGIN_INVALID);
+
+    /* PER is opened right up so a long reader pause cannot wrap it -- 0xFFFF
+     * ticks is 16.4ms, well past LEGIC_GAP_STALE_PERIODS. The overflow
+     * interrupt stays off; while a frame is being received PER is narrowed
+     * back to RX_TIMEOUT_TICKS and the overflow regains its end-of-frame
+     * meaning. */
+    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
+    CODEC_TIMER_SAMPLING.INTCTRLA = TC_OVFINTLVL_OFF_gc;
+    CODEC_TIMER_SAMPLING.PER = 0xFFFF;
+    CODEC_TIMER_SAMPLING.CNT = GapValid ? Origin : 0;
+    CODEC_TIMER_SAMPLING.CTRLA = RX_TICK_gc;
+}
+
+/* Arm the receiver. Deliberately does not touch the gap stopwatch. */
 static void StartDemod(void) {
     CodecSetDemodPower(true);
 
     BitCount = 0;
     FirstEdge = true;
 
-    CODEC_TIMER_SAMPLING.CTRLA = TC_CLKSEL_OFF_gc;
-    CODEC_TIMER_SAMPLING.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-
     CODEC_DEMOD_IN_PORT.INTFLAGS = PORT_INT0IF_bm;
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
+}
+
+/* Raw stopwatch reading -> whole bit periods elapsed, truncated. */
+static uint8_t GapToBitPeriods(uint16_t RawTicks) {
+    uint16_t Periods;
+
+    if (!GapValid) {
+        return LEGIC_GAP_DESYNC;
+    }
+    Periods = RawTicks / RX_TICKS_PER_BIT_PERIOD;
+    if (Periods > LEGIC_GAP_STALE_PERIODS) {
+        return LEGIC_GAP_DESYNC;
+    }
+    return (uint8_t)Periods;
 }
 
 void isr_ISO14443_2F_DEMOD_IN_INT0(void) {
@@ -194,18 +267,18 @@ void isr_ISO14443_2F_DEMOD_IN_INT0(void) {
         /* Start of a new frame: arm the stopwatch, don't classify a bit yet
          * (need a second edge to measure the first bit's duration). */
         FirstEdge = false;
+        /* Read and convert the gap before restarting the timer for bit
+         * measurement. Done here rather than at frame end only to keep the
+         * division (~250 cycles, well inside the 61us to the next edge) off
+         * the response deadline. */
+        RxGapRawTicks = CODEC_TIMER_SAMPLING.CNT;
+        LegicRxGapPeriods = GapToBitPeriods(RxGapRawTicks);
+        LegicGapAfterOurFrame = GapPendingAfterOurFrame;
         CODEC_TIMER_SAMPLING.CNT = 0;
         CODEC_TIMER_SAMPLING.PER = RX_TIMEOUT_TICKS - 1;
         CODEC_TIMER_SAMPLING.INTFLAGS = TC0_OVFIF_bm;
         CODEC_TIMER_SAMPLING.INTCTRLA = TC_OVFINTLVL_HI_gc;
         CODEC_TIMER_SAMPLING.CTRLA = RX_TICK_gc;
-        /* Bit timer is armed; now latch the turnaround gap (does not affect
-         * bit timing). */
-        uint16_t gnow = CODEC_TIMER_GAP.CNT;
-        LegicRxGapMicros = (uint16_t)((gnow - GapAnchor) * GAP_TICK_US);
-        LastEdgeStamp = gnow;
-        LegicFrameSeq++;
-        LegicGapRing[LegicFrameSeq & 7] = LegicRxGapMicros;
         return;
     }
 
@@ -218,7 +291,6 @@ void isr_ISO14443_2F_DEMOD_IN_INT0(void) {
         return;
     }
     CODEC_TIMER_SAMPLING.CNT = 0;
-    LastEdgeStamp = CODEC_TIMER_GAP.CNT;
 
     /* Record the raw interval; bits are classified once the frame is in. */
     if (BitCount < RX_MAX_BITS) {
@@ -231,14 +303,32 @@ void isr_ISO14443_2F_DEMOD_IN_INT0(void) {
  *
  * Runs from the RX-end interrupt rather than the main loop: the reader opens
  * the response slot a fixed 330us after frame end, which main-loop scheduling
- * cannot reliably meet. Costs ~40us of bounded interrupt time, during which
- * the demod edge interrupt is masked and the load-modulation timer will not
- * fire for another 224us. */
+ * cannot reliably meet. The demod edge interrupt is masked throughout and the
+ * load-modulation timer will not fire for another 190us (TX_GAP_CYCLES less
+ * the two pre-charge windows, already armed above).
+ *
+ * The application's share of that is bounded but no longer small: it has to
+ * de-obfuscate the command, look up the addressed byte and obfuscate the
+ * answer here, because the reader picks the address and the gap it just took
+ * is only knowable after the fact -- neither can be precomputed. Worst case is
+ * roughly 140us of the 190us, with LEGIC_GAP_MAX_TICKS setting the bound. */
 static void BuildResponse(void) {
     uint16_t DemodBitCount = BitCount;
+    uint8_t *Out = CodecBuffer;
+    uint8_t Mask = 1;
 
+    /* Walking pointer and rotating mask rather than indexing by bit position:
+     * see the note on legic_xor_bits() in LegicPrime.c. */
     for (uint16_t i = 0; i < DemodBitCount; i++) {
-        SetBit(CodecBuffer, i, RxIntervals[i] > RX_BIT_THRESHOLD);
+        if (RxIntervals[i] > RX_BIT_THRESHOLD) {
+            *Out |= Mask;
+        } else {
+            *Out &= (uint8_t)~Mask;
+        }
+        if ((Mask <<= 1) == 0) {
+            Mask = 1;
+            Out++;
+        }
     }
 
     uint16_t AnswerBitCount = ApplicationProcess(CodecBuffer, DemodBitCount);
@@ -247,13 +337,17 @@ static void BuildResponse(void) {
         BitCount = AnswerBitCount;
         BitSent = 0;
         /* A one-bit answer is the write ACK: 3.57ms, not 330us. The slot is
-         * already counting, so just stretch it. */
+         * already counting, so just stretch it -- taking the pre-charge
+         * windows out of it the same way the RX-end ISR did for the 330us
+         * slot, or the ack lands 471 cycles (35us) late. */
         if (AnswerBitCount == 1) {
-            CODEC_TIMER_LOADMOD.PER = TX_ACK_GAP_CYCLES - 1;
+            CODEC_TIMER_LOADMOD.PER = TX_ACK_GAP_CYCLES - TX_LEAD_CYCLES
+                                      - TX_WARM_CYCLES - 1;
         }
         TxReady = true;
     } else {
-        /* Nothing to say: cancel the slot and listen again. */
+        /* Nothing to say: cancel the slot and listen again. The gap to the
+         * reader's next frame runs from the end of the frame just received. */
         CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
         CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
         StartDemod();
@@ -266,12 +360,25 @@ ISR(CODEC_TIMER_SAMPLING_OVF_VECT) {
     CODEC_TIMER_SAMPLING.INTCTRLA = TC_OVFINTLVL_OFF_gc;
     CODEC_DEMOD_IN_PORT.INT0MASK = 0;
 
-    /* Anchor the next turnaround at this frame's end; TX_DONE overrides it if
-     * we answer. */
-    GapAnchor = LastEdgeStamp;
-
     if (BitCount > 0) {
+        /* Fixed offset from the reader's frame end -- must happen before
+         * BuildResponse(); see GapRestart(). */
+        GapRestart(RX_END_LATENCY_TICKS, false);
         CodecSetDemodPower(false);
+#ifdef LEGIC_GAP_DEBUG
+        /* GapRestart() above only touched the pending flag, so
+         * LegicGapAfterOurFrame still describes this frame. */
+        LegicGapLog[LegicGapLogNext] = RxGapRawTicks;
+        LegicGapLogInfo[LegicGapLogNext] =
+            (uint8_t)(BitCount & LEGIC_GAP_LOG_BITS)
+            | (LegicGapAfterOurFrame ? LEGIC_GAP_LOG_BIAS : 0);
+        if (++LegicGapLogNext >= LEGIC_GAP_LOG_SIZE) {
+            LegicGapLogNext = 0;
+        }
+        if (LegicGapLogCount < LEGIC_GAP_LOG_SIZE) {
+            LegicGapLogCount++;
+        }
+#endif
         /* Arm the response slot before building the answer. This instant is a
          * fixed offset from the reader's last pause edge, so the gap is exact
          * regardless of how long BuildResponse then takes. */
@@ -288,6 +395,12 @@ ISR(CODEC_TIMER_SAMPLING_OVF_VECT) {
 
         BuildResponse();
     } else {
+        /* A lone edge with no second one: not a frame. Carry the stopwatch
+         * across it rather than losing the session -- the glitch happened
+         * RxGapRawTicks into the gap and the timeout has run since. */
+        GapRestart(GapValid ? (uint16_t)(RxGapRawTicks + RX_TIMEOUT_TICKS)
+                            : GAP_ORIGIN_INVALID,
+                   GapPendingAfterOurFrame);
         StartDemod();
     }
 }
@@ -299,8 +412,12 @@ void isr_ISO14443_2F_TIMER_LOADMOD_OVF(void) {
                 /* Answer not ready yet: stay silent rather than send garbage. */
                 CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
                 CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-                StartDemod();   /* restart RX immediately, not via the main loop
-                                 * (so ApplicationTask latency can't delay it) */
+                /* Restart RX immediately, not via the main loop (so
+                 * ApplicationTask latency can't delay it). We owed the reader
+                 * an answer and stayed silent, so the keystream is beyond
+                 * recovery: force the application to wait for a fresh RAND. */
+                GapRestart(GAP_ORIGIN_INVALID, false);
+                StartDemod();
                 break;
             }
             /* Pre-charge window; see TX_WARM_CYCLES. The RX-end ISR already
@@ -353,8 +470,11 @@ void isr_ISO14443_2F_TIMER_LOADMOD_OVF(void) {
             CODEC_LOADMOD_PORT.OUTCLR = CODEC_LOADMOD_MASK;
             CODEC_TIMER_LOADMOD.CTRLA = TC_CLKSEL_OFF_gc;
             CODEC_TIMER_LOADMOD.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-            GapAnchor = CODEC_TIMER_GAP.CNT;   /* our answer end: anchor next gap */
-            StartDemod();   /* immediate RX restart from the ISR */
+            /* Immediate RX restart from the ISR. This instant is the end of
+             * our frame's last bit slot, so the gap to the reader's next frame
+             * starts here: origin 0. */
+            GapRestart(0, true);
+            StartDemod();
             break;
     }
 }
@@ -364,6 +484,7 @@ void ISO14443FCodecInit(void) {
     CodecClaimSharedVectorsF();
 
     Initialize();
+    GapRestart(GAP_ORIGIN_INVALID, false);
     StartDemod();
 }
 

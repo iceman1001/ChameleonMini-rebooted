@@ -71,6 +71,9 @@
 #include "../System.h"
 #include "../Button.h"
 #include "../AntennaLevel.h"
+#ifdef LEGIC_GAP_DEBUG
+#include "../Codec/ISO14443-2F.h"
+#endif
 
 extern const PROGMEM CommandEntryType CommandTable[];
 
@@ -303,6 +306,31 @@ CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage) {
 CommandStatusIdType CommandExecLegicLoad(char* OutMessage) {
     LegicPrimeLoadDefaultImage();
     return COMMAND_INFO_OK_ID;
+}
+#endif
+
+#ifdef LEGIC_GAP_DEBUG
+/* "<gap>/<bits>/<bias> " per frame, oldest first. gap is in RX ticks
+ * (0.25us), bias is 1 when our own frame preceded the turnaround. */
+CommandStatusIdType CommandGetLegicGaps(char* OutParam) {
+    uint16_t Offset = 0;
+    uint8_t Count = LegicGapLogCount;
+    uint8_t Idx = (uint8_t)((LegicGapLogNext + LEGIC_GAP_LOG_SIZE - Count)
+                            % LEGIC_GAP_LOG_SIZE);
+
+    for (uint8_t i = 0; i < Count && Offset < TERMINAL_BUFFER_SIZE - 16; i++) {
+        uint8_t Info = LegicGapLogInfo[Idx];
+        Offset += snprintf_P(OutParam + Offset, TERMINAL_BUFFER_SIZE - Offset,
+                             PSTR("%u/%u/%u "), LegicGapLog[Idx],
+                             (unsigned)(Info & LEGIC_GAP_LOG_BITS),
+                             (unsigned)((Info & LEGIC_GAP_LOG_BIAS) ? 1 : 0));
+        if (++Idx >= LEGIC_GAP_LOG_SIZE) {
+            Idx = 0;
+        }
+    }
+    LegicGapLogCount = 0;   /* read once, then start a fresh window */
+    LegicGapLogNext = 0;
+    return COMMAND_INFO_OK_WITH_TEXT_ID;
 }
 #endif
 

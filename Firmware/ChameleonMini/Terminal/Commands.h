@@ -169,6 +169,13 @@ CommandStatusIdType CommandGetUidSize(char* OutParam);
 CommandStatusIdType CommandExecLegicLoad(char* OutMessage);
 #endif
 
+#ifdef LEGIC_GAP_DEBUG
+/* Raw inter-frame gaps of the last session, in RX ticks (0.25us), oldest
+ * first. Calibration aid for LEGIC_GAP_BIAS -- see ISO14443-2F.c. */
+#define COMMAND_LEGICGAPS           "LEGICGAPS"
+CommandStatusIdType CommandGetLegicGaps(char* OutParam);
+#endif
+
 #define COMMAND_BUTTON              "BUTTON"
 CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);
