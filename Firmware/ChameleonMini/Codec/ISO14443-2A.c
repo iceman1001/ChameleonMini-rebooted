@@ -145,7 +145,7 @@ static void StartDemod(void) {
     CODEC_DEMOD_IN_PORT.INT0MASK = CODEC_DEMOD_IN_MASK0;
 }
 
-ISR(CODEC_DEMOD_IN_INT0_VECT) {
+CODEC_2A_DEMOD_IN_INT0_ISR {
     /* This is the first edge of the first modulation-pause after StartDemod.
      * Now we have time to prepare our timers and variables to start
      * demodulating beginning from one bit-width after this edge. */
@@ -295,7 +295,7 @@ ISR(CODEC_TIMER_SAMPLING_CCA_VECT) {
     CODEC_TIMER_SAMPLING.CTRLD = TC_EVACT_RESTART_gc | TC_EVSEL_CH0_gc;
 }
 
-ISR(CODEC_TIMER_OVF_VECT) {
+CODEC_2A_TIMER_LOADMOD_OVF_ISR {
     /* Bit rate timer. Output a half bit on the output. */
     uint8_t Temp8;
     uint16_t Temp16;
@@ -425,6 +425,9 @@ ISR(CODEC_TIMER_OVF_VECT) {
 }
 
 void ISO14443ACodecInit(void) {
+    /* See Codec.h. */
+    CodecClaimSharedVectorsA();
+
     /* Initialize common peripherals and start listening
      * for incoming data. */
     Initialize();

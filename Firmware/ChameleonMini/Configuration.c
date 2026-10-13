@@ -6,6 +6,7 @@
  */
 
 #include <avr/pgmspace.h>
+#include <string.h>
 #include "Memory/Memory.h"
 #include "Configuration.h"
 #include "Settings.h"
@@ -14,6 +15,11 @@
 /* Map IDs to text */
 static const MapEntryType ConfigurationMap[] PROGMEM = {
     { .Id = CONFIG_NONE,                     .Text = "CLOSED" },
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+    { .Id = CONFIG_LEGIC_PRIME_22,           .Text = "LEGIC_PRIME_22" },
+    { .Id = CONFIG_LEGIC_PRIME_256,          .Text = "LEGIC_PRIME_256" },
+    { .Id = CONFIG_LEGIC_PRIME_1024,         .Text = "LEGIC_PRIME_1024" },
+#endif
 #ifdef CONFIG_MF_ULTRALIGHT_SUPPORT
     { .Id = CONFIG_MF_ULTRALIGHT,            .Text = "MF_ULTRALIGHT" },
     { .Id = CONFIG_MF_ULTRALIGHT_EV1_80B,    .Text = "MF_ULTRALIGHT_EV1_80B" },
@@ -145,6 +151,68 @@ static const PROGMEM ConfigurationType ConfigurationTable[] = {
     .UidSize = MIFARE_ULTRALIGHT_UID_SIZE,
     .CardMemorySize = MIFARE_ULTRALIGHT_EV12_MEM_SIZE,
     .WorkingMemorySize = MIFARE_ULTRALIGHT_PWD_SIZE,
+    .ReadOnly = false
+},
+#endif
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+[CONFIG_LEGIC_PRIME_22] = {
+    .CodecInitFunc = ISO14443FCodecInit,
+    .CodecTaskFunc = ISO14443FCodecTask,
+    .ApplicationInitFunc = LegicPrimeAppInit22,
+    .ApplicationResetFunc = LegicPrimeAppReset,
+    .ApplicationTaskFunc = LegicPrimeAppTask,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
+    .ApplicationProcessFunc = LegicPrimeAppProcess,
+    .ApplicationGetUidFunc = LegicPrimeGetUid,
+    .ApplicationSetUidFunc = LegicPrimeSetUid,
+    .ApplicationGetSakFunc = ApplicationGetSakDummy,
+    .ApplicationSetSakFunc = ApplicationSetSakDummy,
+    .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+    .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
+    .UidSize = LEGIC_PRIME_UID_SIZE,
+    .CardMemorySize = LEGIC_PRIME_MEM_22,
+    .WorkingMemorySize = 0,
+    .ReadOnly = false
+},
+[CONFIG_LEGIC_PRIME_256] = {
+    .CodecInitFunc = ISO14443FCodecInit,
+    .CodecTaskFunc = ISO14443FCodecTask,
+    .ApplicationInitFunc = LegicPrimeAppInit256,
+    .ApplicationResetFunc = LegicPrimeAppReset,
+    .ApplicationTaskFunc = LegicPrimeAppTask,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
+    .ApplicationProcessFunc = LegicPrimeAppProcess,
+    .ApplicationGetUidFunc = LegicPrimeGetUid,
+    .ApplicationSetUidFunc = LegicPrimeSetUid,
+    .ApplicationGetSakFunc = ApplicationGetSakDummy,
+    .ApplicationSetSakFunc = ApplicationSetSakDummy,
+    .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+    .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
+    .UidSize = LEGIC_PRIME_UID_SIZE,
+    .CardMemorySize = LEGIC_PRIME_MEM_256,
+    .WorkingMemorySize = 0,
+    .ReadOnly = false
+},
+[CONFIG_LEGIC_PRIME_1024] = {
+    .CodecInitFunc = ISO14443FCodecInit,
+    .CodecTaskFunc = ISO14443FCodecTask,
+    .ApplicationInitFunc = LegicPrimeAppInit1024,
+    .ApplicationResetFunc = LegicPrimeAppReset,
+    .ApplicationTaskFunc = LegicPrimeAppTask,
+    .ApplicationTickFunc = ApplicationTickDummy,
+    .ApplicationButtonFunc = ApplicationButtonFuncDummy,
+    .ApplicationProcessFunc = LegicPrimeAppProcess,
+    .ApplicationGetUidFunc = LegicPrimeGetUid,
+    .ApplicationSetUidFunc = LegicPrimeSetUid,
+    .ApplicationGetSakFunc = ApplicationGetSakDummy,
+    .ApplicationSetSakFunc = ApplicationSetSakDummy,
+    .ApplicationGetAtqaFunc = ApplicationGetAtqaDummy,
+    .ApplicationSetAtqaFunc = ApplicationSetAtqaDummy,
+    .UidSize = LEGIC_PRIME_UID_SIZE,
+    .CardMemorySize = LEGIC_PRIME_MEM_1024,
+    .WorkingMemorySize = 0,
     .ReadOnly = false
 },
 #endif
@@ -393,6 +461,13 @@ void ConfigurationInit(void)
 
 void ConfigurationSetById( ConfigurationEnum Configuration )
 {
+    /* Configuration arrives from EEPROM, which survives a firmware change that
+     * may define fewer configs than the one that wrote it. Out of range would
+     * read PROGMEM past the table and call garbage function pointers. */
+    if (Configuration >= CONFIG_COUNT) {
+        Configuration = CONFIG_NONE;
+    }
+
     GlobalSettings.ActiveSettingPtr->Configuration = Configuration;
 
     /* Copy struct from PROGMEM to RAM */

@@ -15,6 +15,9 @@
 #include "MifareClassic.h"
 #include "MifareUltralight.h"
 #include "NTAG21x.h"
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+#include "LegicPrime.h"
+#endif
 /* Function wrappers */
 INLINE void ApplicationInit(void) {
     ActiveConfiguration.ApplicationInitFunc();

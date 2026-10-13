@@ -163,6 +163,19 @@ CommandStatusIdType CommandExecWorkingMemDownload(char* OutMessage);
 #define COMMAND_UIDSIZE             "UIDSIZE"
 CommandStatusIdType CommandGetUidSize(char* OutParam);
 
+#ifdef CONFIG_LEGIC_PRIME_SUPPORT
+/* Reload the built-in reference card image into the active slot. */
+#define COMMAND_LEGICLOAD           "LEGICLOAD"
+CommandStatusIdType CommandExecLegicLoad(char* OutMessage);
+#endif
+
+#ifdef LEGIC_GAP_DEBUG
+/* Raw inter-frame gaps of the last session, in RX ticks (0.25us), oldest
+ * first. Calibration aid for LEGIC_GAP_BIAS -- see ISO14443-2F.c. */
+#define COMMAND_LEGICGAPS           "LEGICGAPS"
+CommandStatusIdType CommandGetLegicGaps(char* OutParam);
+#endif
+
 #define COMMAND_BUTTON              "BUTTON"
 CommandStatusIdType CommandExecButton(char* OutMessage);
 CommandStatusIdType CommandGetButton(char* OutParam);
