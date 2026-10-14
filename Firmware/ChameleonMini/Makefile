@@ -14,6 +14,8 @@ UNLOCKED_F	 = False
 PYTHON_BIN	 = /usr/bin/env python3
 # Tool for scrambling operations, to flash on locked (original bootloader) devices
 CRYPTO_TOOL	 = ../../Software/Tools/crypt_operations.py
+# portable version of dfu-programmer
+PYDFU_TOOL = ../../Software/Tools/chameleon_dfu.py
 
 #Supported configurations
 #WARNING. If you flash from Windows original tools, choose either CLASSIC OR ULTRALIGHT
@@ -163,15 +165,7 @@ dfu-prog: $(TARGET).hex $(TARGET).eep
 	dfu-programmer $(MCU) launch
 
 else
-# Program the device using dfu-programmer for unlocked RevE rebooted USB DFU scenario
-# Note that the device has to be in bootloader mode already
-# dfu-programmer >= 0.7.2 required
+# use the portable dfu programmer for devices running stock bootloader
 dfu-prog: $(TARGET).hex $(TARGET).eep
-	$(PYTHON_BIN) $(CRYPTO_TOOL) scramblehex $(TARGET).eep $(TARGET).eep.scramble
-	$(PYTHON_BIN) $(CRYPTO_TOOL) scramblehex $(TARGET).hex $(TARGET).hex.scramble
-	-dfu-programmer $(MCU) erase --force
-	dfu-programmer $(MCU) flash --eeprom --force --suppress-validation $(TARGET).eep.scramble
-	dfu-programmer $(MCU) flash --force --suppress-validation $(TARGET).hex.scramble
-	dfu-programmer $(MCU) launch
-	rm $(TARGET).eep.scramble $(TARGET).hex.scramble
+	$(PYTHON_BIN) $(PYDFU_TOOL) --target $(MCU) flash-hex $(TARGET).hex $(TARGET).eep
 endif
