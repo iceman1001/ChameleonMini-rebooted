@@ -572,8 +572,10 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint16_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
     uint16_t AccessOffset = MFCLASSIC_MEM_KEY_A_OFFSET + MFCLASSIC_MEM_KEY_SIZE;
     uint16_t KeyAddress = MFCLASSIC_MEM_INVALID_ADDRESS;
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
     bool KeyIsCanary = false;
-    //uint8_t Sector = Buffer[1];
+#endif
+	//uint8_t Sector = Buffer[1];
 
     /* Save Nonce in detection mode */
     if(isDetectionEnabled && !isNested) {
