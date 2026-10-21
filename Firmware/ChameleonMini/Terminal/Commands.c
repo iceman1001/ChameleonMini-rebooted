@@ -448,8 +448,10 @@ CommandStatusIdType CommandGetUltralightPassword(char* OutParam) {
 
 #ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
 CommandStatusIdType CommandGetDetection(char* OutParam) {
-    /* Read UID / s0-b0 */
-    AppWorkingMemoryRead(OutParam, MFCLASSIC_MEM_S0B0_ADDRESS, DETECTION_MEM_BLOCK0_SIZE);
+    /* Block 0, bytes 0..7 (UID, BCC, SAK, ATQA) live in card memory */
+    AppCardMemoryRead(OutParam, MFCLASSIC_MEM_S0B0_ADDRESS, DETECTION_BLOCK0_CANARY_ADDR);
+    /* Block 0, bytes 8..15 (canary) live in working memory, see mfcHandle... in MifareClassic.c */
+    AppWorkingMemoryRead(OutParam + DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_ADDR, DETECTION_BLOCK0_CANARY_SIZE);
     /* Read saved nonce data from authentication */
     AppWorkingMemoryRead(OutParam+DETECTION_MEM_BLOCK0_SIZE, DETECTION_MEM_DATA_START_ADDR, DETECTION_MEM_MFKEY_DATA_LEN);
     /* Add file integrity to byte. This adds 2 bytes (209, 210) to DETECTION_MEM_APP_SIZE */

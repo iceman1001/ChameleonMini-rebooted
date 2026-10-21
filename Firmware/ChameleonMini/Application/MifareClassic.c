@@ -571,7 +571,8 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     uint8_t Uid[MFCLASSIC_UID_SIZE];
     uint16_t KeyOffset = (Buffer[0] == MFCLASSIC_CMD_AUTH_A) ? MFCLASSIC_MEM_KEY_A_OFFSET : MFCLASSIC_MEM_KEY_B_OFFSET;
     uint16_t AccessOffset = MFCLASSIC_MEM_KEY_A_OFFSET + MFCLASSIC_MEM_KEY_SIZE;
-    uint16_t KeyAddress;
+    uint16_t KeyAddress = MFCLASSIC_MEM_INVALID_ADDRESS;
+    bool KeyIsCanary = false;
     //uint8_t Sector = Buffer[1];
 
     /* Save Nonce in detection mode */
@@ -580,8 +581,9 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
         memset(DetectionDataSave, 0x00, DETECTION_BYTES_PER_SAVE);
         // Save reader's auth phase 1: KEY type (A or B), and sector number
         memcpy(DetectionDataSave, Buffer, DETECTION_READER_AUTH_P1_SIZE);
-        // Set selected key to be the DETECTION canary
-        KeyAddress = DETECTION_BLOCK0_CANARY_ADDR;
+        // Use the DETECTION canary as key. It is kept in working memory, not in
+        // card memory, whose block 0 bytes 8..15 hold the emulated manufacturer data.
+        KeyIsCanary = true;
 #endif
     /* Set key address and loads it */
     } else {
@@ -611,7 +613,14 @@ void mfcHandleAuthenticationRequest(bool isNested, uint8_t * Buffer, uint16_t * 
     } else {
         AppCardMemoryRead(Uid, MFCLASSIC_MEM_UID_CL1_ADDRESS, MFCLASSIC_MEM_UID_CL1_SIZE);
     }
-    AppCardMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+#ifdef CONFIG_MF_CLASSIC_DETECTION_SUPPORT
+    if (KeyIsCanary) {
+        memcpy(Key, DetectionCanary, MFCLASSIC_MEM_KEY_SIZE);
+    } else
+#endif
+    {
+        AppCardMemoryRead(Key, KeyAddress, MFCLASSIC_MEM_KEY_SIZE);
+    }
 
     /* Proceed with nested or regular authent */
     if(isNested) {
